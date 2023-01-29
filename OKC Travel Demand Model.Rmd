@@ -1,0 +1,189 @@
+---
+title: "Oklahoma City MSA — Travel Demand Model"
+author: "Sam Page, Gabe Barrett-Jackson, Matt Khinda"
+date: "1/29/2023"
+output: pdf_document
+---
+
+```{r setup, echo = FALSE, include=FALSE}
+library(tidyverse)
+library(tidycensus)
+library(tigris)
+library(sf)
+library(ggspatial)
+library(gridExtra)
+library(RColorBrewer)
+library(reshape2)
+
+
+#counties stored as list
+counties <- c("Oklahoma", "Canadian", "Cleveland", "Grady", "Lincoln", "Logan", "McClain")
+
+#desired ACS variables stored as list
+hh_vars <- c(
+            # total pop
+            tot_pop = "B01003_001",
+      
+            # vehicle availability
+            no_veh = "B08201_002",
+            
+            #general household statistics
+            total_hhs = "B08201_001",
+            hh_1person = "B08201_007",
+            hh_2person = "B08201_013",
+            hh_3person = "B08201_019",
+            hh_4person_plus = "B08201_025",
+            
+            #household structure
+            hh_u18_married_couple = "B09002_002",
+            hh_u18_singleparent_male = "B09002_009",
+            hh_u18_singleparent_female = "B09002_015",
+            hh_65plus = "B11007_002",
+            
+            #disability
+            tot_disabled = "B18101_001",
+            
+            #income statistics
+            inc_lt_10k = "B19001_002",
+            inc_btw_10k_15k = "B19001_003",
+            inc_btw_15k_20k = "B19001_004",
+            inc_btw_20k_25k = "B19001_005",
+            inc_btw_25k_30k = "B19001_006",
+            inc_btw_30k_35k = "B19001_007",
+            inc_btw_35k_40k = "B19001_008",
+            inc_btw_40k_45k = "B19001_009",
+            inc_btw_45k_50k = "B19001_010",
+            inc_btw_50k_60k = "B19001_011",
+            inc_btw_60k_75k = "B19001_012",
+            inc_btw_75k_100k = "B19001_013",
+            inc_btw_100k_125k = "B19001_014",
+            inc_btw_125k_150k = "B19001_015",
+            inc_btw_150k_200k = "B19001_016",
+            inc_gt_200k = "B19001_017")
+
+pop_vars <- c(tot_pop = "P1_001N")
+```
+
+
+```{r get_data, include=FALSE}
+# get ACS data from census API
+census_data <- get_acs(geography = "tract",
+                              state = "OK",
+                              county = counties,
+                              variables = hh_vars,
+                              output = "wide", 
+                              geometry = TRUE) 
+
+# get land area from tigris
+okc_areas <- tracts(state = "OK",
+                    county = counties) %>%
+              select(GEOID, ALAND) %>%
+              st_drop_geometry()
+
+# get employment data from LEHD (all OK)
+lehd_data <- read_csv("https://lehd.ces.census.gov/data/lodes/LODES7/ok/wac/ok_wac_S000_JT00_2019.csv.gz", show_col_types = FALSE) %>%
+  rename(total_emp = C000) %>%
+  mutate(basic_emp = CNS01+CNS02+CNS03+CNS04+CNS05+CNS06+CNS08+CNS09) %>%
+  rename(retail_emp = CNS07) %>%
+  mutate(service_emp = total_emp - basic_emp - retail_emp) %>%
+  select(w_geocode, total_emp, basic_emp, retail_emp, service_emp) %>%
+  mutate(w_geocode = as.character(w_geocode)) %>%
+  mutate(GEOID = substr(w_geocode,1,11)) %>% 
+  select(-w_geocode) %>%
+  group_by(GEOID) %>% 
+  summarise(across(everything(), ~sum(.)))
+
+
+# join all data frames
+ok_msa <- census_data %>% 
+  left_join(lehd_data) %>%
+  left_join(okc_areas) %>%
+  select(-ends_with("M")) %>%
+  rename(land_area_sqmeters = ALAND)
+
+#compute density variables
+ok_msa <- ok_msa %>%
+  mutate(pop_density = tot_popE/land_area_sqmeters) %>%
+  mutate(emp_density = total_emp/land_area_sqmeters) %>%
+  mutate(activity_density = (tot_popE + total_emp)/land_area_sqmeters)
+
+```
+
+## Overview
+The following data was aggregated and computed from the 2021 ACS 5-year estimate, Longitudinal Employer-Household Dynamica dataset. 
+An overview of the resulting dataset is provided below:
+
+```{r summary table, echo=FALSE}
+colnames(ok_msa)
+
+```
+
+
+## Exploring Densities
+
+```{r density maps, fig.width=15, echo=FALSE}
+
+blue_pal <- brewer.pal(5, "Blues")
+red_pal <- brewer.pal(5, "Reds")
+purp_pal <- brewer.pal(5, "Purples")
+
+pop_density_map <- ggplot(ok_msa) +
+  annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
+  geom_sf(aes(fill = pop_density), color=NA, size=0.1) +
+  scale_fill_gradientn(colors = blue_pal) +
+  theme_void()
+
+emp_density_map <- ggplot(ok_msa) +
+  annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
+  geom_sf(aes(fill = emp_density), color=NA, size=0.1) +
+  scale_fill_gradientn(colors = red_pal) +
+  theme_void()
+
+activity_density_map <- ggplot(ok_msa) +
+  annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
+  geom_sf(aes(fill = activity_density), color=NA, size=0.1) +
+  scale_fill_gradientn(colors = purp_pal) +
+  theme_void()
+
+grid.arrange(pop_density_map, emp_density_map,activity_density_map, ncol=3)
+
+```
+
+## County-Level Employemnt
+
+```{r employemnt chart, fig.width=11, echo=FALSE}
+
+county_employment <- ok_msa %>%
+    separate(NAME, into = c("tract-num", "county", "state"), sep = ", ") %>%
+    group_by(county) %>%
+    summarise(
+      basic_emp = sum(basic_emp),
+      service_emp = sum(service_emp),
+      retail_emp = sum(retail_emp)) %>%
+    st_drop_geometry()
+
+county_employment_stacked <- melt(county_employment, id = "county")
+
+ggplot(county_employment_stacked, aes(x = county, y = value, fill = variable)) + 
+  geom_bar(stat = "identity")
+
+```
+
+## Distribution
+
+```{r income distribution, fig.width=15, echo=FALSE}
+
+pct_vehicle_ownership <- ok_msa %>%
+  mutate(pct_veh = (1-(no_vehE/total_hhsE))) %>%
+  select(GEOID, NAME, no_vehE, total_hhsE, pct_veh, geometry)
+
+veh_distribution_chart <- ggplot(pct_vehicle_ownership) +
+  geom_histogram(aes(x = pct_veh), bins = 50)
+
+veh_distribution_map <- ggplot(pct_vehicle_ownership) +
+  annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
+  geom_sf(aes(fill = pct_veh), color=NA, size=0.1) +
+  scale_fill_gradientn(colors = blue_pal)
+
+grid.arrange(veh_distribution_map, veh_distribution_chart, ncol=2)
+```
