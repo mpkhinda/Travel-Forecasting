@@ -122,7 +122,7 @@ ok_msa <- ok_msa %>%
 ```
 
 ## Data Overview
-The following data was aggregated and computed from the 2021 ACS 5-year estimate, Longitudinal Employer-Household Dynamica dataset. 
+The following data was aggregated and computed from the 2021 ACS 5-year estimate, and Longitudinal Employer-Household Dynamica dataset. 
 An overview of the resulting dataset is provided below:
 
 
@@ -185,7 +185,7 @@ tibble(ok_msa[1:5,])
 
 
 ## Geography Overview
-The Oklahoma City metropolitan statistical area (MSA) is composed of seven counties centrally located in Oklahoma: Canadian County, Cleveland County, Grady County, Lincoln County, Logan County, McClain County, and Oklahoma County. Across these counties there are a total of **363 census tracts** (based on the 2020 redistricting). The MSA has a total land area of approximately **1,427,523 square kilometers**.Together, these counties are home to 1,412,900 people, according to the 2021 ACS 5-Year Estimates. The Oklahoma City MSA makes up nearly 36% of the state’s total **population of 3,948,100**. 
+The Oklahoma City metropolitan statistical area (MSA) is composed of seven counties centrally located in Oklahoma: Canadian County, Cleveland County, Grady County, Lincoln County, Logan County, McClain County, and Oklahoma County. Across these counties there are a total of **363 census tracts** (based on the 2020 redistricting). The MSA has a total land area of approximately **1,427,523 square kilometers**.Together, these counties are home to 1,412,900 people, according to the 2021 ACS 5-Year Estimates. The Oklahoma City MSA makes up nearly 36% of the state’s total population of 3,948,100. 
 
 The Oklahoma City MSA is predominantly white, with 63% of residents identifying as white alone, followed by 13.9% Hispanic or Latino, 10% Black, 3.1% American Indian and Alaska Native, 3.1% Asian, 0.1% Native Hawaiian and Pacific Islander. 37% of residents in the study are are ages 35-64, 24.6% are under the age of 18, 24.4% are ages 18-34, and 14% are ages 65 and older. The median household income in 2021 was $63,351 – higher than the statewide average and lower than the national average. Just over 14% of residents live below the poverty line – lower than the statewide average and higher than the national average. 
 
@@ -218,13 +218,13 @@ ggplot() +
 
 
 
-```{r pop_density_map, fig.height = 3.5, fig.align = "left", fig.cap="\\label{fig:figs}Map showing the population density in the Oklahoma City MSA", echo=FALSE}
+```{r pop_density_map,  message=FALSE, fig.height = 3.5, fig.align = "left", fig.cap="\\label{fig:figs}Map showing the population density in the Oklahoma City MSA", echo=FALSE}
 
 pop_density_map <- ggplot(ok_msa) +
   annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
   geom_sf(aes(fill = pop_density), color=NA, size=0.1) +
   geom_sf(data = county_geom, aes(), fill = NA, color="black", size=0.1) +
-  scale_fill_gradientn(colors = blue_pal, name = "People / square meter", labels = paste(seq(0,4)*.0001)) +
+  scale_fill_gradientn(colors = blue_pal, name = "People / square meter", labels = paste(seq(0,4)/1000)) +
   theme_void()
 
 pop_density_map

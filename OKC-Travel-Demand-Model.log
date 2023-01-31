@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2023.1.30)  30 JAN 2023 22:15
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2023.1.30)  30 JAN 2023 23:06
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -439,55 +439,55 @@ File: OKC-Travel-Demand-Model_files/figure-latex/geog-1.pdf Graphic file (type p
 <use OKC-Travel-Demand-Model_files/figure-latex/geog-1.pdf>
 Package pdftex.def Info: OKC-Travel-Demand-Model_files/figure-latex/geog-1.pdf  used on input line 233.
 (pdftex.def)             Requested size: 437.63393pt x 469.75386pt.
+<OKC-Travel-Demand-Model_files/figure-latex/pop_density_map-1.pdf, id=48, 349.305pt x 252.945pt>
+File: OKC-Travel-Demand-Model_files/figure-latex/pop_density_map-1.pdf Graphic file (type pdf)
+<use OKC-Travel-Demand-Model_files/figure-latex/pop_density_map-1.pdf>
+Package pdftex.def Info: OKC-Travel-Demand-Model_files/figure-latex/pop_density_map-1.pdf  used on input line 245.
+(pdftex.def)             Requested size: 349.30946pt x 252.94823pt.
 [3
 pdfTeX warning (ext4): destination with the same identifier (name{figure.1}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.245 \end{verbatim}
-                     <./OKC-Travel-Demand-Model_files/figure-latex/geog-1.pdf>]
-<OKC-Travel-Demand-Model_files/figure-latex/pop_density_map-1.pdf, id=65, 349.305pt x 252.945pt>
-File: OKC-Travel-Demand-Model_files/figure-latex/pop_density_map-1.pdf Graphic file (type pdf)
-<use OKC-Travel-Demand-Model_files/figure-latex/pop_density_map-1.pdf>
-Package pdftex.def Info: OKC-Travel-Demand-Model_files/figure-latex/pop_density_map-1.pdf  used on input line 249.
-(pdftex.def)             Requested size: 349.30946pt x 252.94823pt.
+l.249 
+       <./OKC-Travel-Demand-Model_files/figure-latex/geog-1.pdf>]
 <OKC-Travel-Demand-Model_files/figure-latex/emp_density_map-1.pdf, id=66, 339.2675pt x 252.945pt>
 File: OKC-Travel-Demand-Model_files/figure-latex/emp_density_map-1.pdf Graphic file (type pdf)
 <use OKC-Travel-Demand-Model_files/figure-latex/emp_density_map-1.pdf>
-Package pdftex.def Info: OKC-Travel-Demand-Model_files/figure-latex/emp_density_map-1.pdf  used on input line 256.
+Package pdftex.def Info: OKC-Travel-Demand-Model_files/figure-latex/emp_density_map-1.pdf  used on input line 252.
 (pdftex.def)             Requested size: 339.27184pt x 252.94823pt.
 <OKC-Travel-Demand-Model_files/figure-latex/employemnt chart-1.pdf, id=67, 857.2025pt x 550.055pt>
 File: OKC-Travel-Demand-Model_files/figure-latex/employemnt chart-1.pdf Graphic file (type pdf)
 <use OKC-Travel-Demand-Model_files/figure-latex/employemnt chart-1.pdf>
-Package pdftex.def Info: OKC-Travel-Demand-Model_files/figure-latex/employemnt chart-1.pdf  used on input line 266.
+Package pdftex.def Info: OKC-Travel-Demand-Model_files/figure-latex/employemnt chart-1.pdf  used on input line 262.
 (pdftex.def)             Requested size: 469.74937pt x 301.43167pt.
 [4
 pdfTeX warning (ext4): destination with the same identifier (name{figure.2}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.272 
+l.268 
       
 pdfTeX warning (ext4): destination with the same identifier (name{figure.3}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.272 
+l.268 
        <./OKC-Travel-Demand-Model_files/figure-latex/pop_density_map-1.pdf> <./OKC-Travel-Demand-Model_files/figure-latex/emp_density_map-1.pdf>]
-<OKC-Travel-Demand-Model_files/figure-latex/income_distribution-1.pdf, id=97, 857.2025pt x 421.575pt>
+<OKC-Travel-Demand-Model_files/figure-latex/income_distribution-1.pdf, id=96, 857.2025pt x 421.575pt>
 File: OKC-Travel-Demand-Model_files/figure-latex/income_distribution-1.pdf Graphic file (type pdf)
 <use OKC-Travel-Demand-Model_files/figure-latex/income_distribution-1.pdf>
-Package pdftex.def Info: OKC-Travel-Demand-Model_files/figure-latex/income_distribution-1.pdf  used on input line 275.
+Package pdftex.def Info: OKC-Travel-Demand-Model_files/figure-latex/income_distribution-1.pdf  used on input line 271.
 (pdftex.def)             Requested size: 469.74937pt x 231.02428pt.
-<OKC-Travel-Demand-Model_files/figure-latex/poverty_map-1.pdf, id=98, 469.755pt x 275.0275pt>
+<OKC-Travel-Demand-Model_files/figure-latex/poverty_map-1.pdf, id=97, 469.755pt x 275.0275pt>
 File: OKC-Travel-Demand-Model_files/figure-latex/poverty_map-1.pdf Graphic file (type pdf)
 <use OKC-Travel-Demand-Model_files/figure-latex/poverty_map-1.pdf>
-Package pdftex.def Info: OKC-Travel-Demand-Model_files/figure-latex/poverty_map-1.pdf  used on input line 284.
+Package pdftex.def Info: OKC-Travel-Demand-Model_files/figure-latex/poverty_map-1.pdf  used on input line 280.
 (pdftex.def)             Requested size: 469.75386pt x 275.02682pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 284--285
+Underfull \hbox (badness 10000) in paragraph at lines 280--281
 [][]
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 284--285
+Underfull \hbox (badness 10000) in paragraph at lines 280--281
 
  []
 
@@ -495,36 +495,36 @@ Underfull \hbox (badness 10000) in paragraph at lines 284--285
 pdfTeX warning (ext4): destination with the same identifier (name{figure.4}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.288 
+l.284 
       
 pdfTeX warning (ext4): destination with the same identifier (name{figure.5}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.288 
+l.284 
        <./OKC-Travel-Demand-Model_files/figure-latex/employemnt chart-1.pdf> <./OKC-Travel-Demand-Model_files/figure-latex/income_distribution-1.pdf>]
 <OKC-Travel-Demand-Model_files/figure-latex/vehicle_ownership_map-1.pdf, id=119, 432.61626pt x 289.08pt>
 File: OKC-Travel-Demand-Model_files/figure-latex/vehicle_ownership_map-1.pdf Graphic file (type pdf)
 <use OKC-Travel-Demand-Model_files/figure-latex/vehicle_ownership_map-1.pdf>
-Package pdftex.def Info: OKC-Travel-Demand-Model_files/figure-latex/vehicle_ownership_map-1.pdf  used on input line 294.
+Package pdftex.def Info: OKC-Travel-Demand-Model_files/figure-latex/vehicle_ownership_map-1.pdf  used on input line 290.
 (pdftex.def)             Requested size: 432.635pt x 289.09251pt.
 [6
 pdfTeX warning (ext4): destination with the same identifier (name{figure.6}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.298 
+l.294 
        <./OKC-Travel-Demand-Model_files/figure-latex/poverty_map-1.pdf>]
 <OKC-Travel-Demand-Model_files/figure-latex/vehicle_ownership_hist-1.pdf, id=136, 712.6625pt x 313.17pt>
 File: OKC-Travel-Demand-Model_files/figure-latex/vehicle_ownership_hist-1.pdf Graphic file (type pdf)
 <use OKC-Travel-Demand-Model_files/figure-latex/vehicle_ownership_hist-1.pdf>
-Package pdftex.def Info: OKC-Travel-Demand-Model_files/figure-latex/vehicle_ownership_hist-1.pdf  used on input line 301.
+Package pdftex.def Info: OKC-Travel-Demand-Model_files/figure-latex/vehicle_ownership_hist-1.pdf  used on input line 297.
 (pdftex.def)             Requested size: 469.74974pt x 206.42522pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 301--302
+Underfull \hbox (badness 10000) in paragraph at lines 297--298
 [][]
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 301--302
+Underfull \hbox (badness 10000) in paragraph at lines 297--298
 
  []
 
@@ -532,12 +532,12 @@ Underfull \hbox (badness 10000) in paragraph at lines 301--302
 pdfTeX warning (ext4): destination with the same identifier (name{figure.7}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.306 \end{document}
+l.302 \end{document}
                     
 pdfTeX warning (ext4): destination with the same identifier (name{figure.8}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.306 \end{document}
+l.302 \end{document}
                      <./OKC-Travel-Demand-Model_files/figure-latex/vehicle_ownership_map-1.pdf> <./OKC-Travel-Demand-Model_files/figure-latex/vehicle_ownership_hist-1.pdf>] (./OKC-Travel-Demand-Model.aux)
 
 LaTeX Warning: There were multiply-defined labels.
@@ -552,9 +552,9 @@ Here is how much of TeX's memory you used:
  30605 multiletter control sequences out of 15000+600000
  539863 words of font info for 54 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 75i,6n,76p,261b,580s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,6n,76p,261b,437s stack positions out of 10000i,1000n,20000p,200000b,200000s
 {/Users/mattkhinda/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}</Users/mattkhinda/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></Users/mattkhinda/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></Users/mattkhinda/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></Users/mattkhinda/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb></Users/mattkhinda/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb></Users/mattkhinda/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt10.pfb>
-Output written on OKC-Travel-Demand-Model.pdf (7 pages, 1349213 bytes).
+Output written on OKC-Travel-Demand-Model.pdf (7 pages, 1348666 bytes).
 PDF statistics:
  201 PDF objects out of 1000 (max. 8388607)
  141 compressed objects within 2 object streams
