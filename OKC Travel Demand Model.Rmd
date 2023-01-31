@@ -1,9 +1,15 @@
 ---
 title: "Oklahoma City MSA — Travel Demand Model"
 author: "Sam Page, Gabe Barrett-Jackson, Matt Khinda"
-date: "1/29/2023"
+date: "1/31/2023"
 output: pdf_document
+header-includes:
+ \usepackage{float}
 ---
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.pos = 'H')
+```
 
 ```{r setup, echo = FALSE, include=FALSE}
 library(tidyverse)
@@ -61,6 +67,13 @@ hh_vars <- c(
             inc_btw_150k_200k = "B19001_016",
             inc_gt_200k = "B19001_017",
             hh_povlevel = "B17019_002")
+
+# Define color palettes
+blue_pal <- brewer.pal(5, "Blues")
+red_pal <- brewer.pal(5, "Reds")
+purp_pal <- brewer.pal(5, "Purples")
+green_pal <- brewer.pal(5,"Greens")
+orange_pal <- brewer.pal(5,"Oranges")
 ```
 
 
@@ -114,14 +127,14 @@ An overview of the resulting dataset is provided below:
 
 
 #### Data Structure:
-The sample table below shows the first 5 rows of our compiled dataset. Each row represents a census tract in the study area along with its coresponding variables and geometry. When necessary, this dataset can easily be grouped by county, pivoted by category, or mapped geographically. 
+The sample table below shows the first 5 rows of our compiled dataset. Each row represents a census tract in the study area along with its corresponding variables and geometry. When necessary, this dataset can easily be grouped by county, pivoted by category, or mapped geographically. 
 
 ```{r summary table, echo=FALSE}
 tibble(ok_msa[1:5,])
 ```
 
-#### Data Definitions:
- 
+#### Data Definitions:\
+
 **GEOID** - Numerical ID for census tract                	
 **NAME** - Census tract, county, and state                    	
 **tot_popE** - Total number of people    	
@@ -146,8 +159,8 @@ tibble(ok_msa[1:5,])
 **inc_btw_40k_45kE** - Households with income between $40,000 and $45,000       	
 **inc_btw_45k_50kE** - Households with income between $45,000 and $50,000       	
 **inc_btw_50k_60kE** - Households with income between $50,000 and $60,000      	 
-**inc_btw_60k_75kE** - Households with income between $60,000 and $75,000        	
-**inc_btw_75k_100kE** - Households with income between $75,000 and $100,000
+**inc_btw_60k_75kE** - Households with income between $60,000 and $75,000         	
+**inc_btw_75k_100kE** - Households with income between $75,000 and $100,000  
 **inc_btw_100k_125kE** - Households with income between $100,000 and $125,000      	
 **inc_btw_125k_150kE** - Households with income between $125,000 and $150,000  	
 **inc_btw_150k_200kE** - Households with income between $150,000 and 200,000	
@@ -161,14 +174,14 @@ tibble(ok_msa[1:5,])
     Construction (CNS04)
     Manufacturing (CNS05)
     Wholesale trade (CNS06)
-    Transportation and warehousing (CNS06)
+    Transportation and warehousing (CNS06)  
 **retail_emp** - Total number of people employed in retail             	
 **service_emp** - Total number of people employed in remaining sectors            	
 **land_area_sqmeters** - Land area in square meters   	 
 **geometry** - Geographic coordinates of census tract outlines                	
-**pop_density** - People per square meter (calculated by MSG)           
-**emp_density** - Employees per square meter (calculated by MSG)                	
-**Activity_density** - People and employees per square meter (calculated by MSG)
+**pop_density** - People per square meter (calculated)           
+**emp_density** - Employees per square meter (calculated)                	
+**activity_density** - People and employees per square meter (calculated)
 
 
 ## Geography Overview
@@ -180,11 +193,11 @@ The Oklahoma City MSA is predominantly white, with 63% of residents identifying 
 EMBARK, the area’s transit authority, operates all public transit in greater Oklahoma City, which includes fixed-route bus service, the OKC Streetcar, paratransit service, river ferry transit, and a bikeshare network. Beyond transit, car-ownership and use is prevalent in the Oklahoma City MSA with only 2.6% of households reporting that they do not have access to a vehicle, and a median number of vehicles per household of 2.3. According to the 2021 ACS 5-Year Estimates, cars, trucks, or vans are the most common means of transportation to work for workers 16 and over (used by 89.7% of respondents), while commuting by public transportation is far less common (used by 0.5% of respondents). Based on the same ACS data, the average travel time to work is 23 minutes. 
 
 #### Employment
-Major employment sectors in the Oklahoma City metro area include government, higher education, aerospace, healthcare, and retail. According to the Greater Oklahoma City Chamber of Commerce, major employers include the State of Oklahoma, Tinker Air Force Base, the University of Oklahoma, Integris Health, and Amazon. In 2021, the metropolitan area added 10,825 jobs (1.7% increase), and further job growth was expected in 2022 as stated in the 2022 Greater Oklahoma City Economic Outlook.
+Major employment sectors in the Oklahoma City metro area include government, higher education, aerospace, healthcare, and retail. According to the Greater Oklahoma City Chamber of Commerce, major employers include the State of Oklahoma, Tinker Air Force Base, the University of Oklahoma, Integris Health, and Amazon. In 2021, the metropolitan area added 10,825 jobs (1.7% increase), and further job growth was expected in 2022 as stated in the 2022 Greater Oklahoma City Economic Outlook.  
 
 
 
-```{r geog, echo=FALSE}
+```{r geog, fig.height = 6.5, fig.width = 6.5, fig.align = "center", fig.cap="\\label{fig:figs}Map showing the counties and census tracts in the Oklahoma City MSA", echo=FALSE}
 
 county_geom <- ok_msa %>%
     separate(NAME, into = c("tract-num", "county", "state"), sep = ", ") %>%
@@ -193,54 +206,46 @@ county_geom <- ok_msa %>%
 
 ggplot() +
   annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
-  geom_sf(data = ok_msa, aes(), fill = NA, color="black", size=0.15) +
-  geom_sf(data = county_geom, aes(), fill = NA, color="black", size=0.4) +
-  geom_sf_label(data = county_geom, aes(label = county), alpha = 0.7, label.size = NA) +
-  annotation_scale(location = 'bl', bar_cols = "black") +
+  geom_sf(data = ok_msa, aes(), fill = NA, color="darkgrey", size=0.1) +
+  geom_sf(data = county_geom, aes(), fill = NA, color="black", size=0.5) +
+  geom_sf_label(data = county_geom, aes(label = county), alpha = 0, label.size = NA, size =4, fontface = "bold") +
+  annotation_scale(location = 'bl', text_cex = 1) +
   theme_void() 
 
 ```
+  
+## Densities  
 
-## Exploring Densities
 
 
-
-```{r density maps, echo=FALSE}
-
-blue_pal <- brewer.pal(5, "Blues")
-red_pal <- brewer.pal(5, "Reds")
-purp_pal <- brewer.pal(5, "Purples")
-green_pal <- brewer.pal(5,"Greens")
-orange_pal <- brewer.pal(5,"Oranges")
+```{r pop_density_map, fig.height = 3.5, fig.align = "left", fig.cap="\\label{fig:figs}Map showing the population density in the Oklahoma City MSA", echo=FALSE}
 
 pop_density_map <- ggplot(ok_msa) +
   annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
   geom_sf(aes(fill = pop_density), color=NA, size=0.1) +
   geom_sf(data = county_geom, aes(), fill = NA, color="black", size=0.1) +
-  scale_fill_gradientn(colors = blue_pal) +
+  scale_fill_gradientn(colors = blue_pal, name = "People / square meter", labels = paste(seq(0,4)*.0001)) +
   theme_void()
 
+pop_density_map
+
+```
+
+```{r emp_density_map, fig.height = 3.5, fig.align = "left", fig.cap="\\label{fig:figs}Map showing the employment density in the Oklahoma City MSA", echo=FALSE}
 emp_density_map <- ggplot(ok_msa) +
   annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
   geom_sf(aes(fill = emp_density), color=NA, size=0.1) +
   geom_sf(data = county_geom, aes(), fill = NA, color="black", size=0.1) +
-  scale_fill_gradientn(colors = red_pal) + 
+  scale_fill_gradientn(colors = red_pal, name = "Jobs / square meter", labels = paste(seq(0,4)*.001)) + 
   theme_void()
 
-activity_density_map <- ggplot(ok_msa) +
-  annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
-  geom_sf(aes(fill = activity_density), color=NA, size=0.1) +
-  geom_sf(data = county_geom, aes(), fill = NA, color="black", size=0.1) +
-  scale_fill_gradientn(colors = purp_pal) + 
-  theme_void()
-
-grid.arrange(pop_density_map, emp_density_map,activity_density_map, ncol=3)
-
+emp_density_map
 ```
 
-## County-Level Employemnt Sectors
+  
+## Employemnt & Income  
 
-```{r employemnt chart, echo=FALSE}
+```{r employemnt chart, fig.height = 8, fig.width = 12, fig.align = "center", fig.cap="\\label{fig:figs}Employment by sector by county", echo=FALSE}
 
 county_employment <- ok_msa %>%
     separate(NAME, into = c("tract-num", "county", "state"), sep = ", ") %>%
@@ -257,14 +262,12 @@ ggplot(county_employment_stacked, aes(x = county, y = value, fill = variable)) +
   geom_bar(stat = "identity") +
   scale_fill_manual(values = c("steelblue","thistle", "gold"), label = c("Basic", "Service", "Retail")) +
   scale_y_continuous(labels = scales::comma) +
-  labs(y = "Number of Employees", x = " ", fill = "Employment Sector")
+  labs(y = "Number of Employees", x = " ", fill = "Employment Sector") + 
+  theme(legend.position = "top")
 
 ```
-
-## Income Distribution
-
-
-```{r income_distribution, echo=FALSE}
+  
+```{r income_distribution, fig.height = 6, fig.width = 12, fig.align = "center", fig.cap="\\label{fig:figs}Distribution of households by income bracket", echo=FALSE}
 
 msa_income <- ok_msa %>%
   separate(NAME, into = c("tract-num", "county", "state"), sep = ", ") %>%
@@ -303,31 +306,23 @@ ggplot(msa_income) +
 
 ```
 
-
-## Poverty Line
-
-```{r poverty_map, echo=FALSE}
+```{r poverty_map, fig.height = 4, fig.align = "left", fig.cap="\\label{fig:figs}Map showing the spatial distribution of poverty in the Oklahoma City MSA", echo=FALSE}
 
 ggplot(ok_msa) +
   annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
   geom_sf(aes(fill = (hh_povlevelE/total_hhsE)), color=NA, size=0.1) +
   scale_fill_gradientn(colors = green_pal, name = "% of households below federal poverty line", labels = paste(seq(0,5),"%")) + 
   theme_void()
-
-
 ```
 
+  
+## Vehicle Ownership  
 
-## Vehicle Ownership
-
-```{r vehicle_ownership, echo=FALSE}
+```{r vehicle_ownership_map, fig.height = 4, fig.align = "left", fig.cap="\\label{fig:figs}Map showing the spatial distribution of vehicle access in the Oklahoma City MSA", echo=FALSE}
 
 pct_vehicle_ownership <- ok_msa %>%
   mutate(pct_veh = (1-(no_vehE/total_hhsE))) %>%
   select(GEOID, NAME, no_vehE, total_hhsE, pct_veh, geometry)
-
-veh_distribution_chart <- ggplot(pct_vehicle_ownership) +
-  geom_histogram(aes(x = pct_veh), fill = "orangered3", bins = 50)
 
 veh_distribution_map <- ggplot(pct_vehicle_ownership) +
   annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
@@ -335,5 +330,16 @@ veh_distribution_map <- ggplot(pct_vehicle_ownership) +
   scale_fill_gradientn(colors = orange_pal, name = "% of households with 1+ vehicle", labels = paste(seq(4,10, by=2)*10,"%")) +
   theme_void()
 
-grid.arrange(veh_distribution_map, veh_distribution_chart, ncol=2)
+veh_distribution_map
 ```
+
+```{r vehicle_ownership_hist, fig.height = 4.5, fig.width = 10, fig.align = "left", fig.cap="\\label{fig:figs}Distribution of cencus tracts by percent of households with access to a vehicle", echo=FALSE}
+veh_distribution_chart <- ggplot(pct_vehicle_ownership) +
+  geom_histogram(aes(x = pct_veh), fill = "orangered3", bins = 50) + 
+  labs(x = "% of households with 1+ vehicle", y = "Number of Census Tracts") +
+  scale_x_continuous(labels = scales::percent)
+
+veh_distribution_chart
+```
+
+
