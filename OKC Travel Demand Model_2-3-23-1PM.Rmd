@@ -1,0 +1,360 @@
+---
+title: "Oklahoma City MSA — Travel Demand Model"
+author: "Sam Page, Gabe Barrett-Jackson, Matt Khinda"
+date: "1/31/2023"
+output: pdf_document
+header-includes:
+ \usepackage{float}
+---
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.pos = 'H')
+```
+
+```{r setup, echo = FALSE, include=FALSE}
+library(tidyverse)
+library(tidycensus)
+library(tigris)
+library(sf)
+library(ggspatial)
+library(gridExtra)
+library(RColorBrewer)
+library(reshape2)
+
+
+#counties stored as list
+counties <- c("Oklahoma", "Canadian", "Cleveland", "Grady", "Lincoln", "Logan", "McClain")
+
+#desired ACS variables stored as list
+hh_vars <- c(
+            # total pop
+            tot_pop = "B01003_001",
+      
+            # vehicle availability
+            no_veh = "B08201_002",
+            
+            #general household statistics
+            total_hhs = "B08201_001",
+            hh_1person = "B08201_007",
+            hh_2person = "B08201_013",
+            hh_3person = "B08201_019",
+            hh_4person_plus = "B08201_025",
+            
+            #household structure
+            hh_u18_married_couple = "B09002_002",
+            hh_u18_singleparent_male = "B09002_009",
+            hh_u18_singleparent_female = "B09002_015",
+            hh_65plus = "B11007_002",
+            
+            #disability
+            tot_disabled = "B18101_001",
+            
+            #income statistics
+            inc_lt_10k = "B19001_002",
+            inc_btw_10k_15k = "B19001_003",
+            inc_btw_15k_20k = "B19001_004",
+            inc_btw_20k_25k = "B19001_005",
+            inc_btw_25k_30k = "B19001_006",
+            inc_btw_30k_35k = "B19001_007",
+            inc_btw_35k_40k = "B19001_008",
+            inc_btw_40k_45k = "B19001_009",
+            inc_btw_45k_50k = "B19001_010",
+            inc_btw_50k_60k = "B19001_011",
+            inc_btw_60k_75k = "B19001_012",
+            inc_btw_75k_100k = "B19001_013",
+            inc_btw_100k_125k = "B19001_014",
+            inc_btw_125k_150k = "B19001_015",
+            inc_btw_150k_200k = "B19001_016",
+            inc_gt_200k = "B19001_017",
+            hh_povlevel = "B17019_002")
+
+# Define color palettes
+blue_pal <- brewer.pal(5, "Blues")
+red_pal <- brewer.pal(5, "Reds")
+purp_pal <- brewer.pal(5, "Purples")
+green_pal <- brewer.pal(5,"Greens")
+orange_pal <- brewer.pal(5,"Oranges")
+```
+
+
+```{r get_data, include=FALSE}
+# get ACS data from census API
+census_data <- get_acs(geography = "tract",
+                              state = "OK",
+                              county = counties,
+                              variables = hh_vars,
+                              output = "wide", 
+                              geometry = TRUE) 
+
+# get land area from tigris
+okc_areas <- tracts(state = "OK",
+                    county = counties) %>%
+              select(GEOID, ALAND) %>%
+              st_drop_geometry()
+
+# get employment data from LEHD (all OK)
+lehd_data <- read_csv("https://lehd.ces.census.gov/data/lodes/LODES7/ok/wac/ok_wac_S000_JT00_2019.csv.gz", show_col_types = FALSE) %>%
+  rename(total_emp = C000) %>%
+  mutate(basic_emp = CNS01+CNS02+CNS03+CNS04+CNS05+CNS06+CNS08+CNS09) %>%
+  rename(retail_emp = CNS07) %>%
+  mutate(service_emp = total_emp - basic_emp - retail_emp) %>%
+  select(w_geocode, total_emp, basic_emp, retail_emp, service_emp) %>%
+  mutate(w_geocode = as.character(w_geocode)) %>%
+  mutate(GEOID = substr(w_geocode,1,11)) %>% 
+  select(-w_geocode) %>%
+  group_by(GEOID) %>% 
+  summarise(across(everything(), ~sum(.)))
+
+
+# join all data frames
+ok_msa <- census_data %>% 
+  left_join(lehd_data) %>%
+  left_join(okc_areas) %>%
+  select(-ends_with("M")) %>%
+  rename(land_area_sqmeters = ALAND)
+
+#compute density variables
+ok_msa <- ok_msa %>%
+  mutate(pop_density = tot_popE/land_area_sqmeters) %>%
+  mutate(emp_density = total_emp/land_area_sqmeters) %>%
+  mutate(activity_density = (tot_popE + total_emp)/land_area_sqmeters)
+
+```
+
+## Data Overview
+The following data was aggregated and computed from the 2021 ACS 5-year estimate, and Longitudinal Employer-Household Dynamica dataset. 
+An overview of the resulting dataset is provided below:
+
+
+#### Data Structure:
+The sample table below shows the first 5 rows of our compiled dataset. Each row represents a census tract in the study area along with its corresponding variables and geometry. When necessary, this dataset can easily be grouped by county, pivoted by category, or mapped geographically. 
+
+```{r summary table, echo=FALSE}
+tibble(ok_msa[1:5,])
+```
+
+#### Data Definitions:\
+
+**GEOID** - Numerical ID for census tract                	
+**NAME** - Census tract, county, and state                    	
+**tot_popE** - Total number of people    	
+**no_vehE** - Households with no vehicle present                	
+**total_hhsE** - Total number of households               	
+**hh_1personE** - Number of households with 1 person           	 
+**hh_2personE** - Number of households with 2 persons                 	
+**hh_3personE** - Number of households with 3 persons                	
+**hh_4person_plusE** - Number of households with 4 or more persons           	
+**hh_u18_married_coupleE** - Number of households with a person under 18 and a married couple head-of-household  	
+**hh_u18_singleparent_maleE** - Number of households with a person under 18 and a single male head-of-household  	
+**hh_u18_singleparent_femaleE** - Number of households with a person under 18 and a single female head-of-household  	
+**hh_65plusE** - Number of households with a person age 65 or older             	
+**tot_disabledE** - Number of people with a disability           	
+**inc_lt_10kE** - Number of households with income less than $10,000            	
+**inc_btw_10k_15kE** - Households with income between $10,000 and $15,000       	
+**inc_btw_15k_20kE** - Households with income between $15,000 and $20,000       	
+**inc_btw_20k_25kE** - Households with income between $20,000 and $25,000    	 
+**inc_btw_25k_30kE** - Households with income between $25,000 and $30,000      	
+**inc_btw_30k_35kE** - Households with income between $30,000 and $35,000      	
+**inc_btw_35k_40kE** - Households with income between $35,000 and $40,000       	
+**inc_btw_40k_45kE** - Households with income between $40,000 and $45,000       	
+**inc_btw_45k_50kE** - Households with income between $45,000 and $50,000       	
+**inc_btw_50k_60kE** - Households with income between $50,000 and $60,000      	 
+**inc_btw_60k_75kE** - Households with income between $60,000 and $75,000         	
+**inc_btw_75k_100kE** - Households with income between $75,000 and $100,000  
+**inc_btw_100k_125kE** - Households with income between $100,000 and $125,000      	
+**inc_btw_125k_150kE** - Households with income between $125,000 and $150,000  	
+**inc_btw_150k_200kE** - Households with income between $150,000 and 200,000	
+**inc_gt_200kE** - Households with income greater than $200,000         	 
+**hh_povlevelE** - Number of households below the poverty level            	
+**total_emp** - Total number of people employed            
+**basic_emp** - Total number of people employed in the following sectors: 
+    Agriculture, Forestry, Fishing, and Hunting (CNS01)
+    Mining and extraction (CNS02)
+    Utilities (CNS03)
+    Construction (CNS04)
+    Manufacturing (CNS05)
+    Wholesale trade (CNS06)
+    Transportation and warehousing (CNS06)  
+**retail_emp** - Total number of people employed in retail             	
+**service_emp** - Total number of people employed in remaining sectors            	
+**land_area_sqmeters** - Land area in square meters   	 
+**geometry** - Geographic coordinates of census tract outlines                	
+**pop_density** - People per square meter (calculated)           
+**emp_density** - Employees per square meter (calculated)                	
+**activity_density** - People and employees per square meter (calculated)
+
+
+## Geography Overview
+The Oklahoma City metropolitan statistical area (MSA) is composed of seven counties centrally located in Oklahoma: Canadian County, Cleveland County, Grady County, Lincoln County, Logan County, McClain County, and Oklahoma County. Across these counties there are a total of **363 census tracts** (based on the 2020 redistricting). The MSA has a total land area of approximately **1,427,523 square kilometers**.Together, these counties are home to 1,412,900 people, according to the 2021 ACS 5-Year Estimates. The Oklahoma City MSA makes up nearly 36% of the state’s total population of 3,948,100. 
+
+The Oklahoma City MSA is predominantly white, with 63% of residents identifying as white alone, followed by 13.9% Hispanic or Latino, 10% Black, 3.1% American Indian and Alaska Native, 3.1% Asian, 0.1% Native Hawaiian and Pacific Islander. 37% of residents in the study are are ages 35-64, 24.6% are under the age of 18, 24.4% are ages 18-34, and 14% are ages 65 and older. The median household income in 2021 was $63,351 – higher than the statewide average and lower than the national average. Just over 14% of residents live below the poverty line – lower than the statewide average and higher than the national average. 
+
+#### Transit 
+EMBARK, the area’s transit authority, operates all public transit in greater Oklahoma City, which includes fixed-route bus service, the OKC Streetcar, paratransit service, river ferry transit, and a bikeshare network. Beyond transit, car-ownership and use is prevalent in the Oklahoma City MSA with only 2.6% of households reporting that they do not have access to a vehicle, and a median number of vehicles per household of 2.3. According to the 2021 ACS 5-Year Estimates, cars, trucks, or vans are the most common means of transportation to work for workers 16 and over (used by 89.7% of respondents), while commuting by public transportation is far less common (used by 0.5% of respondents). Based on the same ACS data, the average travel time to work is 23 minutes. 
+
+#### Employment
+Major employment sectors in the Oklahoma City metro area include government, higher education, aerospace, healthcare, and retail. According to the Greater Oklahoma City Chamber of Commerce, major employers include the State of Oklahoma, Tinker Air Force Base, the University of Oklahoma, Integris Health, and Amazon. In 2021, the metropolitan area added 10,825 jobs (1.7% increase), and further job growth was expected in 2022 as stated in the 2022 Greater Oklahoma City Economic Outlook.  
+
+
+
+```{r geog, fig.height = 6.5, fig.width = 6.5, fig.align = "center", fig.cap="\\label{fig:figs}Map showing the counties and census tracts in the Oklahoma City MSA", echo=FALSE}
+
+county_geom <- ok_msa %>%
+    separate(NAME, into = c("tract-num", "county", "state"), sep = ", ") %>%
+    group_by(county) %>%
+    summarize(geometry = st_union(geometry))
+
+ggplot() +
+  annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
+  geom_sf(data = ok_msa, aes(), fill = NA, color="darkgrey", size=0.1) +
+  geom_sf(data = county_geom, aes(), fill = NA, color="black", size=0.5) +
+  geom_sf_label(data = county_geom, aes(label = county), alpha = 0, label.size = NA, size =4, fontface = "bold") +
+  annotation_scale(location = 'bl', text_cex = 1) +
+  theme_void() 
+
+```
+  
+## Densities  
+
+
+
+```{r pop_density_map,  message=FALSE, fig.height = 3.5, fig.align = "left", fig.cap="\\label{fig:figs}Map showing the population density in the Oklahoma City MSA", echo=FALSE}
+
+pop_density_map <- ggplot(ok_msa) +
+  annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
+  geom_sf(aes(fill = pop_density), color=NA, size=0.1) +
+  geom_sf(data = county_geom, aes(), fill = NA, color="black", size=0.1) +
+  scale_fill_gradientn(colors = blue_pal, name = "People / square meter", labels = paste(seq(0,4)/1000)) +
+  theme_void()
+
+pop_density_map
+
+```
+
+```{r emp_density_map, fig.height = 3.5, fig.align = "left", fig.cap="\\label{fig:figs}Map showing the employment density in the Oklahoma City MSA", echo=FALSE}
+emp_density_map <- ggplot(ok_msa) +
+  annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
+  geom_sf(aes(fill = emp_density), color=NA, size=0.1) +
+  geom_sf(data = county_geom, aes(), fill = NA, color="black", size=0.1) +
+  scale_fill_gradientn(colors = red_pal, name = "Jobs / square meter", labels = paste(seq(0,4)*.001)) + 
+  theme_void()
+
+emp_density_map
+```
+
+  
+## Employemnt & Income  
+
+```{r employemnt chart, fig.height = 8, fig.width = 12, fig.align = "center", fig.cap="\\label{fig:figs}Employment by sector by county", echo=FALSE}
+
+county_employment <- ok_msa %>%
+    separate(NAME, into = c("tract-num", "county", "state"), sep = ", ") %>%
+    group_by(county) %>%
+    summarise(
+      basic_emp = sum(basic_emp),
+      service_emp = sum(service_emp),
+      retail_emp = sum(retail_emp)) %>%
+    st_drop_geometry()
+
+county_employment_stacked <- melt(county_employment, id = "county")
+
+ggplot(county_employment_stacked, aes(x = county, y = value, fill = variable)) + 
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("steelblue","thistle", "gold"), label = c("Basic", "Service", "Retail")) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(y = "Number of Employees", x = " ", fill = "Employment Sector") + 
+  theme(legend.position = "top")
+
+```
+  
+```{r income_distribution, fig.height = 6, fig.width = 12, fig.align = "center", fig.cap="\\label{fig:figs}Distribution of households by income bracket", echo=FALSE}
+
+msa_income <- ok_msa %>%
+  separate(NAME, into = c("tract-num", "county", "state"), sep = ", ") %>%
+    group_by(state) %>%
+    summarise(
+      inc_lt_10kE = sum(inc_lt_10kE),
+      inc_btw_10k_15kE = sum(inc_btw_10k_15kE),
+      inc_btw_15k_20kE = sum(inc_btw_15k_20kE),
+      inc_btw_20k_25kE = sum(inc_btw_20k_25kE),
+      inc_btw_25k_30kE = sum(inc_btw_25k_30kE),
+      inc_btw_30k_35kE = sum(inc_btw_30k_35kE),
+      inc_btw_35k_40kE = sum(inc_btw_35k_40kE),
+      inc_btw_40k_45kE = sum(inc_btw_40k_45kE),
+      inc_btw_45k_50kE = sum(inc_btw_45k_50kE),
+      inc_btw_50k_60kE = sum(inc_btw_50k_60kE),
+      inc_btw_60k_75kE = sum(inc_btw_60k_75kE),
+      inc_btw_75k_100kE = sum(inc_btw_75k_100kE),
+      inc_btw_100k_125kE = sum(inc_btw_100k_125kE),
+      inc_btw_125k_150kE = sum(inc_btw_125k_150kE),
+      inc_btw_150k_200kE = sum(inc_btw_150k_200kE),
+      inc_gt_200kE = sum(inc_gt_200kE)) %>%
+  pivot_longer(
+    cols = starts_with("inc"),
+    values_to = "count"
+  ) %>% 
+  rename(inc_level = name) %>%
+  select(inc_level, count)
+
+msa_income$inc_level <- factor(msa_income$inc_level, levels = msa_income$inc_level)
+
+ggplot(msa_income) +
+  geom_col(aes(x = inc_level, y = count), fill = "black") +
+  scale_y_continuous(labels = scales::comma) +
+  labs(y = "Number of Households", x = "Income Bracket") +
+  scale_x_discrete(labels=c('<10k', '10-15k', '15-20k', "20-25k", "25-30k", "30-35k", "35-40k", "40-45k", "45-50k", "50-60k", "60-75k", "75-100k", "100-125k", "125-150k", "150-200k", ">200k"))
+
+```
+
+```{r poverty_map, fig.height = 4, fig.align = "left", fig.cap="\\label{fig:figs}Map showing the spatial distribution of poverty in the Oklahoma City MSA", echo=FALSE}
+
+ggplot(ok_msa) +
+  annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
+  geom_sf(aes(fill = (hh_povlevelE/total_hhsE)), color=NA, size=0.1) +
+  scale_fill_gradientn(colors = green_pal, name = "% of households below federal poverty line", labels = paste(seq(0,5),"%")) + 
+  theme_void()
+```
+
+  
+## Vehicle Ownership  
+
+```{r vehicle_ownership_map, fig.height = 4, fig.align = "left", fig.cap="\\label{fig:figs}Map showing the spatial distribution of vehicle access in the Oklahoma City MSA", echo=FALSE}
+
+pct_vehicle_ownership <- ok_msa %>%
+  mutate(pct_veh = (1-(no_vehE/total_hhsE))) %>%
+  select(GEOID, NAME, no_vehE, total_hhsE, pct_veh, geometry)
+
+veh_distribution_map <- ggplot(pct_vehicle_ownership) +
+  annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
+  geom_sf(aes(fill = pct_veh), color=NA, size=0.1) +
+  scale_fill_gradientn(colors = orange_pal, name = "% of households with 1+ vehicle", labels = paste(seq(4,10, by=2)*10,"%")) +
+  theme_void()
+
+veh_distribution_map
+```
+
+```{r vehicle_ownership_hist, fig.height = 4.5, fig.width = 10, fig.align = "left", fig.cap="\\label{fig:figs}Distribution of cencus tracts by percent of households with access to a vehicle", echo=FALSE}
+veh_distribution_chart <- ggplot(pct_vehicle_ownership) +
+  geom_histogram(aes(x = pct_veh), fill = "orangered3", bins = 50) + 
+  labs(x = "% of households with 1+ vehicle", y = "Number of Census Tracts") +
+  scale_x_continuous(labels = scales::percent)
+
+veh_distribution_chart
+```
+
+```{r write to file, echo=FALSE}
+zone_boundaries <- ok_msa %>%
+  select(GEOID, geometry)
+
+st_write(zone_boundaries, "zonesboundaries.geojson", append = FALSE)
+```
+
+```{r read in TransCAD matrix, echo=FALSE}
+okc_matrix_roads_path <- "../Travel-Forecasting/TTmatrix_skim10.csv"
+  
+okc_matrix_roads <- read.csv(okc_matrix_roads_path)
+
+okc_nodes_centroids_path <- "../Travel-Forecasting/nodes_okc_roads_prayerhands_withcentroids.csv"
+
+okc_nodes_centroids <- read.csv(okc_nodes_centroids_path)
+```
