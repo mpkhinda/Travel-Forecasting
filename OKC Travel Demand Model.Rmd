@@ -342,4 +342,46 @@ veh_distribution_chart <- ggplot(pct_vehicle_ownership) +
 veh_distribution_chart
 ```
 
+```{r write to file, echo=FALSE}
+zone_boundaries <- ok_msa %>%
+  select(GEOID, geometry)
 
+st_write(zone_boundaries, "zonesboundaries.geojson", append = FALSE)
+```
+
+```{r read in TransCAD matrix, echo=FALSE}
+okc_matrix_roads_path <- "../Travel-Forecasting/TTmatrix_skim10.csv"
+  
+okc_matrix_roads <- read.csv(okc_matrix_roads_path)
+
+okc_nodes_centroids_path <- "../Travel-Forecasting/nodes_okc_roads_prayerhands_withcentroids.csv"
+
+okc_nodes_centroids <- read.csv(okc_nodes_centroids_path) %>%
+  drop_na(centroid) %>%
+  mutate(long = Longitude / 1000000) %>%
+  mutate(lat = Latitude / 1000000)
+
+okc_centroids_geom <- st_as_sf(okc_nodes_centroids, 
+                                     coords=c("long", "lat"), 
+                                     crs = 4326,
+                                     agr = "constant") %>%
+                      select(ID, geometry)
+
+ok_msa <- ok_msa %>%
+  st_transform(crs = 4326)
+```
+
+```{r mapping TransCAD file, echo=FALSE}
+ggplot(ok_msa) +
+  geom_sf(aes(), fill="white") +
+  geom_sf(data = okc_centroids_geom, fill = "black")
+
+```
+
+```{r join TransCAD files, echo=FALSE}
+ok_msa_w_centroids <- ok_msa %>%
+  apply(st_intersects(ok_msa, okc_centroids_geom, sparse = FALSE), 2, 
+               function(col) { 
+                  okc_centroids_geom[which(col), ]$ID
+               })
+```
