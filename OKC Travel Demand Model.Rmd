@@ -379,9 +379,44 @@ ggplot(ok_msa) +
 ```
 
 ```{r join TransCAD files, echo=FALSE}
-ok_msa_w_centroids <- ok_msa %>%
-  apply(st_intersects(ok_msa, okc_centroids_geom, sparse = FALSE), 2, 
+ok_msa_w_centroids <- ok_msa
+
+ok_msa_w_centroids$centroid_id <-  apply(st_intersects(ok_msa, okc_centroids_geom, sparse = FALSE), MARGIN = 2, 
                function(col) { 
                   okc_centroids_geom[which(col), ]$ID
                })
+
+TTmatrix_long <- okc_matrix_roads %>%
+   pivot_longer(
+     cols = starts_with("X"),
+     values_to = "travel_time_mins") %>%
+  rename(origin = ï..Origin, destination = name) %>%
+  mutate(destination = as.numeric(substr(destination, 2, 7))) %>%
+  filter(travel_time_mins != "--") %>%
+  mutate(travel_time_mins = as.numeric(travel_time_mins))
+```
+
+```{r isochrones, echo=FALSE}
+iso_origin <- 848988
+
+TTmatrix_from_origin <- TTmatrix_long %>%
+  filter(origin == iso_origin)
+
+iso_drivetime_from_origin <- ok_msa_w_centroids %>%
+  select(GEOID, NAME, geometry, centroid_id) %>%
+  left_join(TTmatrix_from_origin, by = c("centroid_id" = "destination"))
+
+iso_drivetime_from_origin[is.na(iso_drivetime_from_origin)] <- 0
+
+iso_origin_geom <- okc_centroids_geom %>%
+  filter(ID == iso_origin)
+  
+
+ggplot(iso_drivetime_from_origin) + 
+  geom_sf(aes(fill = travel_time_mins)) + 
+  scale_fill_gradient2(low = "green", mid = "yellow", high = "red",
+                       midpoint = median(iso_drivetime_from_origin$travel_time_mins),
+                       name = "Transit Travel\ntime to all\nzones from centroid X\n(minutes)") +
+  geom_sf(data = iso_origin_geom, fill = "black")
+
 ```
