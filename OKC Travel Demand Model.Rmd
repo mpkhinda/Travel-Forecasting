@@ -2,9 +2,12 @@
 title: "Oklahoma City MSA — Travel Demand Model"
 author: "Sam Page, Gabe Barrett-Jackson, Matt Khinda"
 date: "1/31/2023"
-output: pdf_document
-header-includes:
- \usepackage{float}
+output:
+  html_document:
+    theme: cerulean
+    toc: true
+    toc_depth: 3
+    toc_float: true
 ---
 
 ```{r global_options, include=FALSE}
@@ -121,19 +124,19 @@ ok_msa <- ok_msa %>%
 
 ```
 
-## Data Overview
+# Data Overview
 The following data was aggregated and computed from the 2021 ACS 5-year estimate, and Longitudinal Employer-Household Dynamica dataset. 
 An overview of the resulting dataset is provided below:
 
 
-#### Data Structure:
+## Data Structure:
 The sample table below shows the first 5 rows of our compiled dataset. Each row represents a census tract in the study area along with its corresponding variables and geometry. When necessary, this dataset can easily be grouped by county, pivoted by category, or mapped geographically. 
 
 ```{r summary table, echo=FALSE}
 tibble(ok_msa[1:5,])
 ```
 
-#### Data Definitions:\
+## Data Definitions:\
 
 **GEOID** - Numerical ID for census tract                	
 **NAME** - Census tract, county, and state                    	
@@ -184,15 +187,15 @@ tibble(ok_msa[1:5,])
 **activity_density** - People and employees per square meter (calculated)
 
 
-## Geography Overview
+# Geography Overview
 The Oklahoma City metropolitan statistical area (MSA) is composed of seven counties centrally located in Oklahoma: Canadian County, Cleveland County, Grady County, Lincoln County, Logan County, McClain County, and Oklahoma County. Across these counties there are a total of **363 census tracts** (based on the 2020 redistricting). The MSA has a total land area of approximately **1,427,523 square kilometers**.Together, these counties are home to 1,412,900 people, according to the 2021 ACS 5-Year Estimates. The Oklahoma City MSA makes up nearly 36% of the state’s total population of 3,948,100. 
 
 The Oklahoma City MSA is predominantly white, with 63% of residents identifying as white alone, followed by 13.9% Hispanic or Latino, 10% Black, 3.1% American Indian and Alaska Native, 3.1% Asian, 0.1% Native Hawaiian and Pacific Islander. 37% of residents in the study are are ages 35-64, 24.6% are under the age of 18, 24.4% are ages 18-34, and 14% are ages 65 and older. The median household income in 2021 was $63,351 – higher than the statewide average and lower than the national average. Just over 14% of residents live below the poverty line – lower than the statewide average and higher than the national average. 
 
-#### Transit 
+## Transit 
 EMBARK, the area’s transit authority, operates all public transit in greater Oklahoma City, which includes fixed-route bus service, the OKC Streetcar, paratransit service, river ferry transit, and a bikeshare network. Beyond transit, car-ownership and use is prevalent in the Oklahoma City MSA with only 2.6% of households reporting that they do not have access to a vehicle, and a median number of vehicles per household of 2.3. According to the 2021 ACS 5-Year Estimates, cars, trucks, or vans are the most common means of transportation to work for workers 16 and over (used by 89.7% of respondents), while commuting by public transportation is far less common (used by 0.5% of respondents). Based on the same ACS data, the average travel time to work is 23 minutes. 
 
-#### Employment
+## Employment
 Major employment sectors in the Oklahoma City metro area include government, higher education, aerospace, healthcare, and retail. According to the Greater Oklahoma City Chamber of Commerce, major employers include the State of Oklahoma, Tinker Air Force Base, the University of Oklahoma, Integris Health, and Amazon. In 2021, the metropolitan area added 10,825 jobs (1.7% increase), and further job growth was expected in 2022 as stated in the 2022 Greater Oklahoma City Economic Outlook.  
 
 
@@ -243,7 +246,7 @@ emp_density_map
 ```
 
   
-## Employemnt & Income  
+## Employment & Income  
 
 ```{r employemnt chart, fig.height = 8, fig.width = 12, fig.align = "center", fig.cap="\\label{fig:figs}Employment by sector by county", echo=FALSE}
 
@@ -343,11 +346,15 @@ veh_distribution_chart
 ```
 
 ```{r write to file, echo=FALSE}
-zone_boundaries <- ok_msa %>%
-  select(GEOID, geometry)
+#zone_boundaries <- ok_msa %>%
+  #select(GEOID, geometry)
 
-st_write(zone_boundaries, "zonesboundaries.geojson", append = FALSE)
+#st_write(zone_boundaries, "zonesboundaries.geojson", append = FALSE)
 ```
+
+# Travel Time Matrix: Roads
+
+To create the network in TransCAD, we imported the Open Street Maps layer and selected for primary, secondary, tertiary, and trunk roads. When creating the centroids and centroid connectors, we allowed for the connectors to extend outside of zone boundaries, at up to 30 XX (was it feet, miles?), and up to 10 connectors per centroid. This resulted in a matrix with only a few gaps, which we resolved by turning surrounding roads two-way. (The major roads in the area were separated highways, so we trust that two-way driving is actually feasible in these zones.) 
 
 ```{r read in TransCAD matrix, echo=FALSE}
 okc_matrix_roads_path <- "../Travel-Forecasting/TTmatrix_skim10.csv"
@@ -372,10 +379,9 @@ ok_msa <- ok_msa %>%
 ```
 
 ```{r mapping TransCAD file, echo=FALSE}
-ggplot(ok_msa) +
-  geom_sf(aes(), fill="white") +
-  geom_sf(data = okc_centroids_geom, fill = "black")
-
+#ggplot(ok_msa) +
+  #geom_sf(aes(), fill="white") +
+  #geom_sf(data = okc_centroids_geom, fill = "black")
 ```
 
 ```{r join TransCAD files, echo=FALSE}
@@ -396,6 +402,10 @@ TTmatrix_long <- okc_matrix_roads %>%
   mutate(travel_time_mins = as.numeric(travel_time_mins))
 ```
 
+## Isochrones
+
+After generating a complete matrix, we read the travel time matrix and the nodes layer into R. We converted the centroids’ coordinates to a geometry, matched centroid IDs with the appropriate census tracts, and pivoted the travel time matrix so origins and destinations would both be in columns. This allowed us to create an isochrone illustrating the travel time from one zone in the study area to all others. 
+
 ```{r isochrones, echo=FALSE}
 iso_origin <- 848988
 
@@ -410,13 +420,11 @@ iso_drivetime_from_origin[is.na(iso_drivetime_from_origin)] <- 0
 
 iso_origin_geom <- okc_centroids_geom %>%
   filter(ID == iso_origin)
-  
 
 ggplot(iso_drivetime_from_origin) + 
   geom_sf(aes(fill = travel_time_mins)) + 
-  scale_fill_gradient2(low = "green", mid = "yellow", high = "red",
+  scale_fill_gradient2(low = "white", mid = "thistle", high = "orchid4",
                        midpoint = median(iso_drivetime_from_origin$travel_time_mins),
-                       name = "Transit Travel\ntime to all\nzones from centroid X\n(minutes)") +
-  geom_sf(data = iso_origin_geom, fill = "black")
-
+                       name = "Transit Travel\ntime to all\nzones from centroid 848988\n(minutes)") +
+  geom_sf(data = iso_origin_geom, shape = 19, size = 3)
 ```
