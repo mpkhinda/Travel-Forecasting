@@ -354,7 +354,7 @@ veh_distribution_chart
 
 # Travel Time Matrix: Roads
 
-To create the network in TransCAD, we imported the Open Street Maps layer and selected for primary, secondary, tertiary, and trunk roads. When creating the centroids and centroid connectors, we allowed for the connectors to extend outside of zone boundaries, at up to 30 XX (was it feet, miles?), and up to 10 connectors per centroid. This resulted in a matrix with only a few gaps, which we resolved by turning surrounding roads two-way. (The major roads in the area were separated highways, so we trust that two-way driving is actually feasible in these zones.) 
+To create the network in TransCAD, we imported the Open Street Maps layer and selected for primary, secondary, tertiary, and trunk roads. When creating the centroids and centroid connectors, we allowed for the connectors to extend outside of zone boundaries, at up to 30 miles, and up to 10 connectors per centroid. This resulted in a matrix with only a few gaps, which we resolved by turning surrounding roads two-way. (The major roads in the area were separated highways, so we trust that two-way driving is actually feasible in these zones.) 
 
 ```{r read in TransCAD matrix, echo=FALSE}
 okc_matrix_roads_path <- "../Travel-Forecasting/TTmatrix_skim10.csv"
@@ -406,15 +406,14 @@ TTmatrix_long <- okc_matrix_roads %>%
 
 After generating a complete matrix, we read the travel time matrix and the nodes layer into R. We converted the centroids’ coordinates to a geometry, matched centroid IDs with the appropriate census tracts, and pivoted the travel time matrix so origins and destinations would both be in columns. This allowed us to create an isochrone illustrating the travel time from one zone in the study area to all others. 
 
-```{r isochrones, echo=FALSE}
-iso_origin <- 848988
-
-TTmatrix_from_origin <- TTmatrix_long %>%
+```{r isochrone functions, echo=FALSE}
+isochrone_generator <- function(iso_origin){
+  temp_matrix <- TTmatrix_long %>%
   filter(origin == iso_origin)
 
 iso_drivetime_from_origin <- ok_msa_w_centroids %>%
   select(GEOID, NAME, geometry, centroid_id) %>%
-  left_join(TTmatrix_from_origin, by = c("centroid_id" = "destination"))
+  left_join(temp_matrix, by = c("centroid_id" = "destination"))
 
 iso_drivetime_from_origin[is.na(iso_drivetime_from_origin)] <- 0
 
@@ -424,7 +423,35 @@ iso_origin_geom <- okc_centroids_geom %>%
 ggplot(iso_drivetime_from_origin) + 
   geom_sf(aes(fill = travel_time_mins)) + 
   scale_fill_gradient2(low = "white", mid = "thistle", high = "orchid4",
-                       midpoint = median(iso_drivetime_from_origin$travel_time_mins),
-                       name = "Transit Travel\ntime to all\nzones from centroid 848988\n(minutes)") +
+                       midpoint = 50, #median(iso_drivetime_from_origin$travel_time_mins),
+                       name = paste("Transit Travel\ntime to all\nzones from", iso_origin, "\n(minutes)")) +
   geom_sf(data = iso_origin_geom, shape = 19, size = 3)
+}
+
+isochrone_generator(848988)
+```
+
+```{r test, echo=FALSE}
+isochrone_generator(848782)
+
+isochrone_generator(849063)
+```
+
+## Accessibility Score
+
+This metric allows us to compare the relative accessibility of tracts more easily. We calculated an "accessibility score" by counting the number of zones each origin could reach within 30 minutes. We note that this score is affected by the lack of residential roads in our network, which would likely provide better accessibility for some of the peripheral zones. 
+
+```{r accessibility score, echo=FALSE}
+accessibility_matrix <- TTmatrix_long %>%
+  filter(travel_time_mins<30) %>%
+  group_by(origin) %>%
+  tally() %>%
+  rename(score = n)
+
+accessibility_score_geom <- ok_msa_w_centroids %>%
+  select(GEOID, NAME, geometry, centroid_id) %>%
+  left_join(accessibility_matrix, by = c("centroid_id" = "origin"))
+
+ggplot(accessibility_score_geom) + 
+  geom_sf(aes(fill=score))
 ```
