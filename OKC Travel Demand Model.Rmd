@@ -455,3 +455,30 @@ accessibility_score_geom <- ok_msa_w_centroids %>%
 ggplot(accessibility_score_geom) + 
   geom_sf(aes(fill=score))
 ```
+
+```{r transit skim matrices, echo=FALSE}
+transitskim_fare_path <- "../Travel-Forecasting/transit_skim1_fare.csv"
+transitskim_fare <- read.csv(transitskim_fare_path)
+
+transitskim_ivtt_path <- "../Travel-Forecasting/transit_skim1_ivtt.csv"
+transitskim_ivtt <- read.csv(transitskim_ivtt_path)
+
+transitskim_init_wt_path <- "../Travel-Forecasting/transit_skim1_init_waittime.csv"
+transitskim_init_wt <- read.csv(transitskim_init_wt_path)
+
+transitskim_transfer_wt_path <- "../Travel-Forecasting/transit_skim1_transfer_waittime.csv"
+transitskim_tranfer_wt <- read.csv(transitskim_transfer_wt_path)
+
+transitskim_access_wt_path <- "../Travel-Forecasting/transit_skim1_access_walktime.csv"
+transitskim_access_wt <- read.csv(transitskim_access_wt_path)
+
+transitskim_egress_wt_path <- "../Travel-Forecasting/transit_skim1_egress_walktime.csv"
+transitskim_egress_wt <- read.csv(transitskim_egress_wt_path)
+
+transitskim_totaltime_path <- "../Travel-Forecasting/transit_skim1_total_time.csv"
+transitskim_totaltime <- read.csv(transitskim_totaltime_path)
+
+transitskim_no_transfers_path <- "../Travel-Forecasting/transit_skim1_no_transfers.csv"
+transitskim_no_transfers <- read.csv(transitskim_no_transfers_path)
+```
+
