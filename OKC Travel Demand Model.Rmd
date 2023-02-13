@@ -23,7 +23,8 @@ library(ggspatial)
 library(gridExtra)
 library(RColorBrewer)
 library(reshape2)
-
+library(tidytransit)
+library(naniar)
 
 #counties stored as list
 counties <- c("Oklahoma", "Canadian", "Cleveland", "Grady", "Lincoln", "Logan", "McClain")
@@ -87,11 +88,13 @@ census_data <- get_acs(geography = "tract",
                               county = counties,
                               variables = hh_vars,
                               output = "wide", 
+                              year = 2019,
                               geometry = TRUE) 
 
 # get land area from tigris
 okc_areas <- tracts(state = "OK",
-                    county = counties) %>%
+                    county = counties,
+                    year = 2019) %>%
               select(GEOID, ALAND) %>%
               st_drop_geometry()
 
@@ -227,7 +230,7 @@ pop_density_map <- ggplot(ok_msa) +
   annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
   geom_sf(aes(fill = pop_density), color=NA, size=0.1) +
   geom_sf(data = county_geom, aes(), fill = NA, color="black", size=0.1) +
-  scale_fill_gradientn(colors = blue_pal, name = "People / square meter", labels = paste(seq(0,4)/1000)) +
+  scale_fill_gradientn(colors = blue_pal, trans = "log", name = "People / square meter", labels = paste(seq(0,3)*.001)) +
   theme_void()
 
 pop_density_map
@@ -239,7 +242,7 @@ emp_density_map <- ggplot(ok_msa) +
   annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
   geom_sf(aes(fill = emp_density), color=NA, size=0.1) +
   geom_sf(data = county_geom, aes(), fill = NA, color="black", size=0.1) +
-  scale_fill_gradientn(colors = red_pal, name = "Jobs / square meter", labels = paste(seq(0,4)*.001)) + 
+  scale_fill_gradientn(colors = red_pal, trans = "log", name = "Jobs / square meter", labels = paste(seq(0,4)*.001)) + 
   theme_void()
 
 emp_density_map
@@ -392,11 +395,11 @@ ok_msa_w_centroids$centroid_id <-  apply(st_intersects(ok_msa, okc_centroids_geo
                   okc_centroids_geom[which(col), ]$ID
                })
 
-TTmatrix_long <- okc_matrix_roads %>%
+drive_TTmatrix_long <- okc_matrix_roads %>%
    pivot_longer(
      cols = starts_with("X"),
      values_to = "travel_time_mins") %>%
-  rename(origin = ï..Origin, destination = name) %>%
+  rename(origin = Origin, destination = name) %>%
   mutate(destination = as.numeric(substr(destination, 2, 7))) %>%
   filter(travel_time_mins != "--") %>%
   mutate(travel_time_mins = as.numeric(travel_time_mins))
@@ -407,8 +410,8 @@ TTmatrix_long <- okc_matrix_roads %>%
 After generating a complete matrix, we read the travel time matrix and the nodes layer into R. We converted the centroids’ coordinates to a geometry, matched centroid IDs with the appropriate census tracts, and pivoted the travel time matrix so origins and destinations would both be in columns. This allowed us to create an isochrone illustrating the travel time from one zone in the study area to all others. 
 
 ```{r isochrone functions, echo=FALSE}
-isochrone_generator <- function(iso_origin){
-  temp_matrix <- TTmatrix_long %>%
+drive_isochrone_generator <- function(iso_origin){
+  temp_matrix <- drive_TTmatrix_long %>%
   filter(origin == iso_origin)
 
 iso_drivetime_from_origin <- ok_msa_w_centroids %>%
@@ -424,17 +427,17 @@ ggplot(iso_drivetime_from_origin) +
   geom_sf(aes(fill = travel_time_mins)) + 
   scale_fill_gradient2(low = "white", mid = "thistle", high = "orchid4",
                        midpoint = 50, #median(iso_drivetime_from_origin$travel_time_mins),
-                       name = paste("Transit Travel\ntime to all\nzones from", iso_origin, "\n(minutes)")) +
-  geom_sf(data = iso_origin_geom, shape = 19, size = 3)
+                       name = paste("Drive Time\nto all\nzones from", iso_origin, "\n(minutes)")) +
+  geom_sf(data = iso_origin_geom, shape = 19, size = 1.5)
 }
 
-isochrone_generator(848988)
+drive_isochrone_generator(848988)
 ```
 
 ```{r test, echo=FALSE}
-isochrone_generator(848782)
+drive_isochrone_generator(848782)
 
-isochrone_generator(849063)
+drive_isochrone_generator(849063)
 ```
 
 ## Accessibility Score
@@ -442,19 +445,25 @@ isochrone_generator(849063)
 This metric allows us to compare the relative accessibility of tracts more easily. We calculated an "accessibility score" by counting the number of zones each origin could reach within 30 minutes. We note that this score is affected by the lack of residential roads in our network, which would likely provide better accessibility for some of the peripheral zones. 
 
 ```{r accessibility score, echo=FALSE}
-accessibility_matrix <- TTmatrix_long %>%
+drive_accessibility_matrix <- drive_TTmatrix_long %>%
   filter(travel_time_mins<30) %>%
   group_by(origin) %>%
   tally() %>%
   rename(score = n)
 
-accessibility_score_geom <- ok_msa_w_centroids %>%
+drive_accessibility_score_geom <- ok_msa_w_centroids %>%
   select(GEOID, NAME, geometry, centroid_id) %>%
-  left_join(accessibility_matrix, by = c("centroid_id" = "origin"))
+  left_join(drive_accessibility_matrix, by = c("centroid_id" = "origin"))
 
-ggplot(accessibility_score_geom) + 
+ggplot(drive_accessibility_score_geom) + 
   geom_sf(aes(fill=score))
 ```
+
+# Travel Time Matrix: Transit
+
+## Assumptions:
+
+In our model and in this house we assume: everyone walks to transit, vehicle speed is 23 mph, walking speed is 2.5 mph, 15-minute wait time, fare is 2 dollars and it is free to transfer.
 
 ```{r transit skim matrices, echo=FALSE}
 transitskim_fare_path <- "../Travel-Forecasting/transit_skim1_fare.csv"
@@ -480,5 +489,184 @@ transitskim_totaltime <- read.csv(transitskim_totaltime_path)
 
 transitskim_no_transfers_path <- "../Travel-Forecasting/transit_skim1_no_transfers.csv"
 transitskim_no_transfers <- read.csv(transitskim_no_transfers_path)
+
+okc_gtfs <- read_gtfs("https://embarkok.com/data/gtfs/google_transit.zip")
+
+route_shapes <- shapes_as_sf(okc_gtfs$shapes)
 ```
 
+```{r reading transit centroids, include = FALSE}
+okc_matrix_transit_path <- "../Travel-Forecasting/Nodes_AND_area_centroids.csv"
+  
+okc_matrix_transit_centroids <- read.csv(okc_matrix_transit_path) %>% 
+  drop_na(centroid) %>%
+  mutate(long = Longitude / 1000000) %>%
+  mutate(lat = Latitude / 1000000)
+
+okc_transit_centroids_geom <- st_as_sf(okc_matrix_transit_centroids, 
+                                     coords=c("long", "lat"), 
+                                     crs = 4326,
+                                     agr = "constant") %>%
+                      select(GEOID, ID) %>%
+                      mutate(GEOID = as.character(GEOID)) 
+
+okc_transit_centroids <- okc_transit_centroids_geom %>%
+                      st_drop_geometry()
+
+ok_msa_w_centroids <- left_join(ok_msa_w_centroids, okc_transit_centroids) %>%
+  rename(transit_centroid_id = ID)
+```
+
+```{r transit vizzz, include = FALSE}
+transit_totaltime_long <- transitskim_totaltime %>%
+  pivot_longer(
+    cols = starts_with("X"),
+    values_to = "total_time_mins") %>%
+  rename(origin = RCIndex, destination = name) %>%
+  mutate(destination = as.numeric(substr(destination, 2, 6))) %>%
+  replace_with_na(replace = list(x = "--")) %>%
+  mutate(total_time_mins = as.numeric(total_time_mins))
+
+transit_fare_long <- transitskim_fare %>%
+  pivot_longer(
+    cols = starts_with("X"),
+    values_to = "fare") %>%
+  rename(origin = RCIndex, destination = name) %>%
+  mutate(destination = as.numeric(substr(destination, 2, 6))) %>%
+  replace_with_na(replace = list(x = "--")) %>%
+  mutate(fare = as.numeric(fare))
+
+transit_ivtt_long <- transitskim_ivtt %>%
+  pivot_longer(
+    cols = starts_with("X"),
+    values_to = "ivtt") %>%
+  rename(origin = RCIndex, destination = name) %>%
+  mutate(destination = as.numeric(substr(destination, 2, 6))) %>%
+  replace_with_na(replace = list(x = "--")) %>%
+  mutate(ivtt = as.numeric(ivtt))
+
+transit_init_wt_long <- transitskim_init_wt %>%
+  pivot_longer(
+    cols = starts_with("X"),
+    values_to = "init_wt") %>%
+  rename(origin = RCIndex, destination = name) %>%
+  mutate(destination = as.numeric(substr(destination, 2, 6))) %>%
+  replace_with_na(replace = list(x = "--")) %>%
+  mutate(init_wt = as.numeric(init_wt))
+
+transit_transfer_wt_long <- transitskim_tranfer_wt %>%
+  pivot_longer(
+    cols = starts_with("X"),
+    values_to = "transfer_wt") %>%
+  rename(origin = RCIndex, destination = name) %>%
+  mutate(destination = as.numeric(substr(destination, 2, 6))) %>%
+  replace_with_na(replace = list(x = "--")) %>%
+  mutate(transfer_wt = as.numeric(transfer_wt))
+
+transit_access_wt_long <- transitskim_access_wt %>%
+  pivot_longer(
+    cols = starts_with("X"),
+    values_to = "access_wt") %>%
+  rename(origin = RCIndex, destination = name) %>%
+  mutate(destination = as.numeric(substr(destination, 2, 6))) %>%
+  replace_with_na(replace = list(x = "--")) %>%
+  mutate(access_wt = as.numeric(access_wt))
+
+transit_egress_wt_long <- transitskim_egress_wt %>%
+  pivot_longer(
+    cols = starts_with("X"),
+    values_to = "egress_wt") %>%
+  rename(origin = RCIndex, destination = name) %>%
+  mutate(destination = as.numeric(substr(destination, 2, 6))) %>%
+ replace_with_na(replace = list(x = "--")) %>%
+  mutate(egress_wt = as.numeric(egress_wt))
+
+transit_no_transfers_wt_long <- transitskim_no_transfers %>%
+  pivot_longer(
+    cols = starts_with("X"),
+    values_to = "num_transfers") %>%
+  rename(origin = RCIndex, destination = name) %>%
+  mutate(destination = as.numeric(substr(destination, 2, 6))) %>%
+  replace_with_na(replace = list(x = "--")) %>%
+  mutate(num_transfers = as.numeric(num_transfers))
+
+transit_TTmatrix_long <- full_join(transit_totaltime_long, transit_fare_long) %>% 
+  full_join(transit_ivtt_long) %>% 
+  full_join(transit_init_wt_long) %>% 
+  full_join(transit_transfer_wt_long) %>% 
+  full_join(transit_access_wt_long) %>% 
+  full_join(transit_egress_wt_long) %>% 
+  full_join(transit_no_transfers_wt_long)
+```
+
+## Plotting EMBARK Routes
+
+This includes both bus routes and a streetcar route that we coded as rail.
+
+```{r plotting EMBARK, echo=FALSE}
+ggplot() +
+  geom_sf(data = ok_msa,
+          fill = "cornsilk",
+          color = "grey") +
+  geom_sf(data = route_shapes,
+          aes(color = shape_id)) +
+          theme_void()+
+  theme(legend.position = "none")
+  
+```
+
+```{r isochrone transit generator, include=FALSE}
+transit_isochrone_generator <- function(iso_origin){
+  temp_matrix <- transit_TTmatrix_long %>%
+  filter(origin == iso_origin)
+
+iso_transittime_from_origin <- ok_msa_w_centroids %>%
+  select(GEOID, NAME, geometry, transit_centroid_id) %>%
+  left_join(temp_matrix, by = c("transit_centroid_id" = "destination"))
+
+iso_origin_geom <- okc_transit_centroids_geom %>%
+  filter(ID == iso_origin)
+
+ggplot(iso_transittime_from_origin) + 
+  geom_sf(aes(fill = total_time_mins)) + 
+  scale_fill_gradient2(low = "white", mid = "thistle", high = "orchid4",
+                       midpoint = 50,
+                       name = paste("Transit Time\nto all\nzones from", iso_origin, "\n(minutes)")) +
+  geom_sf(data = iso_origin_geom, shape = 19, size = 1.5)
+}
+
+transit_stackedbar_generator <- function(iso_origin){
+  temp_matrix <- transit_TTmatrix_long %>%
+  filter(origin == iso_origin) %>%
+  select(destination, access_wt, init_wt, ivtt, transfer_wt, egress_wt)
+
+temp_matrix_stacked <- melt(temp_matrix, id = "destination")
+
+ggplot(temp_matrix_stacked, aes(x = reorder(destination, value), y = value, fill = variable)) + 
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("steelblue","thistle", "gold", "red", "green"), label = c("Walk time", "Wait time", "Travel time", "Transfer time", "Egress time")) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(y = "Number of Minutes", x = " ", fill = "Public Transportation Activity", title = paste("Transit Time to all zones from", iso_origin, "(minutes)"))  + 
+  theme(legend.position = "top", axis.text.x=element_blank(), axis.ticks.x=element_blank())
+
+}
+
+```
+
+## Transit Isochrones and Travel Time Break Down
+
+Advantage of public transit data is break down the overall trip and travel time to produce a more granular analysis. The shape of the first charts are similar, demonstrating similar travel patterns in the downtown region. The third chart illustrates a much steeper increase in travel time. We ordered the stacked bar chart from shortest to longest amount of time rather than geographic distance. It is interesting to compare the three stacked bar charts. The first two follow a more exponential trend while the third follows more of a logarithmic trend.
+
+```{r plots, echo=FALSE, warning=FALSE}
+transit_isochrone_generator(41028)
+
+transit_stackedbar_generator(41028)
+
+transit_isochrone_generator(41077)
+
+transit_stackedbar_generator(41077)
+
+transit_isochrone_generator(41097)
+
+transit_stackedbar_generator(41097)
+```
