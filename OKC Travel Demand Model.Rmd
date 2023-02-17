@@ -20,11 +20,15 @@ library(tidycensus)
 library(tigris)
 library(sf)
 library(ggspatial)
+library(ggthemes)
 library(gridExtra)
 library(RColorBrewer)
 library(reshape2)
 library(tidytransit)
 library(naniar)
+library(knitr)
+library(here)
+library(geojsonio)
 
 #counties stored as list
 counties <- c("Oklahoma", "Canadian", "Cleveland", "Grady", "Lincoln", "Logan", "McClain")
@@ -93,8 +97,7 @@ census_data <- get_acs(geography = "tract",
 
 # get land area from tigris
 okc_areas <- tracts(state = "OK",
-                    county = counties,
-                    year = 2019) %>%
+                    county = counties) %>%
               select(GEOID, ALAND) %>%
               st_drop_geometry()
 
@@ -117,7 +120,8 @@ ok_msa <- census_data %>%
   left_join(lehd_data) %>%
   left_join(okc_areas) %>%
   select(-ends_with("M")) %>%
-  rename(land_area_sqmeters = ALAND)
+  rename(land_area_sqmeters = ALAND) %>%
+  st_transform(crs = 4326)
 
 #compute density variables
 ok_msa <- ok_msa %>%
@@ -137,6 +141,9 @@ The sample table below shows the first 5 rows of our compiled dataset. Each row 
 
 ```{r summary table, echo=FALSE}
 tibble(ok_msa[1:5,])
+
+#head(ok_msa) %>%
+  #kable()
 ```
 
 ## Data Definitions:\
@@ -360,78 +367,95 @@ veh_distribution_chart
 To create the network in TransCAD, we imported the Open Street Maps layer and selected for primary, secondary, tertiary, and trunk roads. When creating the centroids and centroid connectors, we allowed for the connectors to extend outside of zone boundaries, at up to 30 miles, and up to 10 connectors per centroid. This resulted in a matrix with only a few gaps, which we resolved by turning surrounding roads two-way. (The major roads in the area were separated highways, so we trust that two-way driving is actually feasible in these zones.) 
 
 ```{r read in TransCAD matrix, echo=FALSE}
-okc_matrix_roads_path <- "../Travel-Forecasting/TTmatrix_skim10.csv"
-  
-okc_matrix_roads <- read.csv(okc_matrix_roads_path)
+ok_matrix_drive_path <- "../Travel-Forecasting/TTmatrix_skim10_geoid.csv"
 
-okc_nodes_centroids_path <- "../Travel-Forecasting/nodes_okc_roads_prayerhands_withcentroids.csv"
+ok_matrix_drive <- read.csv(ok_matrix_drive_path)
 
-okc_nodes_centroids <- read.csv(okc_nodes_centroids_path) %>%
-  drop_na(centroid) %>%
-  mutate(long = Longitude / 1000000) %>%
-  mutate(lat = Latitude / 1000000)
+drive_TTmatrix_long <- ok_matrix_drive %>%
+  rename(GEOID = ï..GEOID) %>%
+  pivot_longer(cols = -GEOID) %>%
+  mutate(value = as.numeric(value)) %>%
+  mutate(name = substr(name, 2, 12)) %>%
+  rename(from_GEOID = GEOID,
+         to_GEOID = name,
+         drive_time = value)
 
-okc_centroids_geom <- st_as_sf(okc_nodes_centroids, 
-                                     coords=c("long", "lat"), 
-                                     crs = 4326,
-                                     agr = "constant") %>%
-                      select(ID, geometry)
+#zones_old <- geojson_read("../Travel-Forecasting/zonesboundaries.geojson")
 
-ok_msa <- ok_msa %>%
-  st_transform(crs = 4326)
+
+#drive_TTmatrix_long <- ok_matrix_drive %>%
+  # pivot_longer(
+   #  cols = starts_with("X"),
+    # values_to = "drive_time") %>%
+   #rename(from_GEOID = ï..GEOID, to_GEOID = name) %>%
+  #rename(origin = GEOID, destination = name) %>%
+  #mutate(to_GEOID = substr(to_GEOID, 2, 12)) %>%
+  #filter(drive_time != "--") %>%
+  #mutate(drive_time = as.numeric(drive_time))
 ```
 
-```{r mapping TransCAD file, echo=FALSE}
-#ggplot(ok_msa) +
-  #geom_sf(aes(), fill="white") +
-  #geom_sf(data = okc_centroids_geom, fill = "black")
-```
-
-```{r join TransCAD files, echo=FALSE}
-ok_msa_w_centroids <- ok_msa
-
-ok_msa_w_centroids$centroid_id <-  apply(st_intersects(ok_msa, okc_centroids_geom, sparse = FALSE), MARGIN = 2, 
-               function(col) { 
-                  okc_centroids_geom[which(col), ]$ID
-               })
-
-drive_TTmatrix_long <- okc_matrix_roads %>%
-   pivot_longer(
-     cols = starts_with("X"),
-     values_to = "travel_time_mins") %>%
-  rename(origin = Origin, destination = name) %>%
-  mutate(destination = as.numeric(substr(destination, 2, 7))) %>%
-  filter(travel_time_mins != "--") %>%
-  mutate(travel_time_mins = as.numeric(travel_time_mins))
-```
 
 ## Isochrones
 
 After generating a complete matrix, we read the travel time matrix and the nodes layer into R. We converted the centroids’ coordinates to a geometry, matched centroid IDs with the appropriate census tracts, and pivoted the travel time matrix so origins and destinations would both be in columns. This allowed us to create an isochrone illustrating the travel time from one zone in the study area to all others. 
 
-```{r isochrone functions, echo=FALSE}
-drive_isochrone_generator <- function(iso_origin){
-  temp_matrix <- drive_TTmatrix_long %>%
-  filter(origin == iso_origin)
 
-iso_drivetime_from_origin <- ok_msa_w_centroids %>%
-  select(GEOID, NAME, geometry, centroid_id) %>%
-  left_join(temp_matrix, by = c("centroid_id" = "destination"))
+```{r}
+ temp_matrix <- drive_TTmatrix_long %>%
+  filter(from_GEOID == "40017300700")
 
-iso_drivetime_from_origin[is.na(iso_drivetime_from_origin)] <- 0
+  #get tract geometry from ok_msa
+iso_drivetime_from_origin <- ok_msa %>%
+  select(GEOID, geometry) %>%
+  left_join(temp_matrix, by = c("GEOID" = "to_GEOID"))
 
-iso_origin_geom <- okc_centroids_geom %>%
-  filter(ID == iso_origin)
+#change NA to 0
+#iso_drivetime_from_origin[is.na(iso_drivetime_from_origin)] <- 0
+
+#getting point and geometry for centroid
+iso_origin_geom <- ok_msa %>%
+  filter(GEOID == "40017300700") %>%
+  select(GEOID, geometry) %>%
+  st_centroid()
 
 ggplot(iso_drivetime_from_origin) + 
-  geom_sf(aes(fill = travel_time_mins)) + 
+  geom_sf(aes(fill = drive_time)) 
++ 
+  scale_fill_gradient2(low = "white", mid = "thistle", high = "orchid4",
+                       midpoint = 50, #median(iso_drivetime_from_origin$travel_time_mins),
+                       name = paste("Drive Time\nto all\nzones from", 40017300700, "\n(minutes)")) +
+  geom_sf(data = iso_origin_geom, shape = 19, size = 1.5)
+```
+
+```{r isochrone functions, echo=FALSE}
+
+drive_isochrone_generator <- function(iso_origin){
+  temp_matrix <- drive_TTmatrix_long %>%
+  filter(from_GEOID == iso_origin)
+
+  #get tract geometry from ok_msa
+iso_drivetime_from_origin <- ok_msa %>%
+  select(GEOID, geometry) %>%
+  full_join(temp_matrix, by = c("GEOID" = "to_GEOID"))
+
+#change NA to 0
+iso_drivetime_from_origin[is.na(iso_drivetime_from_origin)] <- 0
+
+#getting point and geometry for centroid
+iso_origin_geom <- ok_msa %>%
+  filter(GEOID == iso_origin) %>%
+  select(GEOID, geometry) %>%
+  st_centroid()
+
+ggplot(iso_drivetime_from_origin) + 
+  geom_sf(aes(fill = drive_time)) + 
   scale_fill_gradient2(low = "white", mid = "thistle", high = "orchid4",
                        midpoint = 50, #median(iso_drivetime_from_origin$travel_time_mins),
                        name = paste("Drive Time\nto all\nzones from", iso_origin, "\n(minutes)")) +
   geom_sf(data = iso_origin_geom, shape = 19, size = 1.5)
 }
 
-drive_isochrone_generator(848988)
+drive_isochrone_generator(40109107212)
 ```
 
 ```{r test, echo=FALSE}
@@ -522,7 +546,7 @@ transit_totaltime_long <- transitskim_totaltime %>%
   pivot_longer(
     cols = starts_with("X"),
     values_to = "total_time_mins") %>%
-  rename(origin = RCIndex, destination = name) %>%
+  rename(origin = ï..RCIndex, destination = name) %>%
   mutate(destination = as.numeric(substr(destination, 2, 6))) %>%
   replace_with_na(replace = list(x = "--")) %>%
   mutate(total_time_mins = as.numeric(total_time_mins))
@@ -531,7 +555,7 @@ transit_fare_long <- transitskim_fare %>%
   pivot_longer(
     cols = starts_with("X"),
     values_to = "fare") %>%
-  rename(origin = RCIndex, destination = name) %>%
+  rename(origin = ï..RCIndex, destination = name) %>%
   mutate(destination = as.numeric(substr(destination, 2, 6))) %>%
   replace_with_na(replace = list(x = "--")) %>%
   mutate(fare = as.numeric(fare))
@@ -540,7 +564,7 @@ transit_ivtt_long <- transitskim_ivtt %>%
   pivot_longer(
     cols = starts_with("X"),
     values_to = "ivtt") %>%
-  rename(origin = RCIndex, destination = name) %>%
+  rename(origin = ï..RCIndex, destination = name) %>%
   mutate(destination = as.numeric(substr(destination, 2, 6))) %>%
   replace_with_na(replace = list(x = "--")) %>%
   mutate(ivtt = as.numeric(ivtt))
@@ -549,7 +573,7 @@ transit_init_wt_long <- transitskim_init_wt %>%
   pivot_longer(
     cols = starts_with("X"),
     values_to = "init_wt") %>%
-  rename(origin = RCIndex, destination = name) %>%
+  rename(origin = ï..RCIndex, destination = name) %>%
   mutate(destination = as.numeric(substr(destination, 2, 6))) %>%
   replace_with_na(replace = list(x = "--")) %>%
   mutate(init_wt = as.numeric(init_wt))
@@ -558,7 +582,7 @@ transit_transfer_wt_long <- transitskim_tranfer_wt %>%
   pivot_longer(
     cols = starts_with("X"),
     values_to = "transfer_wt") %>%
-  rename(origin = RCIndex, destination = name) %>%
+  rename(origin = ï..RCIndex, destination = name) %>%
   mutate(destination = as.numeric(substr(destination, 2, 6))) %>%
   replace_with_na(replace = list(x = "--")) %>%
   mutate(transfer_wt = as.numeric(transfer_wt))
@@ -567,7 +591,7 @@ transit_access_wt_long <- transitskim_access_wt %>%
   pivot_longer(
     cols = starts_with("X"),
     values_to = "access_wt") %>%
-  rename(origin = RCIndex, destination = name) %>%
+  rename(origin = ï..RCIndex, destination = name) %>%
   mutate(destination = as.numeric(substr(destination, 2, 6))) %>%
   replace_with_na(replace = list(x = "--")) %>%
   mutate(access_wt = as.numeric(access_wt))
@@ -576,7 +600,7 @@ transit_egress_wt_long <- transitskim_egress_wt %>%
   pivot_longer(
     cols = starts_with("X"),
     values_to = "egress_wt") %>%
-  rename(origin = RCIndex, destination = name) %>%
+  rename(origin = ï..RCIndex, destination = name) %>%
   mutate(destination = as.numeric(substr(destination, 2, 6))) %>%
  replace_with_na(replace = list(x = "--")) %>%
   mutate(egress_wt = as.numeric(egress_wt))
@@ -585,7 +609,7 @@ transit_no_transfers_wt_long <- transitskim_no_transfers %>%
   pivot_longer(
     cols = starts_with("X"),
     values_to = "num_transfers") %>%
-  rename(origin = RCIndex, destination = name) %>%
+  rename(origin = ï..RCIndex, destination = name) %>%
   mutate(destination = as.numeric(substr(destination, 2, 6))) %>%
   replace_with_na(replace = list(x = "--")) %>%
   mutate(num_transfers = as.numeric(num_transfers))
@@ -597,6 +621,10 @@ transit_TTmatrix_long <- full_join(transit_totaltime_long, transit_fare_long) %>
   full_join(transit_access_wt_long) %>% 
   full_join(transit_egress_wt_long) %>% 
   full_join(transit_no_transfers_wt_long)
+
+transit_TTmatrix_long <- transit_TTmatrix_long %>%
+  mutate(ovtt = total_time_mins - ivtt) %>%
+  mutate(perceived_time = ivtt + (ovtt * 1.5)) 
 ```
 
 ## Plotting EMBARK Routes
@@ -670,3 +698,45 @@ transit_isochrone_generator(41097)
 
 transit_stackedbar_generator(41097)
 ```
+
+```{r adding GEOID to transit skim, echo=FALSE}
+partial_TTmatrix <- ok_msa_w_centroids %>%
+  select(GEOID, centroid_id, transit_centroid_id) %>%
+  rename(drive_centroid_id = centroid_id) %>%
+  st_drop_geometry()
+  
+full_TTmatrix <- drive_TTmatrix_long %>%
+  left_join(partial_TTmatrix, by = c("origin" = "drive_centroid_id")) %>%
+  rename(from_GEOID = GEOID) %>%
+  select(from_GEOID, destination, travel_time_mins) %>%
+  left_join(partial_TTmatrix, by = c("destination" ="drive_centroid_id")) 
+
+
+%>%
+  rename(to_GEOID = GEOID, drive_time = travel_time_mins) %>%
+  select(from_GEOID, to_GEOID, drive_time)
+         
+  mutate(origin = ok_msa_w_centroids$GEOID[match(ok_msa_w_centroids$centroid_id, origin)])
+```
+
+
+```{r add employment data to transit skim, echo=FALSE}
+jobs_temp <- ok_msa_w_centroids %>%
+  select(transit_centroid_id, centroid_id, GEOID, NAME, geometry, total_emp, basic_emp, retail_emp, service_emp)
+  
+jobs_access <- transit_TTmatrix_long %>%
+  
+  
+  left_join(jobs_temp, by = c("destination" = "transit_centroid_id")) %>%
+  select(GEOID, NAME, origin, destination, total_time_mins, num_transfers, access_wt, init_wt, ivtt, transfer_wt, egress_wt, ovtt, perceived_time, fare, total_emp, basic_emp, retail_emp, service_emp, geometry)
+```
+
+```{r define a decay function, echo=FALSE}
+
+logistic_function <- function(travel_time, inflection, stdev) {
+  1/(1+exp((travel_time - inflection) / stdev))
+}
+
+```
+
+
