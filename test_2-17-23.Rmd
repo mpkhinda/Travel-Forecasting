@@ -388,9 +388,11 @@ ggplot(iso_drivetime_from_origin) +
 ```{r drive time isochrones, echo=FALSE}
 drive_isochrone_generator(848969)
 
-drive_isochrone_generator(848782)
+drive_isochrone_generator(848732)
 
-drive_isochrone_generator(849063)
+drive_isochrone_generator(848750)
+
+transit_isochrone_generator(41038)
 ```
 
 ## Accessibility Score
@@ -578,8 +580,8 @@ iso_transittime_from_origin <- ok_msa_w_centroids %>%
   select(GEOID, NAME, geometry, transit_centroid_id) %>%
   left_join(temp_matrix, by = c("transit_centroid_id" = "destination"))
 
-iso_origin_geom <- ok_msa_w_centroids %>%
-  filter(transit_centroid_id == iso_origin)
+iso_origin_geom <- ok_transit_centroids_geom %>%
+  filter(ID == iso_origin)
 
 ggplot(iso_transittime_from_origin) + 
   geom_sf(aes(fill = total_time_mins)) + 
