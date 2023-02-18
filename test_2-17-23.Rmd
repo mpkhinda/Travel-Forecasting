@@ -303,17 +303,18 @@ veh_distribution_chart
 # Travel Time Matrix: Roads
 To create the network in TransCAD, we imported the Open Street Maps layer and selected for primary, secondary, tertiary, and trunk roads. When creating the centroids and centroid connectors, we allowed for the connectors to extend outside of zone boundaries, at up to 30 miles, and up to 10 connectors per centroid. This resulted in a matrix with only a few gaps, which we resolved by turning surrounding roads two-way. (The major roads in the area were separated highways, so we trust that two-way driving is actually feasible in these zones.) 
 ```{r read in TransCAD matrix, echo=FALSE}
+#read in drive time matrix
 ok_matrix_drive_path <- "../Travel-Forecasting/TTmatrix_skim10.csv"
-  
 ok_matrix_drive <- read.csv(ok_matrix_drive_path)
 
+#read in drive time centroids
 ok_nodes_centroids_path <- "../Travel-Forecasting/nodes_okc_roads_prayerhands_withcentroids.csv"
-
+#convert lat and long units
 ok_nodes_centroids <- read.csv(ok_nodes_centroids_path) %>%
   drop_na(centroid) %>%
   mutate(long = Longitude / 1000000) %>%
   mutate(lat = Latitude / 1000000)
-
+#create drive time centroid geometry
 ok_centroids_geom <- st_as_sf(ok_nodes_centroids, 
                                      coords=c("long", "lat"), 
                                      crs = 4326,
@@ -329,12 +330,12 @@ ok_centroids_geom <- st_as_sf(ok_nodes_centroids,
 
 ```{r join TransCAD files, echo=FALSE}
 #ok_msa_w_centroids <- ok_msa
-
 #ok_msa_w_centroids$centroid_id <- apply(st_contains(ok_msa, ok_centroids_geom, sparse = FALSE), MARGIN = 2, 
                #function(col) { 
                 #  ok_centroids_geom[which(col), ]$ID
                ##st_write(ok_msa_w_centroids, "ok_msa_w_centroids.csv", append = FALSE)
 
+#pivot drive time matrix
 drive_TTmatrix_long <- ok_matrix_drive %>%
    pivot_longer(
      cols = starts_with("X"),
@@ -348,28 +349,33 @@ drive_TTmatrix_long <- ok_matrix_drive %>%
 ## Isochrones
 After generating a complete matrix, we read the travel time matrix and the nodes layer into R. We converted the centroids’ coordinates to a geometry, matched centroid IDs with the appropriate census tracts, and pivoted the travel time matrix so origins and destinations would both be in columns. This allowed us to create an isochrone illustrating the travel time from one zone in the study area to all others. 
 
-```{r isochrone functions, echo=FALSE}
+```{r main data frame with GEOIDs and drive+transit centroids, echo=FALSE}
+#read in updated data frame with GEOIDs, drive centroids, and transit centroids
 GEOID_centroids_path <- "../Travel-Forecasting/ok_msa_w_centroids_updated_2-18.csv"
 GEOID_centroids <- read.csv(GEOID_centroids_path) %>%
   rename(drive_centroid_id = centroid_id, 
          GEOID = ï..GEOID) %>%
   mutate(GEOID = as.character(GEOID))
-
+#join ok msa df with drive+transit centroids
 ok_msa_w_centroids <- ok_msa %>%
   left_join(GEOID_centroids)
+```
 
+```{r drive time isochrone generator, echo=FALSE}
 drive_isochrone_generator <- function(iso_origin){
+  #create temp matrix to isolate one origin
   temp_matrix <- drive_TTmatrix_long %>%
   filter(origin == iso_origin)
-  
+  #join ok msa w centroids to temp matrix to give geometry
   iso_drivetime_from_origin <- ok_msa_w_centroids %>%
   select(GEOID, geometry, drive_centroid_id) %>%
   left_join(temp_matrix, by = c("drive_centroid_id" = "destination"))
-  
+  #assign NA = 0 for travel time
 iso_drivetime_from_origin[is.na(iso_drivetime_from_origin)] <- 0
+#isolate centroid geometry to identify one point
 iso_origin_geom <- ok_centroids_geom %>%
   filter(ID == iso_origin)
-
+#plot zone geometry with drive time mins as fill
 ggplot(iso_drivetime_from_origin) + 
   geom_sf(aes(fill = travel_time_mins)) + 
   scale_fill_gradient2(low = "white", mid = "thistle", high = "orchid4",
@@ -377,11 +383,11 @@ ggplot(iso_drivetime_from_origin) +
                        name = paste("Drive Time\nto all\nzones from", iso_origin, "\n(minutes)")) +
   geom_sf(data = iso_origin_geom, shape = 19, size = 1.5)
 }
-
-drive_isochrone_generator(848969)
 ```
 
-```{r test, echo=FALSE}
+```{r drive time isochrones, echo=FALSE}
+drive_isochrone_generator(848969)
+
 drive_isochrone_generator(848782)
 
 drive_isochrone_generator(849063)
@@ -412,7 +418,7 @@ ggplot(drive_accessibility_score_geom) +
 
 In our model and in this house we assume: everyone walks to transit, vehicle speed is 23 mph, walking speed is 2.5 mph, 15-minute wait time, fare is 2 dollars and it is free to transfer.
 
-```{r transit skim matrices, echo=FALSE}
+```{r read in transit skim matrices and route shapes, echo=FALSE}
 transitskim_fare_path <- "../Travel-Forecasting/transit_skim1_fare.csv"
 transitskim_fare <- read.csv(transitskim_fare_path)
 transitskim_ivtt_path <- "../Travel-Forecasting/transit_skim1_ivtt.csv"
@@ -429,18 +435,20 @@ transitskim_totaltime_path <- "../Travel-Forecasting/transit_skim1_total_time.cs
 transitskim_totaltime <- read.csv(transitskim_totaltime_path)
 transitskim_no_transfers_path <- "../Travel-Forecasting/transit_skim1_no_transfers.csv"
 transitskim_no_transfers <- read.csv(transitskim_no_transfers_path)
+
 okc_gtfs <- read_gtfs("https://embarkok.com/data/gtfs/google_transit.zip")
 route_shapes <- shapes_as_sf(okc_gtfs$shapes)
 ```
 
 ```{r reading transit centroids, include = FALSE}
+#read in transit centroids
 ok_matrix_transit_path <- "../Travel-Forecasting/Nodes_AND_area_centroids.csv"
-  
+#convert lat and long units
 ok_matrix_transit_centroids <- read.csv(ok_matrix_transit_path) %>% 
   drop_na(centroid) %>%
   mutate(long = Longitude / 1000000) %>%
   mutate(lat = Latitude / 1000000)
-
+#create transit centroid geometry
 ok_transit_centroids_geom <- st_as_sf(ok_matrix_transit_centroids, 
                                      coords=c("long", "lat"), 
                                      crs = 4326,
@@ -448,14 +456,15 @@ ok_transit_centroids_geom <- st_as_sf(ok_matrix_transit_centroids,
                       select(GEOID, ID) %>%
                       mutate(GEOID = as.character(GEOID)) 
 
-ok_transit_centroids <- ok_transit_centroids_geom %>%
-                      st_drop_geometry()
+#ok_transit_centroids <- ok_transit_centroids_geom %>%
+                      #st_drop_geometry()
 
 #ok_msa_w_centroids <- left_join(ok_msa_w_centroids, ok_transit_centroids) %>%
   #rename(transit_centroid_id = ID)
 ```
 
 ```{r transit vizzz, include = FALSE}
+#pivot transit skims
 transit_totaltime_long <- transitskim_totaltime %>%
   pivot_longer(
     cols = starts_with("X"),
@@ -544,7 +553,7 @@ transit_TTmatrix_long <- full_join(transit_totaltime_long, transit_fare_long) %>
 
 This includes both bus routes and a streetcar route that we coded as rail.
 
-```{r plotting EMBARK, echo=FALSE}
+```{r plotting EMBARK routes, echo=FALSE}
 ggplot() +
   geom_sf(data = ok_msa,
           fill = "cornsilk",
@@ -555,6 +564,10 @@ ggplot() +
   theme(legend.position = "none")
   
 ```
+
+## Transit Isochrones and Travel Time Break Down
+
+Advantage of public transit data is break down the overall trip and travel time to produce a more granular analysis. The shape of the first charts are similar, demonstrating similar travel patterns in the downtown region. The third chart illustrates a much steeper increase in travel time. We ordered the stacked bar chart from shortest to longest amount of time rather than geographic distance. It is interesting to compare the three stacked bar charts. The first two follow a more exponential trend while the third follows more of a logarithmic trend.
 
 ```{r isochrone transit generator, include=FALSE}
 transit_isochrone_generator <- function(iso_origin){
@@ -575,7 +588,9 @@ ggplot(iso_transittime_from_origin) +
                        name = paste("Transit Time\nto all\nzones from", iso_origin, "\n(minutes)")) +
   geom_sf(data = iso_origin_geom, shape = 19, size = 1.5)
 }
+```
 
+```{r transit stacked bar chart generator, include=FALSE}
 transit_stackedbar_generator <- function(iso_origin){
   temp_matrix <- transit_TTmatrix_long %>%
   filter(origin == iso_origin) %>%
@@ -590,10 +605,6 @@ ggplot(temp_matrix_stacked, aes(x = reorder(destination, value), y = value, fill
 }
 ```
 
-## Transit Isochrones and Travel Time Break Down
-
-Advantage of public transit data is break down the overall trip and travel time to produce a more granular analysis. The shape of the first charts are similar, demonstrating similar travel patterns in the downtown region. The third chart illustrates a much steeper increase in travel time. We ordered the stacked bar chart from shortest to longest amount of time rather than geographic distance. It is interesting to compare the three stacked bar charts. The first two follow a more exponential trend while the third follows more of a logarithmic trend.
-
 ```{r plots, echo=FALSE, warning=FALSE}
 transit_isochrone_generator(41028)
 transit_stackedbar_generator(41028)
@@ -602,7 +613,7 @@ transit_stackedbar_generator(41077)
 transit_isochrone_generator(41097)
 transit_stackedbar_generator(41097)
 ```
-
+# Accessibility 
 ```{r adding GEOID to transit skim, echo=FALSE}
 partial_drive_TTmatrix_long <- drive_TTmatrix_long %>%
   left_join(GEOID_centroids, by = c("origin" = "drive_centroid_id")) %>%
@@ -622,5 +633,4 @@ partial_transit_TTmatrix_long <- transit_TTmatrix_long %>%
   select(from_GEOID, to_GEOID, total_time_mins, num_transfers, access_wt, init_wt, ivtt, transfer_wt, egress_wt, ovtt, perceived_time, fare)
 
 full_TTmatrix_long <- left_join(partial_drive_TTmatrix_long, partial_transit_TTmatrix_long, by = c("from_GEOID", "to_GEOID"))
-
 ```
