@@ -81,11 +81,12 @@ census_data <- get_acs(geography = "tract",
                               county = counties,
                               variables = hh_vars,
                               output = "wide", 
-                              #year = 2019,
+                              year = 2019,
                               geometry = TRUE) 
 # get land area from tigris
 okc_areas <- tracts(state = "OK",
-                    county = counties) %>%
+                    county = counties,
+                    year = 2019) %>%
               select(GEOID, ALAND) %>%
               st_drop_geometry()
 
@@ -268,6 +269,7 @@ ggplot(msa_income) +
   labs(y = "Number of Households", x = "Income Bracket") +
   scale_x_discrete(labels=c('<10k', '10-15k', '15-20k', "20-25k", "25-30k", "30-35k", "35-40k", "40-45k", "45-50k", "50-60k", "60-75k", "75-100k", "100-125k", "125-150k", "150-200k", ">200k"))
 ```
+
 ```{r poverty_map, fig.height = 4, fig.align = "left", fig.cap="\\label{fig:figs}Map showing the spatial distribution of poverty in the Oklahoma City MSA", echo=FALSE}
 ggplot(ok_msa) +
   annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
@@ -288,6 +290,7 @@ veh_distribution_map <- ggplot(pct_vehicle_ownership) +
   theme_void()
 veh_distribution_map
 ```
+
 ```{r vehicle_ownership_hist, fig.height = 4.5, fig.width = 10, fig.align = "left", fig.cap="\\label{fig:figs}Distribution of cencus tracts by percent of households with access to a vehicle", echo=FALSE}
 veh_distribution_chart <- ggplot(pct_vehicle_ownership) +
   geom_histogram(aes(x = pct_veh), fill = "orangered3", bins = 50) + 
@@ -295,6 +298,7 @@ veh_distribution_chart <- ggplot(pct_vehicle_ownership) +
   scale_x_continuous(labels = scales::percent)
 veh_distribution_chart
 ```
+
 ```{r write to file, echo=FALSE}
 #zone_boundaries <- ok_msa %>%
   #select(GEOID, geometry)
@@ -340,8 +344,8 @@ drive_TTmatrix_long <- ok_matrix_drive %>%
    pivot_longer(
      cols = starts_with("X"),
      values_to = "travel_time_mins") %>%
-  rename(origin = ï..Origin, destination = name) %>%
-  #rename(origin = Origin, destination = name) %>%
+  #rename(origin = ï..Origin, destination = name) %>%
+  rename(origin = Origin, destination = name) %>%
   mutate(destination = as.numeric(substr(destination, 2, 7))) %>%
   filter(travel_time_mins != "--") %>%
   mutate(travel_time_mins = as.numeric(travel_time_mins))
@@ -354,7 +358,8 @@ After generating a complete matrix, we read the travel time matrix and the nodes
 GEOID_centroids_path <- "../Travel-Forecasting/ok_msa_w_centroids_updated_2-18.csv"
 GEOID_centroids <- read.csv(GEOID_centroids_path) %>%
   rename(drive_centroid_id = centroid_id, 
-         GEOID = ï..GEOID) %>%
+         #GEOID = ï..GEOID) %>%
+         GEOID = GEOID) %>%
   mutate(GEOID = as.character(GEOID))
 #join ok msa df with drive+transit centroids
 ok_msa_w_centroids <- ok_msa %>%
@@ -471,7 +476,8 @@ transit_totaltime_long <- transitskim_totaltime %>%
   pivot_longer(
     cols = starts_with("X"),
     values_to = "total_time_mins") %>%
-  rename(origin = ï..RCIndex, destination = name) %>%
+  #rename(origin = ï..RCIndex, destination = name) 
+  rename(origin = RCIndex, destination = name) %>%
   mutate(destination = as.numeric(substr(destination, 2, 6))) %>%
   replace_with_na(replace = list(x = "--")) %>%
   mutate(total_time_mins = as.numeric(total_time_mins))
@@ -480,7 +486,8 @@ transit_fare_long <- transitskim_fare %>%
   pivot_longer(
     cols = starts_with("X"),
     values_to = "fare") %>%
-  rename(origin = ï..RCIndex, destination = name) %>%
+ #rename(origin = ï..RCIndex, destination = name) 
+  rename(origin = RCIndex, destination = name) %>%
   mutate(destination = as.numeric(substr(destination, 2, 6))) %>%
   replace_with_na(replace = list(x = "--")) %>%
   mutate(fare = as.numeric(fare))
@@ -489,7 +496,8 @@ transit_ivtt_long <- transitskim_ivtt %>%
   pivot_longer(
     cols = starts_with("X"),
     values_to = "ivtt") %>%
-  rename(origin = ï..RCIndex, destination = name) %>%
+  #rename(origin = ï..RCIndex, destination = name) 
+  rename(origin = RCIndex, destination = name) %>%
   mutate(destination = as.numeric(substr(destination, 2, 6))) %>%
   replace_with_na(replace = list(x = "--")) %>%
   mutate(ivtt = as.numeric(ivtt))
@@ -498,7 +506,8 @@ transit_init_wt_long <- transitskim_init_wt %>%
   pivot_longer(
     cols = starts_with("X"),
     values_to = "init_wt") %>%
-  rename(origin = ï..RCIndex, destination = name) %>%
+  #rename(origin = ï..RCIndex, destination = name) 
+  rename(origin = RCIndex, destination = name) %>%
   mutate(destination = as.numeric(substr(destination, 2, 6))) %>%
   replace_with_na(replace = list(x = "--")) %>%
   mutate(init_wt = as.numeric(init_wt))
@@ -507,7 +516,8 @@ transit_transfer_wt_long <- transitskim_tranfer_wt %>%
   pivot_longer(
     cols = starts_with("X"),
     values_to = "transfer_wt") %>%
-  rename(origin = ï..RCIndex, destination = name) %>%
+  #rename(origin = ï..RCIndex, destination = name) 
+  rename(origin = RCIndex, destination = name) %>%
   mutate(destination = as.numeric(substr(destination, 2, 6))) %>%
   replace_with_na(replace = list(x = "--")) %>%
   mutate(transfer_wt = as.numeric(transfer_wt))
@@ -516,7 +526,8 @@ transit_access_wt_long <- transitskim_access_wt %>%
   pivot_longer(
     cols = starts_with("X"),
     values_to = "access_wt") %>%
-  rename(origin = ï..RCIndex, destination = name) %>%
+  #rename(origin = ï..RCIndex, destination = name) 
+  rename(origin = RCIndex, destination = name) %>%
   mutate(destination = as.numeric(substr(destination, 2, 6))) %>%
   replace_with_na(replace = list(x = "--")) %>%
   mutate(access_wt = as.numeric(access_wt))
@@ -525,7 +536,8 @@ transit_egress_wt_long <- transitskim_egress_wt %>%
   pivot_longer(
     cols = starts_with("X"),
     values_to = "egress_wt") %>%
-  rename(origin = ï..RCIndex, destination = name) %>%
+  #rename(origin = ï..RCIndex, destination = name) 
+  rename(origin = RCIndex, destination = name) %>%
   mutate(destination = as.numeric(substr(destination, 2, 6))) %>%
  replace_with_na(replace = list(x = "--")) %>%
   mutate(egress_wt = as.numeric(egress_wt))
@@ -534,7 +546,8 @@ transit_no_transfers_wt_long <- transitskim_no_transfers %>%
   pivot_longer(
     cols = starts_with("X"),
     values_to = "num_transfers") %>%
-  rename(origin = ï..RCIndex, destination = name) %>%
+  #rename(origin = ï..RCIndex, destination = name) 
+  rename(origin = RCIndex, destination = name) %>%
   mutate(destination = as.numeric(substr(destination, 2, 6))) %>%
   replace_with_na(replace = list(x = "--")) %>%
   mutate(num_transfers = as.numeric(num_transfers))
@@ -615,7 +628,9 @@ transit_stackedbar_generator(41077)
 transit_isochrone_generator(41097)
 transit_stackedbar_generator(41097)
 ```
+
 # Accessibility 
+
 ```{r adding GEOID to transit skim, echo=FALSE}
 partial_drive_TTmatrix_long <- drive_TTmatrix_long %>%
   left_join(GEOID_centroids, by = c("origin" = "drive_centroid_id")) %>%
@@ -636,3 +651,46 @@ partial_transit_TTmatrix_long <- transit_TTmatrix_long %>%
 
 full_TTmatrix_long <- left_join(partial_drive_TTmatrix_long, partial_transit_TTmatrix_long, by = c("from_GEOID", "to_GEOID"))
 ```
+
+```{r isochrone complete transportation generator, include=FALSE}
+transpo_isochrone_generator <- function(iso_origin){
+  temp_matrix <- full_TTmatrix_long %>%
+  filter(from_GEOID == iso_origin)
+  
+iso_transpo_time_from_origin <- ok_msa_w_centroids %>%
+  select(GEOID, NAME, geometry) %>%
+  left_join(temp_matrix, by = c("GEOID" = "from_GEOID"))
+
+iso_origin_geom <- ok_transit_centroids_geom %>%
+  filter(ID == iso_origin)
+
+ggplot(iso_transittime_from_origin) + 
+  geom_sf(aes(fill = total_time_mins)) + 
+  scale_fill_gradient2(low = "white", mid = "thistle", high = "orchid4",
+                       midpoint = 50,
+                       name = paste("Transit Time\nto all\nzones from", iso_origin, "\n(minutes)")) +
+  geom_sf(data = iso_origin_geom, shape = 19, size = 1.5)
+}
+```
+
+
+```{r creating centroid info}
+
+complete_centroid <- ok_msa_w_centroids %>%
+  st_drop_geometry() %>%
+  left_join(ok_centroids_geom, by = c("drive_centroid_id" = "ID")) %>%
+  select(GEOID, geometry)
+
+```
+
+```{r export to csv for cleaner files, include=FALSE}
+
+write_csv(full_TTmatrix_long, "full_travel_matrix.csv")
+
+write_csv(ok_msa, "full_tract_info.csv")
+
+write_csv(complete_centroid, "full_centroid_geom.csv")
+
+```
+
+
