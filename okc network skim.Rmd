@@ -1,0 +1,100 @@
+---
+title: "OKC Network Skim"
+output: html_document
+date: "2023-02-19"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r setup, echo = FALSE, include=FALSE}
+library(tidyverse)
+library(tidycensus)
+library(tigris)
+library(sf)
+library(ggspatial)
+library(gridExtra)
+library(RColorBrewer)
+library(reshape2)
+library(tidytransit)
+library(naniar)
+```
+
+```{r}
+full_travel_matrix <- read_csv("full_travel_matrix.csv")
+full_tract_info <- read_csv("full_tract_info.csv")
+full_centroid_geom <- read_csv("full_centroid_geom.csv")
+```
+
+# Introduction
+The Oklahoma City metropolitan statistical area (MSA) is composed of seven counties centrally located in Oklahoma: Canadian County, Cleveland County, Grady County, Lincoln County, Logan County, McClain County, and Oklahoma County. Across these counties there are a total of **363 census tracts** (based on the 2020 redistricting). The MSA has a total land area of approximately **1,427,523 square kilometers**.Together, these counties are home to 1,412,900 people, according to the 2021 ACS 5-Year Estimates. The Oklahoma City MSA makes up nearly 36% of the state’s total population of 3,948,100. 
+
+The Oklahoma City MSA is predominantly white, with 63% of residents identifying as white alone, followed by 13.9% Hispanic or Latino, 10% Black, 3.1% American Indian and Alaska Native, 3.1% Asian, 0.1% Native Hawaiian and Pacific Islander. 37% of residents in the study are are ages 35-64, 24.6% are under the age of 18, 24.4% are ages 18-34, and 14% are ages 65 and older. The median household income in 2021 was $63,351 – higher than the statewide average and lower than the national average. Just over 14% of residents live below the poverty line – lower than the statewide average and higher than the national average. 
+
+- Income distribution [PLOT]
+- Other demographics [PLOT]
+
+## Transit 
+EMBARK, the area’s transit authority, operates all public transit in greater Oklahoma City, which includes fixed-route bus service, the OKC Streetcar, paratransit service, river ferry transit, and a bikeshare network. Beyond transit, car-ownership and use is prevalent in the Oklahoma City MSA with only 2.6% of households reporting that they do not have access to a vehicle, and a median number of vehicles per household of 2.3. According to the 2021 ACS 5-Year Estimates, cars, trucks, or vans are the most common means of transportation to work for workers 16 and over (used by 89.7% of respondents), while commuting by public transportation is far less common (used by 0.5% of respondents). Based on the same ACS data, the average travel time to work is 23 minutes. 
+
+Transformation of road network throughout the years [grid -> curvilenear]
+
+Summary Statistics [Linear length (feet or meters) of road type]
+
+Summary Statistics [Number of lines, different modes]
+
+Geography + Transit Lines & Roads + Centroids & Connectors [PLOT]
+
+How model represents transit networks:
+- How we created our model and the assumptions inherent in our model...
+
+## Land Use
+Monocentricity of OKC...
+CBD -> employment density
+Live vs. work
+
+## Employment & Population Density
+Major employment sectors in the Oklahoma City metro area include government, higher education, aerospace, healthcare, and retail. According to the Greater Oklahoma City Chamber of Commerce, major employers include the State of Oklahoma, Tinker Air Force Base, the University of Oklahoma, Integris Health, and Amazon. In 2021, the metropolitan area added 10,825 jobs (1.7% increase), and further job growth was expected in 2022 as stated in the 2022 Greater Oklahoma City Economic Outlook.
+- Assumptions in employment and population
+  - People live at centroid
+  - ?? Retail jobs represent both employment and attractions ??
+  - Simplified assumptions of employment sectors
+    - Breakdown of employment by county [PLOT]
+- Employment [PLOT]
+- Population [PLOT]
+- Activity density [PLOT]
+
+## Accessiblity
+- Define!
+  - Zonal based accessibility metric [PLOT]
+    - Shows connectivity as opposed to the value
+    - Assumptions -> all zones are equal
+      - Cumulative metric [threshold -> zones accessible within x]
+        - CBD plot, peripheral plot [drive and transit]
+      - Isochrone plot
+    - Drive vs. transit in zone
+  - Revised definition
+    - Assumptions -> zones valued based on what they contain [e.g. jobs]
+    - Define the functions
+      - Accessibility metrics
+      - Gravity-based 
+      - Drive vs. transit accessibility measures
+          - Stacked bar charts [PLOT]
+            - Weighting of in vehicle and out of vehicle time
+
+- 
+## Technical appendix
+- Data dictionary
+  - Overview of data structures
+  - Definition of variables [sources + our calculations]
+- Code for 
+  - - Cummulative assessibility
+  - Gravity based functions
+  - Isochrone generator
+  - Stacked bar generator
+  
+```{r}
+
+```
+
