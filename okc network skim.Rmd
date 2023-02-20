@@ -22,10 +22,26 @@ library(naniar)
 ```
 
 ```{r}
-full_travel_matrix <- read_csv("full_travel_matrix.csv")
-full_tract_info <- read_csv("full_tract_info.csv")
-full_centroid_geom <- read_csv("full_centroid_geom.csv")
+full_travel_matrix <- read_csv("full_travel_matrix.csv") %>%
+  mutate(from_GEOID = as.character(from_GEOID), 
+         to_GEOID = as.character(to_GEOID)) 
+
+full_tract_info <- geojson_sf("ok_geom.geojson")
+
+full_centroid_geom <- geojson_sf("full_centroid_geom.geojson")
+
+transit_geom <- read_csv("transit_geom.csv")
+
+ok_roads <- read_sf("okc_roads_prayerhand_geom 2023-02-20.shp")
+
+# Define color palettes
+blue_pal <- brewer.pal(5, "Blues")
+red_pal <- brewer.pal(5, "Reds")
+purp_pal <- brewer.pal(5, "Purples")
+green_pal <- brewer.pal(5,"Greens")
+orange_pal <- brewer.pal(5,"Oranges")
 ```
+
 
 # Introduction
 The Oklahoma City metropolitan statistical area (MSA) is composed of seven counties centrally located in Oklahoma: Canadian County, Cleveland County, Grady County, Lincoln County, Logan County, McClain County, and Oklahoma County. Across these counties there are a total of **363 census tracts** (based on the 2020 redistricting). The MSA has a total land area of approximately **1,427,523 square kilometers**.Together, these counties are home to 1,412,900 people, according to the 2021 ACS 5-Year Estimates. The Oklahoma City MSA makes up nearly 36% of the state’s total population of 3,948,100. 
@@ -33,19 +49,95 @@ The Oklahoma City metropolitan statistical area (MSA) is composed of seven count
 The Oklahoma City MSA is predominantly white, with 63% of residents identifying as white alone, followed by 13.9% Hispanic or Latino, 10% Black, 3.1% American Indian and Alaska Native, 3.1% Asian, 0.1% Native Hawaiian and Pacific Islander. 37% of residents in the study are are ages 35-64, 24.6% are under the age of 18, 24.4% are ages 18-34, and 14% are ages 65 and older. The median household income in 2021 was $63,351 – higher than the statewide average and lower than the national average. Just over 14% of residents live below the poverty line – lower than the statewide average and higher than the national average. 
 
 - Income distribution [PLOT]
-- Other demographics [PLOT]
+```{r}
+msa_income <- full_tract_info %>%
+  separate(NAME, into = c("tract-num", "county", "state"), sep = ", ") %>%
+    group_by(state) %>%
+    summarise(
+      inc_lt_10kE = sum(inc_lt_10kE),
+      inc_btw_10k_15kE = sum(inc_btw_10k_15kE),
+      inc_btw_15k_20kE = sum(inc_btw_15k_20kE),
+      inc_btw_20k_25kE = sum(inc_btw_20k_25kE),
+      inc_btw_25k_30kE = sum(inc_btw_25k_30kE),
+      inc_btw_30k_35kE = sum(inc_btw_30k_35kE),
+      inc_btw_35k_40kE = sum(inc_btw_35k_40kE),
+      inc_btw_40k_45kE = sum(inc_btw_40k_45kE),
+      inc_btw_45k_50kE = sum(inc_btw_45k_50kE),
+      inc_btw_50k_60kE = sum(inc_btw_50k_60kE),
+      inc_btw_60k_75kE = sum(inc_btw_60k_75kE),
+      inc_btw_75k_100kE = sum(inc_btw_75k_100kE),
+      inc_btw_100k_125kE = sum(inc_btw_100k_125kE),
+      inc_btw_125k_150kE = sum(inc_btw_125k_150kE),
+      inc_btw_150k_200kE = sum(inc_btw_150k_200kE),
+      inc_gt_200kE = sum(inc_gt_200kE)) %>%
+  pivot_longer(
+    cols = starts_with("inc"),
+    values_to = "count") %>% 
+  rename(inc_level = name) %>%
+  select(inc_level, count)
 
+msa_income$inc_level <- factor(msa_income$inc_level, levels = msa_income$inc_level)
+
+ggplot(msa_income) +
+  geom_col(aes(x = inc_level, y = count), fill = "black") +
+  scale_y_continuous(labels = scales::comma) +
+  labs(y = "Number of Households", x = "Income Bracket") +
+  scale_x_discrete(labels=c('<10k', '10-15k', '15-20k', "20-25k", "25-30k", "30-35k", "35-40k", "40-45k", "45-50k", "50-60k", "60-75k", "75-100k", "100-125k", "125-150k", "150-200k", ">200k"))
+```
+- Other demographics [PLOT]
+```{r other demographics, echo=FALSE}
+#map of families living below poverty line
+ggplot(full_tract_info) +
+  annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
+  geom_sf(aes(fill = (hh_povlevelE/total_hhsE)), color=NA, size=0.1) +
+  scale_fill_gradientn(colors = green_pal, name = "% of households below federal poverty line", labels = paste(seq(0,5),"%")) + 
+  theme_void()
+
+full_tract_info <- full_tract_info %>%
+  mutate(pct_veh = (1-(no_vehE/total_hhsE))) 
+  
+  veh_distribution_chart <- ggplot(full_tract_info) +
+  geom_histogram(aes(x = pct_veh), fill = "orangered3", bins = 50) + 
+  labs(x = "% of households with 1+ vehicle", y = "Number of Census Tracts") +
+  scale_x_continuous(labels = scales::percent)
+
+veh_distribution_chart
+```
 ## Transit 
 EMBARK, the area’s transit authority, operates all public transit in greater Oklahoma City, which includes fixed-route bus service, the OKC Streetcar, paratransit service, river ferry transit, and a bikeshare network. Beyond transit, car-ownership and use is prevalent in the Oklahoma City MSA with only 2.6% of households reporting that they do not have access to a vehicle, and a median number of vehicles per household of 2.3. According to the 2021 ACS 5-Year Estimates, cars, trucks, or vans are the most common means of transportation to work for workers 16 and over (used by 89.7% of respondents), while commuting by public transportation is far less common (used by 0.5% of respondents). Based on the same ACS data, the average travel time to work is 23 minutes. 
 
-Transformation of road network throughout the years [grid -> curvilenear]
+Transformation of road network throughout the years [grid -> curvilinear]
 
-Summary Statistics [Linear length (feet or meters) of road type]
+Summary Statistics [Linear length (miles) of road type]
+
+Road classifications are determined by Open Street Maps, from which we extracted our road network.
+
+Primary roads: 438.30
+Secondary roads: 982.15
+Tertiary roads: 1550.44
+Trunk roads: 298.96
+Links/Centroid Connectors: 3306.19
 
 Summary Statistics [Number of lines, different modes]
 
 Geography + Transit Lines & Roads + Centroids & Connectors [PLOT]
 
+```{r map of geography, roads, transit, centroids, echo=FALSE}
+county_geom <- full_tract_info %>%
+    separate(NAME, into = c("tract-num", "county", "state"), sep = ", ") %>%
+    group_by(county) %>%
+    summarize(geometry = st_union(geometry))
+
+ggplot() +
+  annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
+  geom_sf(data = full_tract_info, aes(), fill = NA, color="darkgrey", size=0.1) +
+  geom_sf(data = county_geom, aes(), fill = NA, color="black", size=0.5) +
+  geom_sf(data = ok_roads, aes(), fill = NA, color="red", size=0.2) +
+  geom_sf(data = full_centroid_geom, aes(), fill = "green") +
+  geom_sf_label(data = county_geom, aes(label = county), alpha = 0, label.size = NA, size =4, fontface = "bold") +
+  annotation_scale(location = 'bl', text_cex = 1) +
+  theme_void() 
+```
 How model represents transit networks:
 - How we created our model and the assumptions inherent in our model...
 
@@ -61,18 +153,117 @@ Major employment sectors in the Oklahoma City metro area include government, hig
   - ?? Retail jobs represent both employment and attractions ??
   - Simplified assumptions of employment sectors
     - Breakdown of employment by county [PLOT]
-- Employment [PLOT]
-- Population [PLOT]
-- Activity density [PLOT]
+```{r}
+county_employment <- full_tract_info %>%
+    separate(NAME, into = c("tract-num", "county", "state"), sep = ", ") %>%
+    group_by(county) %>%
+    summarise(
+      basic_emp = sum(basic_emp),
+      service_emp = sum(service_emp),
+      retail_emp = sum(retail_emp)) %>%
+    st_drop_geometry()
 
+county_employment_stacked <- melt(county_employment, id = "county")
+
+ggplot(county_employment_stacked, aes(x = county, y = value, fill = variable)) + 
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("steelblue","thistle", "gold"), label = c("Basic", "Service", "Retail")) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(y = "Number of Employees", x = " ", fill = "Employment Sector") + 
+  theme(legend.position = "top")
+```
+- Employment & Population Density [PLOT]
+```{r density plots, echo=FALSE}
+emp_density_map <- ggplot(full_tract_info) +
+  annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
+  geom_sf(aes(fill = emp_density), color=NA, size=0.1) +
+  geom_sf(data = county_geom, aes(), fill = NA, color="black", size=0.1) +
+  scale_fill_gradientn(colors = red_pal, trans = "log", name = "Jobs / square meter", labels = paste(seq(0,4)*.001)) + 
+  theme_void()
+
+emp_density_map
+
+pop_density_map <- ggplot(full_tract_info) +
+  annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
+  geom_sf(aes(fill = pop_density), color=NA, size=0.1) +
+  geom_sf(data = county_geom, aes(), fill = NA, color="black", size=0.1) +
+  scale_fill_gradientn(colors = blue_pal, trans = "log", name = "People / square meter", labels = paste(seq(0,3)*.001)) +
+  theme_void()
+
+pop_density_map
+```
 ## Accessiblity
 - Define!
   - Zonal based accessibility metric [PLOT]
+```{r}
+drive_accessibility_matrix <- full_travel_matrix %>%
+  filter(drive_time<30) %>%
+  group_by(from_GEOID) %>%
+  tally() %>%
+  rename(score = n) 
+
+drive_accessibility_geom <- full_tract_info %>%
+  select(GEOID, geometry) %>%
+  left_join(drive_accessibility_matrix,
+            by = c("GEOID" = "from_GEOID"))
+
+ggplot(drive_accessibility_geom) + 
+  geom_sf(aes(fill=score))
+```
+
     - Shows connectivity as opposed to the value
     - Assumptions -> all zones are equal
       - Cumulative metric [threshold -> zones accessible within x]
         - CBD plot, peripheral plot [drive and transit]
-      - Isochrone plot
+```{r}
+drive_isochrone_generator <- function(iso_origin){
+  temp_matrix <- full_travel_matrix %>%
+  filter(from_GEOID == iso_origin)
+
+  #get tract geometry from ok_msa
+iso_drivetime_from_origin <- full_tract_info %>%
+  select(GEOID, geometry) %>%
+  full_join(temp_matrix, by = c("GEOID" = "to_GEOID"))
+
+selected_centroid <- full_centroid_geom %>%
+  filter(GEOID == iso_origin)
+
+#change NA to 0
+iso_drivetime_from_origin[is.na(iso_drivetime_from_origin)] <- 0
+
+ggplot(iso_drivetime_from_origin) + 
+  geom_sf(aes(fill = drive_time)) + 
+  scale_fill_gradient2(low = "white", mid = "thistle", high = "orchid4",
+                       midpoint = 50, #median(iso_drivetime_from_origin$travel_time_mins),
+                       name = paste("Drive Time\nto all\nzones from", iso_origin, "\n(minutes)")) +
+  geom_sf(data = selected_centroid, shape = 19, size = 1.5)
+}
+
+transit_isochrone_generator <- function(iso_origin){
+  temp_matrix <- full_travel_matrix %>%
+  filter(from_GEOID == iso_origin)
+
+  #get tract geometry from ok_msa
+iso_transittime_from_origin <- full_tract_info %>%
+  select(GEOID, geometry) %>%
+  full_join(temp_matrix, by = c("GEOID" = "to_GEOID"))
+
+selected_centroid <- full_centroid_geom %>%
+  filter(GEOID == iso_origin)
+
+ggplot(iso_transittime_from_origin) + 
+  geom_sf(aes(fill = total_time_mins)) + 
+  scale_fill_gradient2(low = "white", mid = "thistle", high = "orchid4",
+                       midpoint = 50, #median(iso_drivetime_from_origin$travel_time_mins),
+                       name = paste("Transit Time\nto all\nzones from", iso_origin, "\n(minutes)")) +
+  geom_sf(data = selected_centroid, shape = 19, size = 1.5)
+}
+
+drive_isochrone_generator(40109107212)
+
+transit_isochrone_generator(40109107212)
+
+```
     - Drive vs. transit in zone
   - Revised definition
     - Assumptions -> zones valued based on what they contain [e.g. jobs]
@@ -81,20 +272,137 @@ Major employment sectors in the Oklahoma City metro area include government, hig
       - Gravity-based 
       - Drive vs. transit accessibility measures
           - Stacked bar charts [PLOT]
-            - Weighting of in vehicle and out of vehicle time
+```{r stacked bar chart, echo=FALSE}
+transit_stackedbar_generator <- function(iso_origin){
+  temp_matrix <- full_travel_matrix %>%
+  filter(from_GEOID == iso_origin) %>%
+  select(to_GEOID, access_wt, init_wt, ivtt, transfer_wt, egress_wt)
 
-- 
+temp_matrix_stacked <- melt(temp_matrix, id = "to_GEOID")
+
+ggplot(temp_matrix_stacked, aes(x = reorder(to_GEOID, value), y = value, fill = variable)) + 
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("steelblue","thistle", "gold", "red", "green"), label = c("Walk time", "Wait time", "Travel time", "Transfer time", "Egress time")) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(y = "Number of Minutes", x = " ", fill = "Public Transportation Activity", title = paste("Transit Time to all zones from", iso_origin, "(minutes)"))  + 
+  theme(legend.position = "top", axis.text.x=element_blank(), axis.ticks.x=element_blank())
+}
+
+transit_stackedbar_generator(40109107212)
+```
+          
+            - Weighting of in vehicle and out of vehicle time
+            
+```{r}
+full_travel_matrix <- full_travel_matrix %>%
+  left_join(full_tract_info %>%
+              select(GEOID, total_emp, basic_emp, service_emp, retail_emp), 
+            by = c("to_GEOID" = "GEOID"))
+```
+
+```{r define decay functions, echo=FALSE}
+#exponential decay function for driving
+exponential_function <- function(travel_time, halflife) {
+  lambda = log(2) / halflife
+  exp(travel_time * -1 * lambda)
+}
+
+#logistic decay function for transit
+logistic_function <- function(travel_time, inflection, stdev) {
+  1/(1+exp((travel_time - inflection) / stdev))
+}
+```
+
+```{r accessibility df, echo=FALSE}
+#adding weights to driving and transit travel time, associating jobs with weights
+full_travel_matrix <- full_travel_matrix %>%
+  mutate(weight_drive = exponential_function(drive_time, 30),
+         weight_transit = logistic_function(perceived_time, 30, 10)) %>%
+   mutate(drive_jobs = total_emp * weight_drive,
+     transit_jobs = total_emp * weight_transit)
+
+accessibility_summary <- full_travel_matrix %>%
+  group_by(from_GEOID) %>%
+  summarise(drive_access = sum(drive_jobs, na.rm = TRUE),
+            transit_access = sum(transit_jobs, na.rm = TRUE)) %>%
+  mutate(drive_index = 100*drive_access/max(drive_access),
+         transit_index = 100*transit_access/max(transit_access))
+```
+``` {r plotting accessibility indices}
+ggplot(accessibility_summary) +
+  geom_point(aes(x = drive_index,
+                 y = transit_index),
+             alpha = 0.5,
+             color = "blue",
+             shape = "o") +
+  scale_x_continuous(name = "Car accessibility index") +
+  scale_y_continuous(name = "Transit accessibility index") +
+  theme_minimal()
+
+ggplot(accessibility_summary) +
+  geom_histogram(aes(x = drive_index),
+                 bins = 30,
+                 color = "blue",
+                 fill = "lightblue",
+                 alpha = 0.5) +
+  geom_histogram(aes(x = transit_index),
+                 bins = 30,
+                 color = "red",
+                 fill = "pink", 
+                 alpha = 0.3) +
+  scale_x_continuous(name = "Car and transit accessibility index") +
+  scale_y_continuous(name = "Number of census tracts") +
+  theme_minimal()
+```
+```{r plotting spatial accessibility, echo=FALSE}
+accessibility_summary <- accessibility_summary %>%
+  left_join(full_tract_info %>%
+              select(GEOID, geometry),
+            by = c("from_GEOID" = "GEOID")) %>%
+  as.data.frame()
+
+tract_accessibility <- full_tract_info %>%
+  select(GEOID, geometry) %>%
+  left_join(accessibility_summary, 
+            by = c("GEOID" = "from_GEOID"))
+
+ggplot(tract_accessibility) +
+  annotation_map_tile(type = "cartolight",
+                      zoomin = 0,
+                      progress = "none") +
+  geom_sf(aes(fill = drive_index),
+          color = NA,
+          alpha = 0.6) +
+  scale_fill_viridis_c(name = "Drive accessibility",
+                       #trans = "log",
+                       #breaks = c(0.000001,100),
+                       #labels = c("Low",
+                                  #"High"),
+                       option = "A") +
+  theme_map()
+
+ggplot(tract_accessibility) +
+  annotation_map_tile(type = "cartolight",
+                      zoomin = 0,
+                      progress = "none") +
+  geom_sf(aes(fill = transit_index),
+          color = NA,
+          alpha = 0.6) +
+  scale_fill_viridis_c(name = "Transit accessibility",
+                       trans = "log",
+                       breaks = c(0.000001,100),
+                       labels = c("Low",
+                                  "High"),
+                       option = "A") +
+  theme_map()
+```
+
 ## Technical appendix
 - Data dictionary
   - Overview of data structures
   - Definition of variables [sources + our calculations]
 - Code for 
-  - - Cummulative assessibility
+  - - Cumulative accessibility
   - Gravity based functions
   - Isochrone generator
   - Stacked bar generator
-  
-```{r}
-
-```
-

@@ -229,8 +229,6 @@ ggplot() +
   
 ## Densities  
 
-
-
 ```{r pop_density_map,  message=FALSE, fig.height = 3.5, fig.align = "left", fig.cap="\\label{fig:figs}Map showing the population density in the Oklahoma City MSA", echo=FALSE}
 
 pop_density_map <- ggplot(ok_msa) +
@@ -517,6 +515,8 @@ transitskim_no_transfers <- read.csv(transitskim_no_transfers_path)
 okc_gtfs <- read_gtfs("https://embarkok.com/data/gtfs/google_transit.zip")
 
 route_shapes <- shapes_as_sf(okc_gtfs$shapes)
+
+write_csv(route_shapes, "transit_geom.csv")
 ```
 
 ```{r reading transit centroids, include = FALSE}
@@ -731,12 +731,17 @@ jobs_access <- transit_TTmatrix_long %>%
   select(GEOID, NAME, origin, destination, total_time_mins, num_transfers, access_wt, init_wt, ivtt, transfer_wt, egress_wt, ovtt, perceived_time, fare, total_emp, basic_emp, retail_emp, service_emp, geometry)
 ```
 
-```{r define a decay function, echo=FALSE}
 
-logistic_function <- function(travel_time, inflection, stdev) {
-  1/(1+exp((travel_time - inflection) / stdev))
-}
 
+```{r read in roads shape file, echo=FALSE}
+ok_roads_geom <- read_sf("okc_roads_prayerhand_geom 2023-02-20.shp")
+
+ggplot() +
+  annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
+  geom_sf(data = ok_msa, aes(), fill = NA, color="darkgrey", size=0.1) +
+  geom_sf(data = county_geom, aes(), fill = NA, color="black", size=0.5) +
+  geom_sf(data = ok_roads_geom, aes(), fill = NA, color="red", size=0.2) +
+  geom_sf_label(data = county_geom, aes(label = county), alpha = 0, label.size = NA, size =4, fontface = "bold") +
+  annotation_scale(location = 'bl', text_cex = 1) +
+  theme_void() 
 ```
-
-

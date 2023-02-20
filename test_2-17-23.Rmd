@@ -358,8 +358,8 @@ After generating a complete matrix, we read the travel time matrix and the nodes
 GEOID_centroids_path <- "../Travel-Forecasting/ok_msa_w_centroids_updated_2-18.csv"
 GEOID_centroids <- read.csv(GEOID_centroids_path) %>%
   rename(drive_centroid_id = centroid_id, 
-         #GEOID = ï..GEOID) %>%
-         GEOID = GEOID) %>%
+         GEOID = ï..GEOID) %>%
+         #GEOID = GEOID) %>%
   mutate(GEOID = as.character(GEOID))
 #join ok msa df with drive+transit centroids
 ok_msa_w_centroids <- ok_msa %>%
@@ -687,9 +687,9 @@ complete_centroid <- ok_msa_w_centroids %>%
 
 write_csv(full_TTmatrix_long, "full_travel_matrix.csv")
 
-write_csv(ok_msa, "full_tract_info.csv")
+st_write(ok_msa, "ok_geom.geojson")
 
-write_csv(complete_centroid, "full_centroid_geom.csv")
+st_write(complete_centroid, "full_centroid_geom.geojson")
 
 ```
 
