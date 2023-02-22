@@ -1,11 +1,12 @@
 ---
-title: "OKC Network Skim"
+title: "Building a Travel Demand Model for the Oklahoma City Metropolitan Statistical Area"
+author: "Gabe Barrett-Jackson, Matt Khinda, Samantha Page"
 output:
   html_document:
     theme: cerulean
-    toc: false
-    toc_depth: 4
-    toc_float: false
+    toc: true
+    toc_depth: 6
+    toc_float: true
 date: "2023-02-23"
 ---
 
@@ -25,9 +26,8 @@ library(reshape2)
 library(tidytransit)
 library(naniar)
 library(geojsonio)
+library(knitr)
 ```
-
-# Building a Travel Demand Model for the Oklahoma City Metropolitan Statistical Area
 
 ```{r reading in data frames, include=FALSE}
 full_tract_info <- geojson_sf("ok_geom.geojson") %>%
@@ -56,13 +56,14 @@ green_pal <- brewer.pal(5,"Greens")
 orange_pal <- brewer.pal(5,"Oranges")
 ```
 
-## Introduction + Demographics 
+# Introduction + Demographics 
 
 The Oklahoma City (OKC) metropolitan statistical area (MSA) is composed of seven counties centrally located in Oklahoma: Canadian County, Cleveland County, Grady County, Lincoln County, Logan County, McClain County, and Oklahoma County. Across these counties there are a total of **363 census tracts** (based on the 2010 census tracts). The MSA has a total land area of approximately **1,427,500 square kilometers**. Together, these counties are home to 1,382,800 people, according to the 2019 ACS 5-Year Estimates. The Oklahoma City MSA makes up about 35% of the state’s total population of 3,932,900.
 
 The Oklahoma City MSA is predominantly white, with 64.3% of residents identifying as white alone, followed by 13.3% Hispanic or Latino, 10.1% Black, 3.3% American Indian and Alaska Native, 3.1% Asian, 0.1% Native Hawaiian and Pacific Islander. 36.8% of residents in the study are are ages 35-64, 24.7% are under the age of 18, 25.0% are ages 18-34, and 13.6% are ages 65 and older. The median household income in 2021 was $59,084 (Fig. 1) – higher than the statewide average and lower than the national average. About 13.9% of residents live below the poverty line (Fig. 2) – lower than the statewide average and higher than the national average.
 
-```{r income distribution, echo=FALSE, warning=FALSE}
+
+```{r income distribution, echo=FALSE, warning=FALSE, fig.align = "center"}
 msa_income <- full_tract_info %>%
   separate(NAME, into = c("tract-num", "county", "state"), sep = ", ") %>%
     group_by(state) %>%
@@ -103,7 +104,7 @@ ggplot(msa_income) +
 ```
 
 
-```{r poverty line, echo=FALSE, warning=FALSE}
+```{r poverty line, echo=FALSE, warning=FALSE, fig.align = "center"}
 #map of families living below poverty line
 ggplot(full_tract_info) +
   annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
@@ -119,11 +120,11 @@ ggplot(full_tract_info) +
 ```
 
 
-## Transportation in OKC
+# Transportation in OKC
 
 EMBARK, the area’s transit authority, operates all public transit in greater Oklahoma City, which includes fixed-route bus service, the OKC Streetcar, paratransit service, river ferry transit, and a bikeshare network. Beyond transit, car-ownership and use is prevalent in the Oklahoma City MSA with only 2.6% of households reporting that they do not have access to a vehicle (Fig. 3), and a median number of vehicles per household of 2.3. According to the 2019 ACS 5-Year Estimates, cars, trucks, or vans are the most common means of transportation to work for workers 16 and over (used by 92.6% of respondents), while commuting by public transportation is far less common (used by 0.5% of respondents). Based on the same ACS data, the average travel time to work is 23 minutes.
 
-```{r vehicle ownership, echo=FALSE}
+```{r vehicle ownership, echo=FALSE, fig.align = "center"}
 #pct of vehicle ownership
 ggplot(full_tract_info) +
   geom_histogram(aes(x = pct_veh), fill = "orangered3", bins = 50) + 
@@ -135,24 +136,25 @@ ggplot(full_tract_info) +
 ```
 
 
-### Road Network
+## Road Network
 
 The Oklahoma City MSA contains a road network that has developed akin to many cities in the United States. Downtown OKC, which is the oldest part of the MSA, largely follows a grid pattern. As the network moves towards the periphery this street network design changes. The network becomes much more sparse and transitions to a less uniform curvilinear network.   
 
-### Road Network Summary Statistics 
+## Road Network Summary Statistics 
 
 Road classifications are determined by Open Street Maps, from which we extracted our road network.
 
-Primary roads: 438.3 miles
-Secondary roads: 982.2 miles
-Tertiary roads: 1550.4 miles
-Trunk roads: 299.0 miles
-Links/Centroid Connectors: 3306.2 miles
-
-## Our Model 
+* Primary roads: 438.3 miles
+* Secondary roads: 982.2 miles
+* Tertiary roads: 1550.4 miles
+* Trunk roads: 299.0 miles
+* Links/Centroid Connectors: 3306.2 miles
 
 
-```{r map of geography, roads, transit, centroids, echo=FALSE}
+# Our Model 
+
+
+```{r map of geography, roads, transit, centroids, echo=FALSE, fig.align = "center"}
 county_geom <- full_tract_info %>%
     separate(NAME, into = c("tract-num", "county", "state"), sep = ", ") %>%
     group_by(county) %>%
@@ -178,36 +180,59 @@ To create the network in TransCAD (Fig. 4), we imported the Open Street Maps lay
 
 Assumptions that were incorporated into our road network include:
 
-- Vehicle speed on primary roads is: 60 mph
-- Vehicle speed on secondary roads is: 40 mph
-- Vehicle speed on tertiary roads is: 30 mph
-- Vehicle speed on trunk roads is: 60 mph
-- Vehicle speed on link/centroid connectors is: 15 mph
-
+* Vehicle speed on primary roads is: 60 mph
+* Vehicle speed on secondary roads is: 40 mph
+* Vehicle speed on tertiary roads is: 30 mph
+* Vehicle speed on trunk roads is: 60 mph
+* Vehicle speed on link/centroid connectors is: 15 mph
 
 Assumptions that were incorporated into our model when we created our transit network include:
-- Everyone walks to transit
-- Transit vehicle speed is 23 mph
-- Walking speed is 2.5 mph
-- There is an assumed 15-minute wait time, max wait time, and transfer time
-- Fares are $2 and there is a $0 transfer fee
-- EMBARK operates a streetcar which was changed in TransCAD to exist as rail
+* Everyone walks to transit
+* Transit vehicle speed is 23 mph
+* Walking speed is 2.5 mph
+* There is an assumed 15-minute wait time, max wait time, and transfer time
+* Fares are $2 and there is a $0 transfer fee
+* EMBARK operates a streetcar which was changed in TransCAD to exist as rail
+
+The charts below illustrate how the timing of various transit trips break down across walk, wait, transfer and travel time (Figs. 5-6).
 
 
-## Land Use: Employment & Population Density
+```{r stacked bar chart, echo=FALSE, warning=FALSE, fig.align = "center"}
+transit_stackedbar_generator <- function(iso_origin){
+  temp_matrix <- full_travel_matrix %>%
+  filter(from_GEOID == iso_origin) %>%
+  select(to_GEOID, access_wt, init_wt, ivtt, transfer_wt, egress_wt)
+
+temp_matrix_stacked <- melt(temp_matrix, id = "to_GEOID")
+
+ggplot(temp_matrix_stacked, aes(x = reorder(to_GEOID, value), y = value, fill = variable)) + 
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("steelblue","thistle", "gold", "red", "green"), label = c("Walk time", "Wait time", "Travel time", "Transfer time", "Egress time")) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(y = "Number of Minutes", x = " ", fill = "Public Transportation Activity", title = paste("Figs. 5 and 6 - Travel Time Makes Up the Bulk of Most Trips,\nbut Transfer Wait Time is Also A Large Portion of Trip Duration")) + 
+    labs(subtitle = paste("Transit Time to all zones from", iso_origin, "(minutes)")) +
+  theme(legend.position = "top", axis.text.x=element_blank(), axis.ticks.x=element_blank())
+}
+
+transit_stackedbar_generator(40109107212)
+transit_stackedbar_generator(40027201202)
+```
+
+
+# Land Use: Employment & Population Density
 Major employment sectors in the Oklahoma City metro area include government, higher education, aerospace, healthcare, and retail. According to the Greater Oklahoma City Chamber of Commerce, major employers include the State of Oklahoma, Tinker Air Force Base, the University of Oklahoma, Integris Health, and Amazon. In 2021, the metropolitan area added 10,825 jobs (1.7% increase), and further job growth was expected in 2022 as stated in the 2022 Greater Oklahoma City Economic Outlook.
 
 Assumptions inherent in our model related to employment and population include:
-- Everyone lives at centroid of their zone
-- Retail jobs represent both employment and attractions
-- We assume that employment exists in three categories (Fig. 5):
-  - Retail
-  - Service
-  - Basic
-- We also include total employment as a measure of all three categories
+* Everyone lives at centroid of their zone
+* Retail jobs represent both employment and attractions
+* We assume that employment exists in three categories (Fig. 7):
+    + Retail
+    + Service
+    + Basic
+* We also include total employment as a measure of all three categories
 
 
-```{r employment type by county, echo=FALSE}
+```{r employment type by county, echo=FALSE, fig.align = "center"}
 county_employment <- full_tract_info %>%
     separate(NAME, into = c("tract-num", "county", "state"), sep = ", ") %>%
     group_by(county) %>%
@@ -226,24 +251,24 @@ ggplot(county_employment_stacked, aes(x = county, y = value, fill = variable)) +
   labs(y = "Number of Employees", 
        x = " ", 
        fill = "Employment Sector",
-       subtitle = "Fig. 5 - Oklahoma County has the Most Employees in the MSA,\nand the Majority Are Service Sector Workers") + 
+       subtitle = "Fig. 7 - Oklahoma County has the Most Employees in the MSA,\nand the Majority Are Service Sector Workers") + 
   theme(legend.position = "top")
 ```
 
 
-OKC generally follows a monocentric pattern of development with the greatest density of people living and working in downtown Oklahoma City (Figs. 6 and 7), located in the center of the MSA.
+OKC generally follows a monocentric pattern of development with the greatest density of people living and working in downtown Oklahoma City (Figs. 8 and 9), located in the center of the MSA.
 
 
 This employment density aligns with heightened public transit connectivity, too. In the urban core of Oklahoma City, we notice an overlap between a central business district, higher employment density, and increased public transit connectivity. 
 
 
-```{r density plots, echo=FALSE}
+```{r density plots, echo=FALSE, fig.align = "center"}
 emp_density_map <- ggplot(full_tract_info) +
   annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
   geom_sf(aes(fill = emp_density), color=NA, size=0.1) +
   geom_sf(data = county_geom, aes(), fill = NA, color="black", size=0.1) +
   scale_fill_gradientn(colors = red_pal, trans = "log", name = "Jobs / square meter", labels = paste(seq(0,4)*.001)) + 
-  labs(subtitle = "Fig. 6 - Population Density is Greatest in the Center of the Oklahoma City MSA",
+  labs(subtitle = "Fig. 8 - Population Density is Greatest in the Center of the Oklahoma City MSA",
        x = "",
        y = "") +
   annotation_scale(location = 'br', text_cex = 0.5) +
@@ -256,7 +281,7 @@ pop_density_map <- ggplot(full_tract_info) +
   geom_sf(aes(fill = pop_density), color=NA, size=0.1) +
   geom_sf(data = county_geom, aes(), fill = NA, color="black", size=0.1) +
   scale_fill_gradientn(colors = blue_pal, trans = "log", name = "People / square meter", labels = paste(seq(0,3)*.001)) +
-  labs(subtitle = "Fig. 7 - Job Density is Also Concentrated in the Center of the Oklahoma City MSA",
+  labs(subtitle = "Fig. 9 - Job Density is Also Concentrated in the Center of the Oklahoma City MSA",
        x = "",
        y = "") +
   annotation_scale(location = 'br', text_cex = 0.5) +
@@ -266,15 +291,14 @@ pop_density_map
 ```
 
 
-## Accessiblity
+# Accessiblity
 
 The measurement of accessibility has been suggested as the ultimate benchmark for evaluating the effectiveness of land-use and transportation systems. By gauging accessibility, one can evaluate how much certain demographic groups benefit from a particular land-use and transportation system. This analysis can yield a significant socio-spatial report for urban planners, informing them on how to better plan and implement these systems (El-Geneidy and Levinson 2022; Wachs and Kumagai 1973).
 
-When we first completed our road network skim, we created a visualization of accessibility based on drive-time access from one zone to all others. This metric allowed us to compare the relative accessibility of tracts more easily. This zonal-based accessibility shows connectivity as opposed to an index metric, as illustrated below, and assumes that all zones are equally valuable, rather than weighting zones based on the amenities or activities accessible within them. It also relies on a rigid threshold to determine accessibility: determining an "accessibility score" by counting the number of zones each origin could reach within 30 minutes of driving. We note that this score is affected by the lack of residential roads in our network, which would likely provide better accessibility for some of the peripheral zones.
+When we first completed our road network skim, we created a visualization of accessibility based on drive-time access from one zone to all others (Fig. 10). This metric allowed us to compare the relative accessibility of tracts more easily. This zonal-based accessibility shows connectivity as opposed to an index metric, as illustrated below, and assumes that all zones are equally valuable, rather than weighting zones based on the amenities or activities accessible within them. It also relies on a rigid threshold to determine accessibility: determining an "accessibility score" by counting the number of zones each origin could reach within 30 minutes of driving. We note that this score is affected by the lack of residential roads in our network, which would likely provide better accessibility for some of the peripheral zones.
 
 
-
-```{r zonal-based accessibility, echo=FALSE}
+```{r zonal-based accessibility, echo=FALSE, fig.align = "center"}
 drive_accessibility_matrix <- full_travel_matrix %>%
   filter(drive_time<30) %>%
   group_by(from_GEOID) %>%
@@ -289,13 +313,13 @@ drive_accessibility_geom <- full_tract_info %>%
 ggplot(drive_accessibility_geom) + 
   annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
   geom_sf(aes(fill=score)) +
-  labs(subtitle = "Fig. 8 - Zonal-Based Accessibility Shows Greatest Access to Other Zones\nis Centered in Downtown Oklahoma City") +
+  labs(subtitle = "Fig. 10 - Zonal-Based Accessibility Shows Greatest Access to Other Zones\nis Centered in Downtown Oklahoma City") +
   annotation_scale(location = 'br', text_cex = 0.5) +
   theme()
 ```
 
 
-```{r isochrone generators, echo=FALSE}
+```{r isochrone generators, echo=FALSE, fig.align = "center"}
 drive_isochrone_generator <- function(iso_origin){
   temp_matrix <- full_travel_matrix %>%
   filter(from_GEOID == iso_origin)
@@ -360,36 +384,14 @@ transit_isochrone_generator(40027201202) #southern transit hub
 transit_isochrone_generator(40081961100) #periphery @ NW corner, no transit access
 ```
   
+
 After calculating and creating our initial visualization of zonal-based accessibility we came to understand that the number of zones one can reach is less relevant than the number of opportunities one can reach. Our definition of accessibility also changed to reflect this understanding. We turn to the definition provided by Carole, accessibility: The ease with which a person can fully participate in the economic, civic, and social life of their society. In the case of our model we have chosen to limit accessibility to access to job opportunities. Our model still holds assumptions, for example, zones are assigned value based on what the jobs they contain. In this way we employ a gravity-based accessibility measure that considers the attractiveness and distance of destinations within a particular area. This measure considers that the more attractive a destination is and the closer it is to a particular location, the more accessible it is to people living or working in that area.
 
-We have decided to keep measures of car and transit accessibility separate, rather than create a combined metric of the two. We are more interested in comparing access across the two different modes than conceptualizing one measure of both car and transit accessibility. However, we did weight transit travel time to account for perceptions that out-of-vehicle travel time on public transportation trips is more onerous than in-vehicle travel time, multiplying OVTT by 1.5. 
+We have decided to keep measures of car and transit accessibility separate, rather than create a combined metric of the two (Figs. 15-16). We are more interested in comparing access across the two different modes than conceptualizing one measure of both car and transit accessibility. However, we did weight transit travel time to account for perceptions that out-of-vehicle travel time on public transportation trips is more onerous than in-vehicle travel time, multiplying OVTT by 1.5. 
 
-For our models, we selected the exponential function for car travel and the logistic function for transit travel. Our rationale is that the exponential function captures the long-reaching value of a private vehicle in achieving accessibility, as the measure of accessibility never quite reaches 0, no matter how long the travel time. The benefit of a logistic function for transit, however, reflects the perception of great access within short trips on a transit network. For both functions, we set a half-life/inflection point of 30 minutes, which aligns with our personal conceptions of reasonable work- and personal-trip distances.
-          
-          
-```{r stacked bar chart, echo=FALSE, warning=FALSE}
-transit_stackedbar_generator <- function(iso_origin){
-  temp_matrix <- full_travel_matrix %>%
-  filter(from_GEOID == iso_origin) %>%
-  select(to_GEOID, access_wt, init_wt, ivtt, transfer_wt, egress_wt)
-
-temp_matrix_stacked <- melt(temp_matrix, id = "to_GEOID")
-
-ggplot(temp_matrix_stacked, aes(x = reorder(to_GEOID, value), y = value, fill = variable)) + 
-  geom_bar(stat = "identity") +
-  scale_fill_manual(values = c("steelblue","thistle", "gold", "red", "green"), label = c("Walk time", "Wait time", "Travel time", "Transfer time", "Egress time")) +
-  scale_y_continuous(labels = scales::comma) +
-  labs(y = "Number of Minutes", x = " ", fill = "Public Transportation Activity", title = paste("Transit Time to all zones from", iso_origin, "(minutes)"))  + 
-    labs(subtitle = "Figs. 15 and 16 - Travel Time Makes Up the Bulk of Most Trips,\nbut Transfer Wait Time is Also A Large Portion of Trip Duration") +
-  theme(legend.position = "top", axis.text.x=element_blank(), axis.ticks.x=element_blank())
-}
-
-transit_stackedbar_generator(40109107212)
-transit_stackedbar_generator(40027201202)
-```
+For our models, we selected the exponential function for car travel and the logistic function for transit travel (Figs. 17-18). Our rationale is that the exponential function captures the long-reaching value of a private vehicle in achieving accessibility, as the measure of accessibility never quite reaches 0, no matter how long the travel time. The benefit of a logistic function for transit, however, reflects the perception of great access within short trips on a transit network. For both functions, we set a half-life/inflection point of 30 minutes, which aligns with our personal conceptions of reasonable work- and personal-trip distances.
           
 
-[text to come: Weighting of in vehicle and out of vehicle time]
 ```{r define decay functions, echo=FALSE}
 #exponential decay function for driving
 exponential_function <- function(travel_time, halflife) {
@@ -419,7 +421,7 @@ accessibility_summary <- full_travel_matrix %>%
          transit_index = 100*transit_access/max(transit_access))
 ```
 
-``` {r plotting accessibility indices, echo=FALSE}
+``` {r plotting accessibility indices, echo=FALSE, fig.align = "center"}
 ggplot(accessibility_summary) +
   geom_point(aes(x = drive_index,
                  y = transit_index),
@@ -428,12 +430,12 @@ ggplot(accessibility_summary) +
              shape = "o") +
   scale_x_continuous(name = "Car accessibility index") +
   scale_y_continuous(name = "Transit accessibility index") +
-  labs(subtitle = "Fig. 17 - The Transit Hub South of Downtown Oklahoma City is A Recognizable Blip on this Plot Showing Car and Transit Accessibility Plotted Against One Another") +
+  labs(subtitle = "Fig. 15 - The Transit Hub South of Downtown Oklahoma City is A Recognizable Blip on this Plot Showing Car and Transit Accessibility Plotted Against One Another") +
   theme()
 ```
 
 
-```{r accessibility indices histogram, echo=FALSE}
+```{r accessibility indices histogram, echo=FALSE, fig.align = "center"}
 ggplot(accessibility_summary) +
   geom_histogram(aes(x = drive_index),
                  bins = 30,
@@ -447,12 +449,239 @@ ggplot(accessibility_summary) +
                  alpha = 0.3) +
   scale_x_continuous(name = "Car and transit accessibility index") +
   scale_y_continuous(name = "Number of census tracts") +
-  labs(subtitle = "Fig. 18 -  Nearly Two-Thirds of Zones Do Not Have Any Transit Accessibility") +
+  labs(subtitle = "Fig. 16 -  Nearly Two-Thirds of Zones Do Not Have Any Transit Accessibility") +
   theme()
 ```
 
 
-```{r plotting spatial accessibility, echo=FALSE, warning=FALSE}
+```{r plotting spatial accessibility, echo=FALSE, warning=FALSE, fig.align = "center"}
+accessibility_summary <- accessibility_summary %>%
+  left_join(full_tract_info %>%
+              select(GEOID, geometry),
+            by = c("from_GEOID" = "GEOID")) %>%
+  as.data.frame()
+
+tract_accessibility <- full_tract_info %>%
+  select(GEOID, geometry) %>%
+  left_join(accessibility_summary, 
+            by = c("GEOID" = "from_GEOID"))
+
+ggplot(tract_accessibility) +
+  annotation_map_tile(type = "cartolight",
+                      zoomin = 0,
+                      progress = "none") +
+  geom_sf(aes(fill = drive_index),
+          color = NA,
+          alpha = 0.6) +
+  scale_fill_viridis_c(name = "Drive accessibility",
+                       #trans = "log",
+                       #breaks = c(0.000001,100),
+                       #labels = c("Low",
+                                  #"High"),
+                       option = "A") +
+  labs(subtitle = "Fig. 17 - Accessibility by Car is Strongest in Downtown Oklahoma City,\nwith Some Zones on the Periphery Indicating Very Low Accessibility") +
+  theme()
+
+ggplot(tract_accessibility) +
+  annotation_map_tile(type = "cartolight",
+                      zoomin = 0,
+                      progress = "none") +
+  geom_sf(aes(fill = transit_index),
+          color = NA,
+          alpha = 0.6) +
+  scale_fill_viridis_c(name = "Transit accessibility",
+                       trans = "log",
+                       breaks = c(0.000001,100),
+                       #labels = c("Low",
+                                  #"High"),
+                       option = "A") +
+  labs(subtitle = "Fig. 18 - Accessibility by Transit is Concentrated in the Downtown Area,\nwith Some Accessibility around a Southern Transit Hub in Norman") +
+  theme()
+```
+
+# Technical appendix
+
+## Data dictionary
+
+### Overview of data structures
+  
+```{r summary tract info, echo=FALSE}
+head(full_tract_info) %>%
+  kable()
+```
+
+```{r summary travel matrix, echo=FALSE}
+head(full_travel_matrix) %>%
+  kable()
+```
+
+### Definition of Variables 
+
+**GEOID** - Numerical ID for census tract                	
+**NAME** - Census tract, county, and state                    	
+**tot_popE** - Total number of people    	
+**no_vehE** - Households with no vehicle present
+**pct_veh** - Percent of households with at least one vehicle
+**total_hhsE** - Total number of households               	
+**hh_1personE** - Number of households with 1 person           	 
+**hh_2personE** - Number of households with 2 persons                 	
+**hh_3personE** - Number of households with 3 persons                	
+**hh_4person_plusE** - Number of households with 4 or more persons           	
+**hh_u18_married_coupleE** - Number of households with a person under 18 and a married couple head-of-household  	
+**hh_u18_singleparent_maleE** - Number of households with a person under 18 and a single male head-of-household  	
+**hh_u18_singleparent_femaleE** - Number of households with a person under 18 and a single female head-of-household  	
+**hh_65plusE** - Number of households with a person age 65 or older             	
+**tot_disabledE** - Number of people with a disability           	
+**inc_lt_10kE** - Number of households with income less than $10,000            	
+**inc_btw_10k_15kE** - Households with income between $10,000 and $15,000       	
+**inc_btw_15k_20kE** - Households with income between $15,000 and $20,000       	
+**inc_btw_20k_25kE** - Households with income between $20,000 and $25,000    	 
+**inc_btw_25k_30kE** - Households with income between $25,000 and $30,000      	
+**inc_btw_30k_35kE** - Households with income between $30,000 and $35,000      	
+**inc_btw_35k_40kE** - Households with income between $35,000 and $40,000       	
+**inc_btw_40k_45kE** - Households with income between $40,000 and $45,000       	
+**inc_btw_45k_50kE** - Households with income between $45,000 and $50,000       	
+**inc_btw_50k_60kE** - Households with income between $50,000 and $60,000      	 
+**inc_btw_60k_75kE** - Households with income between $60,000 and $75,000         	
+**inc_btw_75k_100kE** - Households with income between $75,000 and $100,000  
+**inc_btw_100k_125kE** - Households with income between $100,000 and $125,000      	
+**inc_btw_125k_150kE** - Households with income between $125,000 and $150,000  	
+**inc_btw_150k_200kE** - Households with income between $150,000 and 200,000	
+**inc_gt_200kE** - Households with income greater than $200,000         	 
+**hh_povlevelE** - Number of households below the poverty level            	
+**total_emp** - Total number of people employed            
+**basic_emp** - Total number of people employed in the following sectors: 
+    Agriculture, Forestry, Fishing, and Hunting (CNS01)
+    Mining and extraction (CNS02)
+    Utilities (CNS03)
+    Construction (CNS04)
+    Manufacturing (CNS05)
+    Wholesale trade (CNS06)
+    Transportation and warehousing (CNS06)  
+**retail_emp** - Total number of people employed in retail             	
+**service_emp** - Total number of people employed in remaining sectors            	
+**land_area_sqmeters** - Land area in square meters   	 
+**geometry** - Geographic coordinates of census tract outlines                	
+**pop_density** - People per square meter (calculated)           
+**emp_density** - Employees per square meter (calculated)                	
+**activity_density** - People and employees per square meter (calculated)
+**from_GEOID** - Trip origin
+**to_GEOID** - Trip destination
+**drive_time**  - Total length of car trip in minutes
+**total_time_mins** - Total length of transit trip in minutes
+**num_transfers** - Number of transfers per transit trip
+**access_wt** - Walk time to access transit
+**init_wt** - Initial wait time for transit trip
+**ivtt** - In-vehicle travel time for transit trip
+**transfer_wt** - Wait time for transfers, set at a maximum of 15 minutes
+**egress_wt** - Walk time to destination after transit trip
+**ovtt** - Out-of-vehicle travel time for transit trip
+**perceived_time** - Weighted travel time for transit trip (ovtt + 1.5*ivtt)
+**fare** - Total cost of transit trip, assuming fares are $2 and transfers are free (based on generalization of EMBARK fares)
+
+## Code  
+
+### Stacked Bar Generator
+
+transit_stackedbar_generator <- function(iso_origin){
+  temp_matrix <- full_travel_matrix %>%
+  filter(from_GEOID == iso_origin) %>%
+  select(to_GEOID, access_wt, init_wt, ivtt, transfer_wt, egress_wt)
+
+temp_matrix_stacked <- melt(temp_matrix, id = "to_GEOID")
+
+ggplot(temp_matrix_stacked, aes(x = reorder(to_GEOID, value), y = value, fill = variable)) + 
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("steelblue","thistle", "gold", "red", "green"), label = c("Walk time", "Wait time", "Travel time", "Transfer time", "Egress time")) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(y = "Number of Minutes", x = " ", fill = "Public Transportation Activity", title = paste("Transit Time to all zones from", iso_origin, "(minutes)"))  + 
+    labs(subtitle = "Figs. 15 and 16 - Travel Time Makes Up the Bulk of Most Trips,\nbut Transfer Wait Time is Also A Large Portion of Trip Duration") +
+  theme(legend.position = "top", axis.text.x=element_blank(), axis.ticks.x=element_blank())
+}
+
+transit_stackedbar_generator(x)
+
+
+### Isochrone Generator
+
+drive_isochrone_generator <- function(iso_origin){
+  temp_matrix <- full_travel_matrix %>%
+  filter(from_GEOID == iso_origin)
+
+  #get tract geometry from ok_msa
+iso_drivetime_from_origin <- full_tract_info %>%
+  select(GEOID, geometry) %>%
+  full_join(temp_matrix, by = c("GEOID" = "to_GEOID"))
+
+selected_centroid <- full_centroid_geom %>%
+  filter(GEOID == iso_origin)
+
+#change NA to 0
+iso_drivetime_from_origin[is.na(iso_drivetime_from_origin)] <- 0
+
+ggplot(iso_drivetime_from_origin) + 
+  annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
+  geom_sf(aes(fill = drive_time)) + 
+  scale_fill_gradient2(low = "white", mid = "thistle", high = "orchid4",
+                       midpoint = 50, #median(iso_drivetime_from_origin$travel_time_mins),
+                       name = paste("Drive Time\nto all\nzones from", iso_origin, "\n(minutes)")) +
+  labs(subtitle = "Figs. 9, 10, and 11 - Drive-time Isochrones Show Access to All Zones in the Study Area") +
+  geom_sf(data = selected_centroid, shape = 19, size = 1.5) +
+  annotation_scale(location = 'br', text_cex = 0.5) +
+  theme()
+}
+
+transit_isochrone_generator <- function(iso_origin){
+  temp_matrix <- full_travel_matrix %>%
+  filter(from_GEOID == iso_origin)
+
+  #get tract geometry from ok_msa
+iso_transittime_from_origin <- full_tract_info %>%
+  select(GEOID, geometry) %>%
+  full_join(temp_matrix, by = c("GEOID" = "to_GEOID"))
+
+selected_centroid <- full_centroid_geom %>%
+  filter(GEOID == iso_origin)
+
+ggplot(iso_transittime_from_origin) + 
+  annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
+  geom_sf(aes(fill = total_time_mins)) + 
+  scale_fill_gradient2(low = "white", mid = "thistle", high = "orchid4",
+                       midpoint = 50, #median(iso_drivetime_from_origin$travel_time_mins),
+                       name = paste("Transit Time\nto all\nzones from", iso_origin, "\n(minutes)")) +
+  labs(subtitle = "Figs. 12, 13, and 14 - Transit-time Isochrones Show Limited Access within the Study Area") +
+  geom_sf(data = selected_centroid, shape = 19, size = 1.5) +
+  annotation_scale(location = 'br', text_cex = 0.5) +
+  theme()
+}
+drive_isochrone_generator(x)
+transit_isochrone_generator(x)
+
+
+### Cumulative Accessibility
+
+drive_accessibility_matrix <- full_travel_matrix %>%
+  filter(drive_time<30) %>%
+  group_by(from_GEOID) %>%
+  tally() %>%
+  rename(score = n) 
+
+drive_accessibility_geom <- full_tract_info %>%
+  select(GEOID, geometry) %>%
+  left_join(drive_accessibility_matrix,
+            by = c("GEOID" = "from_GEOID"))
+
+ggplot(drive_accessibility_geom) + 
+  annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
+  geom_sf(aes(fill=score)) +
+  labs(subtitle = "Fig. 8 - Zonal-Based Accessibility Shows Greatest Access to Other Zones\nis Centered in Downtown Oklahoma City") +
+  annotation_scale(location = 'br', text_cex = 0.5) +
+  theme()
+
+
+### Gravity-based Accessibility Functions
+
+
 accessibility_summary <- accessibility_summary %>%
   left_join(full_tract_info %>%
               select(GEOID, geometry),
@@ -495,14 +724,4 @@ ggplot(tract_accessibility) +
                        option = "A") +
   labs(subtitle = "Fig. 20 - Accessibility by Transit is Concentrated in the Downtown Area,\nwith Some Accessibility around a Southern Transit Hub in Norman") +
   theme()
-```
 
-## Technical appendix
-- Data dictionary
-  - Overview of data structures
-  - Definition of variables [sources + our calculations]
-- Code for 
-  - Cumulative accessibility
-  - Gravity based functions
-  - Isochrone generator
-  - Stacked bar generator
