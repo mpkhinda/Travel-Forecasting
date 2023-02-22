@@ -516,7 +516,9 @@ okc_gtfs <- read_gtfs("https://embarkok.com/data/gtfs/google_transit.zip")
 
 route_shapes <- shapes_as_sf(okc_gtfs$shapes)
 
-write_csv(route_shapes, "transit_geom.csv")
+st_write(route_shapes, "transit_geom.geojson", append=FALSE)
+
+#st_write(complete_centroid, "full_centroid_geom.geojson")
 ```
 
 ```{r reading transit centroids, include = FALSE}
