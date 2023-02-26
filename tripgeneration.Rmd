@@ -1,0 +1,239 @@
+---
+title: "trip_generation"
+author: "SP"
+date: "2/26/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE)
+```
+
+```{r}
+library(here)
+library(tidyverse)
+library(downloader)
+library(tidycensus)
+library(sf)
+```
+
+```{r load NHTS data}
+nhts_path <- "../Travel-Forecasting/nhts_data/"
+
+okc_trips <- here(nhts_path,
+                  "trippub.csv") %>%
+  read_csv() %>%
+  filter(HH_CBSA == "36420") %>%
+  filter(TRPTRANS != "01" & # Walk
+           TRPTRANS != "02" & # Bike
+           TRPTRANS != "19") %>%
+  mutate(home_based = (WHYFROM == "01" |
+                         WHYFROM == "02" |
+                         WHYTO == "01" |
+                         WHYTO == "02"),
+         work = (WHYFROM == "03" |
+           WHYTO == "03")) %>%
+  mutate(purpose = case_when(home_based & work ~ "HBW",
+                             home_based ~ "HBO",
+                             TRUE ~ "NHB"))
+
+table(okc_trips$purpose)
+```
+
+
+```{r count household trips}
+hh_trip_counts <- okc_trips %>%
+  group_by(HOUSEID) %>%
+  summarise(HBO_trips = sum(purpose == "HBO"),
+            HBW_trips = sum(purpose == "HBW"),
+            NHB_trips = sum(purpose == "NHB")) 
+```
+
+```{r}
+okc_hhs <- here(nhts_path,
+                     "hhpub.csv") %>%
+  read_csv() %>%
+  filter(HH_CBSA == "36420") %>%
+  left_join(hh_trip_counts) %>%
+  replace_na(list(HBO_trips = 0,
+                  HBW_trips = 0,
+                  NHB_trips = 0))
+```
+
+```{r variable mutation}
+okc_trips_65 <- okc_trips %>%
+  group_by(HOUSEID) %>%
+  summarize(age_65 = sum(ifelse(R_AGE_IMP >= 65, TRUE, FALSE))) %>%
+  mutate(age_65 = ifelse(age_65 == 0, FALSE, TRUE))
+
+okc_hhs <- okc_hhs %>%
+  mutate(inc_k = case_when(HHFAMINC == "01" ~ 5,
+                           HHFAMINC == "02" ~ 12.5,
+                           HHFAMINC == "03" ~ 17.5,
+                           HHFAMINC == "04" ~ 20,
+                           HHFAMINC == "05" ~ 37.5,
+                           HHFAMINC == "06" ~ 62.5,
+                           HHFAMINC == "07" ~ 82.5,
+                           HHFAMINC == "08" ~ 112.5,
+                           HHFAMINC == "09" ~ 132.5,
+                           HHFAMINC == "10" ~ 175,
+                           HHFAMINC == "11" ~ 300,
+                           TRUE ~ 99)) %>%
+  mutate(inc_k = na_if(inc_k, 99)) %>%
+  mutate(have_veh = ifelse(HHVEHCNT == 0, FALSE, TRUE)) %>%
+  mutate(homeownership = ifelse(HOMEOWN == "01", TRUE, FALSE))
+
+okc_hhs <- okc_hhs %>%
+  left_join(okc_trips_65, by = "HOUSEID") %>%
+  mutate(any_kids = LIF_CYC != "01" &
+                    LIF_CYC != "02" &
+                    LIF_CYC != "09" &
+                    LIF_CYC != "10")
+
+```
+
+```{r}
+hbo_trip_prod <- lm(HBO_trips ~ log2(inc_k) +
+                                #have_veh +
+                                any_kids +
+                      #homeownership +
+                      age_65,
+                    data = okc_hhs)
+
+summary(hbo_trip_prod)
+```
+```{r}
+hbw_trip_prod <- lm(HBW_trips ~ log2(inc_k) +
+                                #have_veh +
+                                any_kids +
+                      #homeownership +
+                      age_65,
+                    data = okc_hhs)
+
+summary(hbw_trip_prod)
+```
+```{r}
+nhb_trip_prod <- lm(NHB_trips ~ log2(inc_k) +
+                                #have_veh +
+                                any_kids +
+                      #homeownership +
+                      age_65,
+                    data = okc_hhs)
+
+summary(nhb_trip_prod)
+```
+
+```{r reading in tract info}
+vars <- c(tot_hhs = "B11005_001",
+          hhs_with_kids = "B11005_002",
+          hhs_0_veh = "B08201_002",
+          hhs_1_veh = "B08201_003",
+          med_inc = "B19113_001")
+
+median_study_area_income <- get_acs(year = 2019,
+                                    geography = "cbsa",
+                                    variables = "B19113_001") %>%
+  filter(NAME == "Oklahoma City, OK Metro Area")
+
+# Load TAZs
+okc_zones_temp <- get_acs(year = 2019, 
+                     state = "OK",
+                     county = c("Canadian",
+                                    "cleveland",
+                                    "Grady",
+                                    "Lincoln",
+                                    "Logan",
+                                    "McClain",
+                                    "Oklahoma"),
+                     variables = vars,
+                     geography = "tract",
+                     geometry = TRUE,
+                     output = "wide") %>%
+  replace_na(replace = list(med_incE = median_study_area_income$estimate[1])) %>%
+  select(GEOID, hhs_with_kidsE, med_incE) %>%
+  st_drop_geometry()
+
+
+full_tract_info <- geojson_sf("ok_geom.geojson") %>%
+  mutate(pct_veh = (1-(no_vehE/total_hhsE))) %>%
+  left_join(okc_zones_temp, by = "GEOID")
+```
+
+
+```{r calculate trip productions}
+tract_trip_info <- full_tract_info %>%
+  mutate(hbo_prod_per_hh = hbo_trip_prod$coefficients["(Intercept)"] + 
+                           hbo_trip_prod$coefficients["log2(inc_k)"] * log2(med_incE) + 
+                           hbo_trip_prod$coefficients["any_kidsTRUE"] *  (hhs_with_kidsE/total_hhsE) + 
+                           hbo_trip_prod$coefficients["age_65TRUE"] * (hh_65plusE / total_hhsE)) %>%
+  mutate(hbo_trip_prod = total_hhsE * hbo_prod_per_hh)
+
+
+tract_trip_info <- tract_trip_info %>%
+  mutate(hbw_prod_per_hh = hbw_trip_prod$coefficients["(Intercept)"] + 
+                           hbw_trip_prod$coefficients["log2(inc_k)"] * log2(med_incE) + 
+                           hbw_trip_prod$coefficients["any_kidsTRUE"] *  (hhs_with_kidsE/total_hhsE) + 
+                           hbw_trip_prod$coefficients["age_65TRUE"] * (hh_65plusE / total_hhsE)) %>%
+  mutate(hbw_trip_prod = total_hhsE * hbw_prod_per_hh)
+
+
+tract_trip_info <- tract_trip_info %>%
+  mutate(nhb_prod_per_hh = nhb_trip_prod$coefficients["(Intercept)"] + 
+                           nhb_trip_prod$coefficients["log2(inc_k)"] * log2(med_incE) + 
+                           nhb_trip_prod$coefficients["any_kidsTRUE"] *  (hhs_with_kidsE/total_hhsE) + 
+                           nhb_trip_prod$coefficients["age_65TRUE"] * (hh_65plusE / total_hhsE)) %>%
+  mutate(nhb_trip_prod = total_hhsE * nhb_prod_per_hh)
+```
+
+```{r trip attractions}
+tract_trip_info <- tract_trip_info %>%
+  mutate(hbo_trip_attr = 1.0 * total_hhsE +
+                         0.3 * basic_emp +
+                         5.9 * retail_emp +
+                         2.3 * service_emp) %>%
+  mutate(hbw_trip_attr = 1.2 * total_emp) %>%
+  mutate(nhb_trip_attr = 0.6 * total_hhsE +
+                         0.7 * basic_emp +
+                         2.6 * retail_emp +
+                         1.0 * service_emp)
+```
+
+```{r comparing productions and attractions}
+sum(tract_trip_info$hbo_trip_prod)
+
+sum(tract_trip_info$hbo_trip_attr)
+
+tract_trip_info <- tract_trip_info %>%
+  mutate(hbo_bal_attr = hbo_trip_attr * 
+           sum(hbo_trip_prod) / sum(hbo_trip_attr))
+
+sum(tract_trip_info$hbo_bal_attr)
+
+
+sum(tract_trip_info$hbw_trip_prod)
+
+sum(tract_trip_info$hbw_trip_attr)
+
+tract_trip_info <- tract_trip_info %>%
+  mutate(hbw_bal_attr = hbw_trip_attr * 
+           sum(hbw_trip_prod) / sum(hbw_trip_attr))
+
+sum(tract_trip_info$hbw_bal_attr)
+
+
+
+sum(tract_trip_info$nhb_trip_prod)
+
+sum(tract_trip_info$nhb_trip_attr)
+
+tract_trip_info <- tract_trip_info %>%
+  mutate(nhb_bal_attr = nhb_trip_attr * 
+           sum(nhb_trip_prod) / sum(nhb_trip_attr))
+
+sum(tract_trip_info$nhb_bal_attr)
+```
+```{r write a new file}
+tract_trip_info %>%
+  st_write("tract_trip_info.geojson")
+```
+
