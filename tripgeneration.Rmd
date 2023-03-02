@@ -1,7 +1,7 @@
 ---
-title: "trip_generation"
-author: "SP"
-date: "2/26/2023"
+title: "Trip Generation Model"
+author: "Gabriel Barrett-Jackson, Matt Khinda, Samantha Page"
+date: "March 2, 2023"
 output: html_document
 ---
 
@@ -9,15 +9,16 @@ output: html_document
 knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE)
 ```
 
-```{r}
+```{r libraries, echo=FALSE}
 library(here)
 library(tidyverse)
 library(downloader)
 library(tidycensus)
 library(sf)
+library(geojsonio)
 ```
 
-```{r load NHTS data}
+```{r load NHTS data, echo=FALSE, include=FALSE}
 nhts_path <- "../Travel-Forecasting/nhts_data/"
 
 okc_trips <- here(nhts_path,
@@ -41,7 +42,7 @@ table(okc_trips$purpose)
 ```
 
 
-```{r count household trips}
+```{r count household trips, echo=FALSE}
 hh_trip_counts <- okc_trips %>%
   group_by(HOUSEID) %>%
   summarise(HBO_trips = sum(purpose == "HBO"),
@@ -49,7 +50,7 @@ hh_trip_counts <- okc_trips %>%
             NHB_trips = sum(purpose == "NHB")) 
 ```
 
-```{r}
+```{r read in nhts data, echo=FALSE}
 okc_hhs <- here(nhts_path,
                      "hhpub.csv") %>%
   read_csv() %>%
@@ -60,7 +61,7 @@ okc_hhs <- here(nhts_path,
                   NHB_trips = 0))
 ```
 
-```{r variable mutation}
+```{r variable mutation, echo=FALSE}
 okc_trips_65 <- okc_trips %>%
   group_by(HOUSEID) %>%
   summarize(age_65 = sum(ifelse(R_AGE_IMP >= 65, TRUE, FALSE))) %>%
@@ -92,43 +93,59 @@ okc_hhs <- okc_hhs %>%
 
 ```
 
-```{r}
+We ran linear regression models using the following variables: 
+
+* Log-base 2 transformation of median income (in thousands)
+* Presence of children in the household
+* Homeownership
+* Households with residents age 65 or older
+
+```{r Home-Based Other Production Model}
 hbo_trip_prod <- lm(HBO_trips ~ log2(inc_k) +
                                 #have_veh +
                                 any_kids +
-                      #homeownership +
+                      homeownership +
                       age_65,
                     data = okc_hhs)
 
 summary(hbo_trip_prod)
 ```
-```{r}
+For home-based other trip productions, income, presence of children, and adults over 65 were significant variables in the regression. 
+
+
+
+```{r Home-Based Work Production Model}
 hbw_trip_prod <- lm(HBW_trips ~ log2(inc_k) +
                                 #have_veh +
                                 any_kids +
-                      #homeownership +
+                      homeownership +
                       age_65,
                     data = okc_hhs)
 
 summary(hbw_trip_prod)
 ```
-```{r}
+For home-based work trip productions, only the presence of residents over 65 was significant.
+
+```{r Non-Home Based Production Model}
 nhb_trip_prod <- lm(NHB_trips ~ log2(inc_k) +
                                 #have_veh +
                                 any_kids +
-                      #homeownership +
+                      homeownership +
                       age_65,
                     data = okc_hhs)
 
 summary(nhb_trip_prod)
 ```
+For non-home-based trip productions, only the presence of children was a significant variable in the regression. 
 
-```{r reading in tract info}
+```{r reading in tract info, include=FALSE, warning=FALSE, message=FALSE}
 vars <- c(tot_hhs = "B11005_001",
           hhs_with_kids = "B11005_002",
           hhs_0_veh = "B08201_002",
           hhs_1_veh = "B08201_003",
-          med_inc = "B19113_001")
+          med_inc = "B19113_001",
+          owner_occ = "B25003_002",
+          renter_occ = "B25003_003")
 
 median_study_area_income <- get_acs(year = 2019,
                                     geography = "cbsa",
@@ -150,21 +167,22 @@ okc_zones_temp <- get_acs(year = 2019,
                      geometry = TRUE,
                      output = "wide") %>%
   replace_na(replace = list(med_incE = median_study_area_income$estimate[1])) %>%
-  select(GEOID, hhs_with_kidsE, med_incE) %>%
+  select(GEOID, hhs_with_kidsE, med_incE, owner_occE, renter_occE) %>%
   st_drop_geometry()
 
 
 full_tract_info <- geojson_sf("ok_geom.geojson") %>%
   mutate(pct_veh = (1-(no_vehE/total_hhsE))) %>%
-  left_join(okc_zones_temp, by = "GEOID")
+  left_join(okc_zones_temp, by = "GEOID") %>%
+  mutate(hhs_without_kidsE = (total_hhsE - hhs_with_kidsE))
 ```
 
-
-```{r calculate trip productions}
+```{r calculate trip productions, echo=FALSE}
 tract_trip_info <- full_tract_info %>%
   mutate(hbo_prod_per_hh = hbo_trip_prod$coefficients["(Intercept)"] + 
                            hbo_trip_prod$coefficients["log2(inc_k)"] * log2(med_incE) + 
                            hbo_trip_prod$coefficients["any_kidsTRUE"] *  (hhs_with_kidsE/total_hhsE) + 
+                           hbo_trip_prod$coefficients["homeownershipTRUE"] * (owner_occE / total_hhsE) +
                            hbo_trip_prod$coefficients["age_65TRUE"] * (hh_65plusE / total_hhsE)) %>%
   mutate(hbo_trip_prod = total_hhsE * hbo_prod_per_hh)
 
@@ -173,6 +191,7 @@ tract_trip_info <- tract_trip_info %>%
   mutate(hbw_prod_per_hh = hbw_trip_prod$coefficients["(Intercept)"] + 
                            hbw_trip_prod$coefficients["log2(inc_k)"] * log2(med_incE) + 
                            hbw_trip_prod$coefficients["any_kidsTRUE"] *  (hhs_with_kidsE/total_hhsE) + 
+                           hbw_trip_prod$coefficients["homeownershipTRUE"] * (owner_occE / total_hhsE) +
                            hbw_trip_prod$coefficients["age_65TRUE"] * (hh_65plusE / total_hhsE)) %>%
   mutate(hbw_trip_prod = total_hhsE * hbw_prod_per_hh)
 
@@ -181,11 +200,12 @@ tract_trip_info <- tract_trip_info %>%
   mutate(nhb_prod_per_hh = nhb_trip_prod$coefficients["(Intercept)"] + 
                            nhb_trip_prod$coefficients["log2(inc_k)"] * log2(med_incE) + 
                            nhb_trip_prod$coefficients["any_kidsTRUE"] *  (hhs_with_kidsE/total_hhsE) + 
+                           nhb_trip_prod$coefficients["homeownershipTRUE"] * (owner_occE / total_hhsE) +
                            nhb_trip_prod$coefficients["age_65TRUE"] * (hh_65plusE / total_hhsE)) %>%
   mutate(nhb_trip_prod = total_hhsE * nhb_prod_per_hh)
 ```
 
-```{r trip attractions}
+```{r trip attractions, echo=FALSE}
 tract_trip_info <- tract_trip_info %>%
   mutate(hbo_trip_attr = 1.0 * total_hhsE +
                          0.3 * basic_emp +
@@ -198,7 +218,7 @@ tract_trip_info <- tract_trip_info %>%
                          1.0 * service_emp)
 ```
 
-```{r comparing productions and attractions}
+```{r comparing productions and attractions, include=FALSE}
 sum(tract_trip_info$hbo_trip_prod)
 
 sum(tract_trip_info$hbo_trip_attr)
@@ -232,8 +252,85 @@ tract_trip_info <- tract_trip_info %>%
 
 sum(tract_trip_info$nhb_bal_attr)
 ```
-```{r write a new file}
-tract_trip_info %>%
-  st_write("tract_trip_info.geojson")
+```{r write a new file, echo=FALSE, warning=FALSE}
+#tract_trip_info %>%
+  #st_write("tract_trip_info.geojson")
 ```
 
+As expected, attractions and productions are primarily concentrated in the downtown area--attractions even more so than productions. Both generally follow the density maps of residences and employment that we created earlier in the semester. 
+
+```{r dot density map on productions, echo=FALSE}
+#productions dot density map
+hbo_prod_pts <- st_sample(tract_trip_info, 
+                              size = ceiling(tract_trip_info$hbo_trip_prod/1000))
+ 
+hbo_prod_df <- tibble(trip_type = rep("Home-Based Other",
+                                            length(hbo_prod_pts))) %>%
+  st_sf(geom = hbo_prod_pts)
+
+hbw_prod_pts <- st_sample(tract_trip_info,
+                               size = ceiling(tract_trip_info$hbw_trip_prod/1000))
+
+hbw_prod_df <- tibble(trip_type = rep("Home-Based Work", 
+                                              length(hbw_prod_pts))) %>%
+  st_sf(geom = hbw_prod_pts)
+
+nhb_prod_pts <- st_sample(tract_trip_info,
+                               size = ceiling(tract_trip_info$nhb_trip_prod/1000))
+
+nhb_prod_df <- tibble(trip_type = rep("Non-Home-Based", 
+                                              length(nhb_prod_pts))) %>%
+  st_sf(geom = nhb_prod_pts)
+
+production_points <- rbind(hbo_prod_df, hbw_prod_df, nhb_prod_df)
+
+
+ggplot(full_tract_info) +
+  geom_sf(color = "white") +
+  geom_sf(data = production_points,
+          aes(color = trip_type),
+          alpha = 0.5,
+          size = 0.4) +
+  scale_color_brewer("Production Distribution\n(each points represents\n1000 productions)",
+                     palette = "Set2") +
+  theme_void()  +
+  guides(color = guide_legend(override.aes = list(size=5, alpha = 0.6)))
+```
+
+```{r dot density map for attractions, echo=FALSE}
+#attractions
+hbo_att_pts <- st_sample(tract_trip_info, 
+                              size = ceiling(tract_trip_info$hbo_trip_attr/1000))
+ 
+hbo_att_df <- tibble(trip_type = rep("Home-Based Other",
+                                            length(hbo_att_pts))) %>%
+  st_sf(geom = hbo_att_pts)
+
+hbw_att_pts <- st_sample(tract_trip_info,
+                               size = ceiling(tract_trip_info$hbw_trip_attr/1000))
+
+hbw_att_df <- tibble(trip_type = rep("Home-Based Work", 
+                                              length(hbw_att_pts))) %>%
+  st_sf(geom = hbw_att_pts)
+
+nhb_att_pts <- st_sample(tract_trip_info,
+                               size = ceiling(tract_trip_info$nhb_trip_attr/1000))
+
+nhb_att_df <- tibble(trip_type = rep("Non-Home-Based", 
+                                              length(nhb_att_pts))) %>%
+  st_sf(geom = nhb_att_pts)
+
+attraction_points <- rbind(hbo_att_df, hbw_att_df, nhb_att_df)
+
+
+ggplot(full_tract_info) +
+  geom_sf(color = "white") +
+  geom_sf(data = attraction_points,
+          aes(color = trip_type),
+          alpha = 0.5,
+          size = 0.4) +
+  scale_color_brewer("Attraction Distribution\n(each points represents\n1000 attractions)",
+                     palette = "Set1") +
+  theme_void()  +
+  guides(color = guide_legend(override.aes = list(size=5, alpha = 0.6)))
+```
