@@ -1,7 +1,7 @@
 ---
-title: "Trip Generation Model"
+title: "Trip Generation & Gravity Model"
 author: "Gabriel Barrett-Jackson, Matt Khinda, Samantha Page"
-date: "March 2, 2023"
+date: "March 10, 2023"
 output: html_document
 ---
 
@@ -10,19 +10,37 @@ knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE)
 ```
 
 ```{r libraries, echo=FALSE}
-library(here)
-library(tidyverse)
-library(downloader)
-library(tidycensus)
-library(sf)
-library(geojsonio)
+if (!require(here)) install.packages("here"); library(here)
+if (!require(tidyverse)) install.packages("tidyverse"); library(tidyverse)
+if (!require(downloader)) install.packages("downloader"); library(downloader)
+if (!require(tidycensus)) install.packages("tidycensus"); library(tidycensus)
+if (!require(tigris)) install.packages("tigris"); library(tigris)
+if (!require(sf)) install.packages("sf"); library(sf)
+if (!require(geojsonio)) install.packages("geojsonio"); library(geojsonio)
+if (!require(remotes)) install.packages("remotes"); library(remotes)
+if (!require(od)) install.packages("od"); library(od)
+if (!require(srvyr)) install.packages("srvyr"); library(srvyr)
+if (!require(ggspatial)) install.packages("ggspatial"); library(ggspatial)
+if (!require(survey)) install.packages("survey"); library(survey)
+if (!require(RColorBrewer)) install.packages("RColorBrewer"); library(RColorBrewer)
+
+# uses remotes package to load from github
+install_github("https://github.com/c-voulgaris/scenRios")
+library(scenRios)
+install_github("https://github.com/mattflor/chorddiag")
+library(chorddiag)
 ```
 
 ```{r load NHTS data, echo=FALSE, include=FALSE}
-nhts_path <- "../Travel-Forecasting/nhts_data/"
+nhts_path <- unzip("../Travel-Forecasting/nhts_data.zip")
+# To access specific files use [i]
+# [1] ./hhpub.csv
+# [2] ./perpub.csv
+# [3] ./trippub.csv
+# [4] ./vehpub.csv
+# [5] ./Citation.docx
 
-okc_trips <- here(nhts_path,
-                  "trippub.csv") %>%
+okc_trips <- here(nhts_path[3]) %>%
   read_csv() %>%
   filter(HH_CBSA == "36420") %>%
   filter(TRPTRANS != "01" & # Walk
@@ -51,8 +69,7 @@ hh_trip_counts <- okc_trips %>%
 ```
 
 ```{r read in nhts data, echo=FALSE}
-okc_hhs <- here(nhts_path,
-                     "hhpub.csv") %>%
+okc_hhs <- here(nhts_path[1]) %>%
   read_csv() %>%
   filter(HH_CBSA == "36420") %>%
   left_join(hh_trip_counts) %>%
@@ -252,6 +269,7 @@ tract_trip_info <- tract_trip_info %>%
 
 sum(tract_trip_info$nhb_bal_attr)
 ```
+
 ```{r write a new file, echo=FALSE, warning=FALSE}
 #tract_trip_info %>%
   #st_write("tract_trip_info.geojson")
@@ -290,7 +308,7 @@ ggplot(full_tract_info) +
   geom_sf(data = production_points,
           aes(color = trip_type),
           alpha = 0.5,
-          size = 0.4) +
+          size = 0.15) +
   scale_color_brewer("Production Distribution\n(each points represents\n1000 productions)",
                      palette = "Set2") +
   theme_void()  +
@@ -328,9 +346,239 @@ ggplot(full_tract_info) +
   geom_sf(data = attraction_points,
           aes(color = trip_type),
           alpha = 0.5,
-          size = 0.4) +
+          size = 0.15) +
   scale_color_brewer("Attraction Distribution\n(each points represents\n1000 attractions)",
                      palette = "Set1") +
   theme_void()  +
   guides(color = guide_legend(override.aes = list(size=5, alpha = 0.6)))
 ```
+  
+## Average travel time by trip purpose (based on NHTS data)  
+
+By summarizing the NHTS trips by purpose we found that Home-Based Work trips had the longest average travel time of 26.45 minutes, while both Home-Based Other and Non-Home-Based trips were significantly shorter with average times of 17.15 and 16.33 minutes respectively. This seems accurate because residents are typically more willing to travel farther to their jobs than for other day-to-day purposes.
+```{r nhts avg tt, echo=FALSE}
+ttime_by_purpose <- okc_trips %>%
+  filter(TRVLCMIN > 0) %>%
+  as_survey(weights = WTTRDFIN) %>%
+  group_by(purpose) %>%
+  summarise(avg_time = survey_mean(TRVLCMIN))
+```
+
+```{r create friction factor, include = FALSE}
+# load full ttmatrix 
+full_TTmatrix <- read_csv("full_travel_matrix.csv") %>%
+  mutate(from_GEOID = as.character(from_GEOID),
+         to_GEOID = as.character(to_GEOID))
+
+# cacluate friction factors (using exponential function)
+full_TTmatrix <- full_TTmatrix %>%
+  mutate(F_HBO = exp(-0.18 * drive_time),
+         F_HBW = exp(-0.06 * drive_time),
+         F_NHB = exp(-0.2 * drive_time))
+```
+
+## Esitmating travel flows using an exponential deterrence function
+
+Based on the observed values from NHTS data, we calibrated our exponential deterrence function to best fit those travel times. We decided to use an exponential deterrence function in keeping with our expontential accessibility decay function which reflects the same assumed value of travel time. The exponential function is written as:
+$$\begin{equation}  F_{ijp} = e^{-mt_{ij}} \end{equation}$$
+where $F_{ij}$ is the friction factor for trips with purpose p between zone i and zone j, $t_{ij}$ is the the travel time from zone i to zone j. We adjusted the m value for each purpose. For Home-Based Work trips we used a value -0.06, for Home-Based Other trips we used a value of -0.18, and for Non-Home-Based trips we used a value of -0.2. The resulting estimates were all within .2 minutes of the NHTS averages. 
+
+```{r estimate travel flows, echo = FALSE}
+
+HBO_dist <- grvty_balancing(od_zones = tract_trip_info,
+                            friction = full_TTmatrix,
+                            zone_id = "GEOID",
+                            zone_o = "hbo_trip_prod",
+                            zone_d = "hbo_bal_attr",
+                            friction_o_id = "from_GEOID",
+                            friction_d_id = "to_GEOID",
+                            friction_factor = "F_HBO",
+                            tolerance = 0.01,
+                            max_iter = 50000)
+
+HBW_dist <- grvty_balancing(od_zones = tract_trip_info,
+                            friction = full_TTmatrix,
+                            zone_id = "GEOID",
+                            zone_o = "hbw_trip_prod",
+                            zone_d = "hbw_bal_attr",
+                            friction_o_id = "from_GEOID",
+                            friction_d_id = "to_GEOID",
+                            friction_factor = "F_HBW",
+                            tolerance = 0.01,
+                            max_iter = 50000)
+
+NHB_dist <- grvty_balancing(od_zones = tract_trip_info,
+                            friction = full_TTmatrix,
+                            zone_id = "GEOID",
+                            zone_o = "nhb_trip_prod",
+                            zone_d = "nhb_bal_attr",
+                            friction_o_id = "from_GEOID",
+                            friction_d_id = "to_GEOID",
+                            friction_factor = "F_NHB",
+                            tolerance = 0.01,
+                            max_iter = 50000)
+
+HBO_flows <- HBO_dist$flows %>%
+  rename(from_GEOID = o_id,
+         to_GEOID = d_id,
+         HBO_flow = flow)
+
+HBW_flows <- HBW_dist$flows %>%
+  rename(from_GEOID = o_id,
+         to_GEOID = d_id,
+         HBW_flow = flow)
+
+NHB_flows <- NHB_dist$flows %>%
+  rename(from_GEOID = o_id,
+         to_GEOID = d_id,
+         NHB_flow = flow)
+
+full_TTmatrix <- full_TTmatrix %>%
+  left_join(HBO_flows) %>%
+  left_join(HBW_flows) %>%
+  left_join(NHB_flows)
+
+# Check avg travel times by purpose (compare with NHTS avg)
+hbo_est <- sum(full_TTmatrix$HBO_flow * full_TTmatrix$drive_time) / sum(full_TTmatrix$HBO_flow)
+hbw_est <- sum(full_TTmatrix$HBW_flow * full_TTmatrix$drive_time) / sum(full_TTmatrix$HBW_flow)
+nhb_est <- sum(full_TTmatrix$NHB_flow * full_TTmatrix$drive_time) / sum(full_TTmatrix$NHB_flow)
+
+ttime_by_purpose_pred <- ttime_by_purpose %>%
+  mutate(pred_time = c(hbo_est, hbw_est, nhb_est)) %>%
+  mutate(time_dif = avg_time - pred_time) %>%
+  rename(nhts_avg_time = avg_time) %>%
+  select(-avg_time_se)
+
+head(ttime_by_purpose_pred)
+```
+## Visualizing travel flows by purpose and county
+
+To better understand trip distribution within the MSA, we mapped the most frequent (250+) origin-destination pairs by trip type. We noticed that Home-Based Other trips are the most spatially distributed across the region, while Home-Based Work trips were the most concentrated — particularly around what we believe to be the major employment centers just south of Oklahoma City. We also created three chord diagrams showing the intra- and inter-county flows by trip purpose. This allows us to better understand which counties are more attractive or productive for each trip purpose.
+
+```{r visualize flows, echo = FALSE}
+
+desire_lines_HBO_threshold <- od_to_sf(full_TTmatrix, tract_trip_info, silent = TRUE) %>%
+  filter(HBO_flow > 250)
+
+desire_lines_HBW_threshold <- od_to_sf(full_TTmatrix, tract_trip_info, silent = TRUE) %>%
+  filter(HBW_flow > 250)
+
+desire_lines_NHB_threshold <- od_to_sf(full_TTmatrix, tract_trip_info, silent = TRUE) %>%
+  filter(NHB_flow > 250)
+```
+#### Home-Based Other flows
+
+```{r hbo flows, echo = FALSE}
+ggplot(desire_lines_HBO_threshold,) +
+  annotation_map_tile(type = "cartolight", zoomin = 0, progress = "none") +
+  geom_sf(aes(alpha = HBO_flow), color = "red") +
+  theme_void()
+```
+
+#### Home-Based Work flows
+
+```{r hbw flows, echo = FALSE}
+ggplot(desire_lines_HBW_threshold,) +
+  annotation_map_tile(type = "cartolight", zoomin = 0, progress = "none") +
+  geom_sf(aes(alpha = HBW_flow), color = "blue") +
+  theme_void()
+```
+
+#### Non-Home Based flows
+
+```{r nhb flows, echo = FALSE}
+ggplot(desire_lines_NHB_threshold,) +
+  annotation_map_tile(type = "cartolight", zoomin = 0, progress = "none") +
+  geom_sf(aes(alpha = NHB_flow), color = "goldenrod2") +
+  theme_void()
+```
+
+
+
+
+
+```{r chord diagram, echo = FALSE}
+county_names = c("Oklahoma",
+                 "Cleveland", 
+                 "Canadian", 
+                 "Grady", 
+                 "Lincoln", 
+                 "Logan",
+                 "McClain")
+
+county_skim <- full_TTmatrix %>%
+  mutate(from_county = substr(from_GEOID, 1, 5),
+         to_county = substr(to_GEOID, 1, 5)) %>%
+  group_by(from_county, to_county) %>%
+  summarise(HBO_flow = sum(HBO_flow), 
+            HBW_flow = sum(HBW_flow), 
+            NHB_flow = sum(NHB_flow)) %>%
+  filter(HBO_flow > 0) %>%
+  filter(HBW_flow > 0) %>%
+  filter(NHB_flow > 0)
+
+labeled_skim <- tibble(prod_name = sort(rep(county_names, 6)),
+                       attr_name = rep(county_names, 6))
+
+labeled_skim <- labeled_skim %>%
+  mutate(from_county = case_when(
+                         prod_name == "Oklahoma" ~ "40109",
+                         prod_name == "Cleveland" ~ "40027",
+                         prod_name == "Canadian" ~ "40017",
+                         prod_name == "Grady" ~ "40051",
+                         prod_name == "Lincoln" ~ "40081",
+                         prod_name == "Logan" ~ "40083",
+                         prod_name == "McClain" ~ "40087"),
+         to_county = case_when(
+                         attr_name == "Oklahoma" ~ "40109",
+                         attr_name == "Cleveland" ~ "40027",
+                         attr_name == "Canadian" ~ "40017",
+                         attr_name == "Grady" ~ "40051",
+                         attr_name == "Lincoln" ~ "40081",
+                         attr_name == "Logan" ~ "40083",
+                         attr_name == "McClain" ~ "40087")) %>%
+  left_join(county_skim) %>%
+  replace_na(list(HBO_flow = 0)) %>%
+  replace_na(list(HBW_flow = 0)) %>%
+  replace_na(list(NHB_flow = 0))
+
+hbo_mat <- matrix(labeled_skim$HBO_flow,
+                  byrow = TRUE,
+                  nrow = 7, ncol = 7)
+
+dimnames(hbo_mat) <- list(production = county_names,
+                          attraction = county_names)
+
+hbw_mat <- matrix(labeled_skim$HBW_flow,
+                  byrow = TRUE,
+                  nrow = 7, ncol = 7)
+
+dimnames(hbw_mat) <- list(production = county_names,
+                          attraction = county_names)
+
+nhb_mat <- matrix(labeled_skim$NHB_flow,
+                  byrow = TRUE,
+                  nrow = 7, ncol = 7)
+
+dimnames(nhb_mat) <- list(production = county_names,
+                          attraction = county_names)
+```
+
+#### Home-Based Other trips by county
+```{r hbo chord, echo = FALSE}
+chorddiag(hbo_mat, groupColors = brewer.pal(7, "Set2"), groupnamePadding = 50, tickInterval = 50000)
+```
+
+#### Home-Based Work trips by county
+```{r hbw chord, echo = FALSE}
+chorddiag(hbw_mat, groupColors = brewer.pal(7, "Set2"), groupnamePadding = 50, tickInterval = 10000)
+```
+
+#### Non-Home Based trips by county
+```{r nhb chord, echo = FALSE}
+chorddiag(nhb_mat, groupColors = brewer.pal(7, "Set2"), groupnamePadding = 50, tickInterval = 10000)
+```
+
+
+
+
