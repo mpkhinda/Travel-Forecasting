@@ -23,6 +23,8 @@ if (!require(srvyr)) install.packages("srvyr"); library(srvyr)
 if (!require(ggspatial)) install.packages("ggspatial"); library(ggspatial)
 if (!require(survey)) install.packages("survey"); library(survey)
 if (!require(RColorBrewer)) install.packages("RColorBrewer"); library(RColorBrewer)
+if (!require(jtools)) install.packages("jtools"); library(jtools)
+if (!require(kableExtra)) install.packages("kableExtra"); library(kableExtra)
 
 # uses remotes package to load from github
 install_github("https://github.com/c-voulgaris/scenRios")
@@ -110,12 +112,19 @@ okc_hhs <- okc_hhs %>%
 
 ```
 
-We ran linear regression models using the following variables: 
+## Trip Productions
+To generate trip production estimates for our model, we ran linear regressions between each trip purpose (home-based other, home-based work, and non-home-based) and four demographic characteristics pulled from American Community Survey data. The census variables we used for these regressions differed somewhat from those we collected at an earlier stage in our model-building. For these regressions, we focused on:
 
-* Log-base 2 transformation of median income (in thousands)
-* Presence of children in the household
-* Homeownership
-* Households with residents age 65 or older
+* Median income (calculated as a continuous variable)
+* Presence of children in the household (true or false, not further differentiated by gender or number of parents)
+* Homeownership (true or false)
+* Households with residents age 65 or older (true or false)
+
+In running the linear regression models, we kept all the variables formatted as described above, except for income, which we formatted as a log-base 2 transformation (in the thousands). All three models have R-squared values of 0.2 or less, and all have at least one significant variable.
+
+
+For home-based other trip productions, income, presence of children, and adults over 65 were significant variables in the regression:
+
 
 ```{r Home-Based Other Production Model}
 hbo_trip_prod <- lm(HBO_trips ~ log2(inc_k) +
@@ -125,10 +134,11 @@ hbo_trip_prod <- lm(HBO_trips ~ log2(inc_k) +
                       age_65,
                     data = okc_hhs)
 
-summary(hbo_trip_prod)
+summ(hbo_trip_prod)
 ```
-For home-based other trip productions, income, presence of children, and adults over 65 were significant variables in the regression. 
 
+
+For home-based work trip productions, only the presence of residents over 65 was significant:
 
 
 ```{r Home-Based Work Production Model}
@@ -139,9 +149,12 @@ hbw_trip_prod <- lm(HBW_trips ~ log2(inc_k) +
                       age_65,
                     data = okc_hhs)
 
-summary(hbw_trip_prod)
+summ(hbw_trip_prod)
 ```
-For home-based work trip productions, only the presence of residents over 65 was significant.
+
+
+For non-home-based trip productions, only the presence of children was a significant variable in the regression:
+
 
 ```{r Non-Home Based Production Model}
 nhb_trip_prod <- lm(NHB_trips ~ log2(inc_k) +
@@ -151,9 +164,8 @@ nhb_trip_prod <- lm(NHB_trips ~ log2(inc_k) +
                       age_65,
                     data = okc_hhs)
 
-summary(nhb_trip_prod)
+summ(nhb_trip_prod)
 ```
-For non-home-based trip productions, only the presence of children was a significant variable in the regression. 
 
 ```{r reading in tract info, include=FALSE, warning=FALSE, message=FALSE}
 vars <- c(tot_hhs = "B11005_001",
@@ -257,8 +269,6 @@ tract_trip_info <- tract_trip_info %>%
 
 sum(tract_trip_info$hbw_bal_attr)
 
-
-
 sum(tract_trip_info$nhb_trip_prod)
 
 sum(tract_trip_info$nhb_trip_attr)
@@ -275,7 +285,11 @@ sum(tract_trip_info$nhb_bal_attr)
   #st_write("tract_trip_info.geojson")
 ```
 
-As expected, attractions and productions are primarily concentrated in the downtown area--attractions even more so than productions. Both generally follow the density maps of residences and employment that we created earlier in the semester. 
+
+## Trip Attractions
+To estimate trip attractions for our model, we used coefficients for “motorized person trips” found in NCHRP 716. We calculated attractions for each trip type, and then balanced them to ensure the number of trip productions and attractions were the same. 
+
+As expected, attractions and productions are primarily concentrated in the downtown area--attractions even more so than productions. Both generally follow the density maps of residences and employment that we created earlier in the semester.
 
 ```{r dot density map on productions, echo=FALSE}
 #productions dot density map
@@ -352,10 +366,13 @@ ggplot(full_tract_info) +
   theme_void()  +
   guides(color = guide_legend(override.aes = list(size=5, alpha = 0.6)))
 ```
+
   
-## Average travel time by trip purpose (based on NHTS data)  
+## Average Travel Time by Trip Purpose (based on NHTS data)  
 
 By summarizing the NHTS trips by purpose we found that Home-Based Work trips had the longest average travel time of 26.45 minutes, while both Home-Based Other and Non-Home-Based trips were significantly shorter with average times of 17.15 and 16.33 minutes respectively. This seems accurate because residents are typically more willing to travel farther to their jobs than for other day-to-day purposes.
+
+
 ```{r nhts avg tt, echo=FALSE}
 ttime_by_purpose <- okc_trips %>%
   filter(TRVLCMIN > 0) %>%
@@ -377,11 +394,14 @@ full_TTmatrix <- full_TTmatrix %>%
          F_NHB = exp(-0.2 * drive_time))
 ```
 
-## Esitmating travel flows using an exponential deterrence function
+## Estimating Travel Flows Using an Exponential Deterrence Function
 
 Based on the observed values from NHTS data, we calibrated our exponential deterrence function to best fit those travel times. We decided to use an exponential deterrence function in keeping with our expontential accessibility decay function which reflects the same assumed value of travel time. The exponential function is written as:
 $$\begin{equation}  F_{ijp} = e^{-mt_{ij}} \end{equation}$$
-where $F_{ij}$ is the friction factor for trips with purpose p between zone i and zone j, $t_{ij}$ is the the travel time from zone i to zone j. We adjusted the m value for each purpose. For Home-Based Work trips we used a value -0.06, for Home-Based Other trips we used a value of -0.18, and for Non-Home-Based trips we used a value of -0.2. The resulting estimates were all within .2 minutes of the NHTS averages. 
+where $F_{ij}$ is the friction factor for trips with purpose p between zone i and zone j, $t_{ij}$ is the the travel time from zone i to zone j. 
+
+We adjusted the m value for each purpose. For Home-Based Work trips we used a value -0.06, for Home-Based Other trips we used a value of -0.18, and for Non-Home-Based trips we used a value of -0.2. The resulting estimates were all within .2 minutes of the NHTS averages. Though still relatively low, the higher magnitude m values for home-based other and non-home-based trips suggests those trip types are more sensitive to travel time in our model. This also matches our expectations that home-based work trips are the least sensitive to travel time, as they are the least “negotiable” trips a person typically takes in a given day. 
+
 
 ```{r estimate travel flows, echo = FALSE}
 
@@ -451,9 +471,11 @@ ttime_by_purpose_pred <- ttime_by_purpose %>%
 
 head(ttime_by_purpose_pred)
 ```
-## Visualizing travel flows by purpose and county
 
+
+## Visualizing Travel Flows by Purpose and County
 To better understand trip distribution within the MSA, we mapped the most frequent (250+) origin-destination pairs by trip type. We noticed that Home-Based Other trips are the most spatially distributed across the region, while Home-Based Work trips were the most concentrated — particularly around what we believe to be the major employment centers just south of Oklahoma City. We also created three chord diagrams showing the intra- and inter-county flows by trip purpose. This allows us to better understand which counties are more attractive or productive for each trip purpose.
+
 
 ```{r visualize flows, echo = FALSE}
 
