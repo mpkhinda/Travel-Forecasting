@@ -1,8 +1,13 @@
 ---
-title: "Trip Generation & Gravity Model"
+title: "Oklahoma City Trip Generation and Distribution Models"
 author: "Gabriel Barrett-Jackson, Matt Khinda, Samantha Page"
-date: "March 10, 2023"
-output: html_document
+date: "March 21, 2023"
+output:
+  html_document:
+    theme: cerulean
+    toc: true
+    toc_depth: 6
+    toc_float: true
 ---
 
 ```{r setup, include=FALSE}
@@ -112,18 +117,26 @@ okc_hhs <- okc_hhs %>%
 
 ```
 
-## Trip Productions
-To generate trip production estimates for our model, we ran linear regressions between each trip purpose (home-based other, home-based work, and non-home-based) and four demographic characteristics pulled from American Community Survey data. The census variables we used for these regressions differed somewhat from those we collected at an earlier stage in our model-building. For these regressions, we focused on:
 
-* Median income (calculated as a continuous variable)
+## Estimating Trip Productions
+
+To generate trip production estimates for our model, we ran linear regressions using observed trip counts by purpose (home-based other, home-based work, and non-home-based) as the dependent variable, and four household characteristics pulled from American Community Survey data as the predictors. The census variables we used for these regressions differed somewhat from those we collected at an earlier stage in our model-building. Initially, we were interested in understanding whether income, family structure, vehicle ownership, and age had any relationship with travel behavior. Upon reviewing the NHTS data, we realized we needed to adjust some of our tract characteristic variables to better align with the ways variables are structured in NHTS. For income, we changed the variable structure from categorical brackets to a continuous number—the median income for each zone. For family structure, we opted for a binary variable that would note the presence of children in the household, regardless of the number of parents or their gender. For vehicle ownership, we found the variable to be insignificant in the first runs of the models, so we switched it out for measures of homeownership instead.  
+
+To support our choice of variables, we looked to the transportation planning literature to understand how others have analyzed the relationships between socioeconomic characteristics and travel behavior. Specifically, we noted that a 2013 paper by Boschmann and Brady found that with increasing age, travelers make fewer and shorter trips, women make fewer and shorter trips than men, and persons with disabilities make the fewest trips compared with all other persons. Equally, Agrawal et. al. found that low-income individuals have distinct travel needs and cost of travel has implications for how individuals travel. Finally, Rosenbloom finds that the presence of children changes travel behavior, more drastically for women than men. 
+
+Based on all of this, we chose to employ the following variables in our model:
+
+* Median income (continuous variable, in thousands of dollars)
 * Presence of children in the household (true or false, not further differentiated by gender or number of parents)
 * Homeownership (true or false)
 * Households with residents age 65 or older (true or false)
 
-In running the linear regression models, we kept all the variables formatted as described above, except for income, which we formatted as a log-base 2 transformation (in the thousands). All three models have R-squared values of 0.2 or less, and all have at least one significant variable.
+While the variables we chose were based on prior evidence outlined above, we recognize their limits in fully describing households and accurately forecasting travel behavior. For example, while both the presence of children and the presence of residents aged 65 and older tell us something about household structure, they are both proxies for more specific characteristics that define travel patterns (school or daycare enrollment in the case of children, or non-participation in the labor force in the case of people 65 and older) which could be more accurately measured and modeled if those specific data were available. Further, we chose to incorporate an indicator of homeownership as a more individualized measure of household wealth to supplement the zone-level median income. 
+
+In running the linear regression models, we kept all the variables formatted as listed above except for income, for which we applied a log-base 2 transformation (in thousands) to understand the effect of doubling one's income rather than increasing it by a single dollar. All three models have R-squared values between 0.11 and 0.2, which means that between 11% and 20% of the variation in trip production can be attributed to the predictive variables we selected. This is in keeping with what we would expect for a model using a limited set of characteristics to predict something as complex as travel behavior. A more accurate prediction would likely require separate models for each trip purpose, using a greater number of independent variables, and many iterations of testing to determine the right combination of these variables that best fits the observed travel behavior. Equally, a more accurate model would rely on more local travel survey data, rather than subsetting the NHTS for our study area, which we have done here for the sake of time and data availability. 
 
 
-For home-based other trip productions, income, presence of children, and adults over 65 were significant variables in the regression:
+### Home-Based Other Model
 
 
 ```{r Home-Based Other Production Model}
@@ -138,7 +151,7 @@ summ(hbo_trip_prod)
 ```
 
 
-For home-based work trip productions, only the presence of residents over 65 was significant:
+### Home-Based Work Model
 
 
 ```{r Home-Based Work Production Model}
@@ -153,7 +166,7 @@ summ(hbw_trip_prod)
 ```
 
 
-For non-home-based trip productions, only the presence of children was a significant variable in the regression:
+### Non-Home-Based Model
 
 
 ```{r Non-Home Based Production Model}
@@ -286,10 +299,12 @@ sum(tract_trip_info$nhb_bal_attr)
 ```
 
 
-## Trip Attractions
-To estimate trip attractions for our model, we used coefficients for “motorized person trips” found in NCHRP 716. We calculated attractions for each trip type, and then balanced them to ensure the number of trip productions and attractions were the same. 
+## Estimating Trip Attractions
 
-As expected, attractions and productions are primarily concentrated in the downtown area--attractions even more so than productions. Both generally follow the density maps of residences and employment that we created earlier in the semester.
+To estimate trip attractions for our model, we relied on the coefficients for “motorized person trips” found in NCHRP 716. Using these values, we calculated attractions for each trip type within each zone, and then balanced them with the productions to ensure an equal number of trips produced and trips attracted in the overall study area.  
+
+As expected, attractions and productions are primarily concentrated in the downtown area—attractions even more so than productions. Both generally follow the density maps of residences and employment that we created earlier in the semester.
+
 
 ```{r dot density map on productions, echo=FALSE}
 #productions dot density map
@@ -368,9 +383,9 @@ ggplot(full_tract_info) +
 ```
 
   
-## Average Travel Time by Trip Purpose (based on NHTS data)  
+## Assessing Average Travel Time by Trip Purpose (based on NHTS data)  
 
-By summarizing the NHTS trips by purpose we found that Home-Based Work trips had the longest average travel time of 26.45 minutes, while both Home-Based Other and Non-Home-Based trips were significantly shorter with average times of 17.15 and 16.33 minutes respectively. This seems accurate because residents are typically more willing to travel farther to their jobs than for other day-to-day purposes.
+By summarizing the NHTS trips by purpose we found that Home-Based Work trips had the longest average travel time of 26.45 minutes, while both Home-Based Other and Non-Home-Based trips were significantly shorter with average times of 17.15 and 16.33 minutes respectively. These estimates aligned with our expectations that residents are typically more willing to travel farther to their jobs than for other day-to-day purposes.
 
 
 ```{r nhts avg tt, echo=FALSE}
@@ -394,13 +409,14 @@ full_TTmatrix <- full_TTmatrix %>%
          F_NHB = exp(-0.2 * drive_time))
 ```
 
-## Estimating Travel Flows Using an Exponential Deterrence Function
 
-Based on the observed values from NHTS data, we calibrated our exponential deterrence function to best fit those travel times. We decided to use an exponential deterrence function in keeping with our expontential accessibility decay function which reflects the same assumed value of travel time. The exponential function is written as:
+## Determining Travel Flows Using an Exponential Deterrence Function
+
+Based on the observed values from NHTS data, we calibrated our exponential deterrence function to best fit those travel times. We decided to use an exponential deterrence function in keeping with our exponential accessibility decay , which reflects the same assumed value of travel time. The exponential function is written as:
 $$\begin{equation}  F_{ijp} = e^{-mt_{ij}} \end{equation}$$
 where $F_{ij}$ is the friction factor for trips with purpose p between zone i and zone j, $t_{ij}$ is the the travel time from zone i to zone j. 
 
-We adjusted the m value for each purpose. For Home-Based Work trips we used a value -0.06, for Home-Based Other trips we used a value of -0.18, and for Non-Home-Based trips we used a value of -0.2. The resulting estimates were all within .2 minutes of the NHTS averages. Though still relatively low, the higher magnitude m values for home-based other and non-home-based trips suggests those trip types are more sensitive to travel time in our model. This also matches our expectations that home-based work trips are the least sensitive to travel time, as they are the least “negotiable” trips a person typically takes in a given day. 
+We adjusted the m value for each purpose, to most closely correspond with the average travel time found in NTHS data. For Home-Based Work trips we used a value -0.06, for Home-Based Other trips we used a value of -0.18, and for Non-Home-Based trips we used a value of -0.2. The resulting estimates in our model were all within .2 minutes of the NHTS averages. Though still relatively low, the higher magnitude m values for home-based other and non-home-based trips suggest that those trip types are more sensitive to travel time in our model. This also matches our expectations that home-based work trips are the least sensitive to travel time, as they are the least “negotiable” trips a person typically takes in a given day. 
 
 
 ```{r estimate travel flows, echo = FALSE}
@@ -469,12 +485,13 @@ ttime_by_purpose_pred <- ttime_by_purpose %>%
   rename(nhts_avg_time = avg_time) %>%
   select(-avg_time_se)
 
-head(ttime_by_purpose_pred)
+kable(ttime_by_purpose_pred)
 ```
 
 
 ## Visualizing Travel Flows by Purpose and County
-To better understand trip distribution within the MSA, we mapped the most frequent (250+) origin-destination pairs by trip type. We noticed that Home-Based Other trips are the most spatially distributed across the region, while Home-Based Work trips were the most concentrated — particularly around what we believe to be the major employment centers just south of Oklahoma City. We also created three chord diagrams showing the intra- and inter-county flows by trip purpose. This allows us to better understand which counties are more attractive or productive for each trip purpose.
+
+To better understand trip distribution within the MSA, we mapped the most frequent origin-destination pairs (those with 250 trips or more between them) by trip type. We noticed that Home-Based Other trips are the most spatially distributed across the region, while Home-Based Work trips were the most concentrated — particularly around what we believe to be the major employment centers just south of Oklahoma City. 
 
 
 ```{r visualize flows, echo = FALSE}
@@ -488,7 +505,10 @@ desire_lines_HBW_threshold <- od_to_sf(full_TTmatrix, tract_trip_info, silent = 
 desire_lines_NHB_threshold <- od_to_sf(full_TTmatrix, tract_trip_info, silent = TRUE) %>%
   filter(NHB_flow > 250)
 ```
-#### Home-Based Other flows
+
+
+### Home-Based Other Flows
+
 
 ```{r hbo flows, echo = FALSE}
 ggplot(desire_lines_HBO_threshold,) +
@@ -497,7 +517,9 @@ ggplot(desire_lines_HBO_threshold,) +
   theme_void()
 ```
 
-#### Home-Based Work flows
+
+### Home-Based Work Flows
+
 
 ```{r hbw flows, echo = FALSE}
 ggplot(desire_lines_HBW_threshold,) +
@@ -506,7 +528,9 @@ ggplot(desire_lines_HBW_threshold,) +
   theme_void()
 ```
 
-#### Non-Home Based flows
+
+### Non-Home Based Flows
+
 
 ```{r nhb flows, echo = FALSE}
 ggplot(desire_lines_NHB_threshold,) +
@@ -516,10 +540,7 @@ ggplot(desire_lines_NHB_threshold,) +
 ```
 
 
-
-
-
-```{r chord diagram, echo = FALSE}
+```{r chord diagram, echo = FALSE, message = FALSE}
 county_names = c("Oklahoma",
                  "Cleveland", 
                  "Canadian", 
@@ -586,21 +607,35 @@ dimnames(nhb_mat) <- list(production = county_names,
                           attraction = county_names)
 ```
 
-#### Home-Based Other trips by county
+
+We also created three chord diagrams showing the intra- and inter-county flows by trip purpose. This allows us to better understand which counties are more attractive or productive for each trip purpose. For example, we noticed that in Cleveland County (southeast of downtown), home-based other and non-home-based trips are more than half of all trips into the county, while home-based work trips are a smaller share. For all trip types with destinations in Cleveland County, Oklahoma County (centrally located) was a major producer, providing yet another illustration of the close relationship between these two central areas in the MSA.
+
+
+### Home-Based Other Trips by County
+
+
 ```{r hbo chord, echo = FALSE}
 chorddiag(hbo_mat, groupColors = brewer.pal(7, "Set2"), groupnamePadding = 50, tickInterval = 50000)
 ```
 
-#### Home-Based Work trips by county
+
+### Home-Based Work Trips by County
+
+
 ```{r hbw chord, echo = FALSE}
 chorddiag(hbw_mat, groupColors = brewer.pal(7, "Set2"), groupnamePadding = 50, tickInterval = 10000)
 ```
 
-#### Non-Home Based trips by county
+
+### Non-Home Based Trips by County
+
 ```{r nhb chord, echo = FALSE}
 chorddiag(nhb_mat, groupColors = brewer.pal(7, "Set2"), groupnamePadding = 50, tickInterval = 10000)
 ```
 
 
+#### References
 
-
+* Agrawal et. al. “Getting around When You're Just Getting by : The Travel Behavior and Transportation Expenditures of Low-Income Adults.” Welcome to ROSA P. Mineta Transportation Institute, January 1, 2011. https://rosap.ntl.bts.gov/view/dot/18612.
+* Rosenbloom, Sandra. “The Impact of Growing Children on Their Parents' Travel Behavior: A Comparative Analysis .” Transportation Research Board, 1987. https://onlinepubs.trb.org/Onlinepubs/trr/1987/1135/1135-003.pdf. 
+* Boschmann E.E., Brady S. Travel behaviors, sustainable mobility, and transit-oriented developments: A travel count analysis of older adults in the Denver, Colorado metropolitan area. J. Transp. Geogr. 2013;33:1–11. doi: 10.1016/j.jtrangeo.2013.09.001.
