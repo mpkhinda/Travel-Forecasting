@@ -1,0 +1,168 @@
+---
+title: "Oklahoma City Mode Choice"
+author: "Gabriel Barrett-Jackson, Matt Khinda, Samantha Page"
+date: "3/24/2023"
+output:
+  html_document:
+    theme: cerulean
+    toc: true
+    toc_depth: 6
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE)
+```
+
+```{r libraries}
+if (!require(here)) install.packages("here"); library(here)
+if (!require(tidyverse)) install.packages("tidyverse"); library(tidyverse)
+if (!require(knitr)) install.packages("knitr"); library(knitr)
+if (!require(kableExtra)) install.packages("kableExtra"); library(kableExtra)
+if (!require(sf)) install.packages("sf"); library(sf)
+if (!require(geojsonio)) install.packages("geojsonio"); library(geojsonio)
+if (!require(geojsonsf)) install.packages("geojsonsf"); library(geojsonsf)
+if (!require(survey)) install.packages("survey"); library(survey)
+if (!require(srvyr)) install.packages("srvyr"); library(srvyr)
+```
+
+
+```{r load data}
+IRS_mileage_rate <- 0.655
+
+# load travel matrix and geom
+full_travel_matrix <- read_csv("full_travel_matrix.csv")
+tract_centroid_geom <- geojson_sf("full_centroid_geom.geojson")
+
+
+
+
+```
+
+```{r load nhts}
+nhts_path <- unzip("../Travel-Forecasting/nhts_data.zip")
+# To access specific files use [i]
+# [1] ./hhpub.csv
+# [2] ./perpub.csv
+# [3] ./trippub.csv
+# [4] ./vehpub.csv
+# [5] ./Citation.docx
+
+okc_nhts_trips <- here(nhts_path[3]) %>%
+  read_csv() %>%
+  filter(HH_CBSA == "36420") %>%
+  filter(TRPTRANS != "01" & # Walk
+           TRPTRANS != "02" & # Bike
+           TRPTRANS != "19") %>%
+  mutate(home_based = (WHYFROM == "01" |
+                         WHYFROM == "02" |
+                         WHYTO == "01" |
+                         WHYTO == "02"),
+         work = (WHYFROM == "03" |
+           WHYTO == "03")) %>%
+  mutate(purpose = case_when(home_based & work ~ "HBW",
+                             home_based ~ "HBO",
+                             TRUE ~ "NHB")) %>%
+  mutate(mode = case_when(TRPTRANS == "03" & NUMONTRP > 1 ~ "HOV",
+                          TRPTRANS == "04" & NUMONTRP > 1 ~ "HOV",
+                          TRPTRANS == "05" & NUMONTRP > 1 ~ "HOV",
+                          TRPTRANS == "06" & NUMONTRP > 1 ~ "HOV",
+                          TRPTRANS == "08" & NUMONTRP > 1 ~ "HOV",
+                          TRPTRANS == "17" & NUMONTRP > 1 ~ "HOV",
+                          TRPTRANS == "18" & NUMONTRP > 1 ~ "HOV",
+                          TRPTRANS == "03" ~ "SOV",
+                          TRPTRANS == "04" ~ "SOV",
+                          TRPTRANS == "05" ~ "SOV",
+                          TRPTRANS == "06" ~ "SOV",
+                          TRPTRANS == "08" ~ "SOV",
+                          TRPTRANS == "17" ~ "SOV",
+                          TRPTRANS == "18" ~ "SOV",
+                          TRPTRANS == "10" ~ "transit",
+                          TRPTRANS == "11" ~ "transit",
+                          TRPTRANS == "12" ~ "transit",
+                          TRPTRANS == "13" ~ "transit",
+                          TRPTRANS == "16" ~ "transit",
+                          TRUE ~ "other")) %>%
+  filter(mode != "other")
+```
+
+```{r}
+trips_svy <- okc_nhts_trips %>%
+  as_survey(weights = WTTRDFIN)
+
+mode_by_purpose <- trips_svy %>%
+  group_by(purpose, mode) %>%
+  survey_tally() %>%
+  select(-n_se) %>%
+  pivot_wider(names_from = mode,
+              values_from = n,
+              names_prefix = "n_",) %>%
+  replace_na(list(n_transit = 0)) %>%
+  mutate(n_trips = n_SOV + n_HOV + n_transit) %>%
+  mutate(pct_SOV = n_SOV / n_trips) %>%
+  mutate(pct_HOV = n_HOV / n_trips) %>%
+  mutate(pct_transit = n_transit / n_trips) %>%
+  select(purpose, pct_SOV, pct_HOV, pct_transit)
+```
+
+```{r constant calcs}
+# store mode shares by purpose as individual values
+SOV_share_HBO <- 
+  mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "HBO"]
+
+HOV_share_HBO <- 
+  mode_by_purpose$pct_HOV[mode_by_purpose$purpose == "HBO"]
+
+transit_share_HBO <- 
+  mode_by_purpose$pct_transit[mode_by_purpose$purpose == "HBO"]
+
+# calculating log odds
+SOV_const_HBO <- log(SOV_share_HBO / (1 - SOV_share_HBO)) 
+HOV_const_HBO <- log(HOV_share_HBO / (1 - HOV_share_HBO))
+transit_const_HBO <- log(transit_share_HBO / (1 - transit_share_HBO))
+
+
+
+SOV_share_HBW <- 
+  mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "HBW"]
+
+HOV_share_HBW <- 
+  mode_by_purpose$pct_HOV[mode_by_purpose$purpose == "HBW"]
+
+transit_share_HBW <- 
+  mode_by_purpose$pct_transit[mode_by_purpose$purpose == "HBW"]
+
+SOV_const_HBW <- log(SOV_share_HBW / (1 - SOV_share_HBW))
+HOV_const_HBW <- log(HOV_share_HBW / (1 - HOV_share_HBW))
+transit_const_HBW <- log(transit_share_HBW / (1 - transit_share_HBW))
+
+
+
+SOV_share_NHB <- 
+  mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "NHB"]
+
+HOV_share_NHB <- 
+  mode_by_purpose$pct_HOV[mode_by_purpose$purpose == "NHB"]
+
+transit_share_NHB <- 
+  mode_by_purpose$pct_transit[mode_by_purpose$purpose == "NHB"]
+
+SOV_const_NHB <- log(SOV_share_NHB / (1 - SOV_share_NHB))
+HOV_const_NHB <- log(HOV_share_NHB / (1 - HOV_share_NHB))
+transit_const_NHB <- log(transit_share_NHB / (1 - transit_share_NHB))
+
+```
+
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
