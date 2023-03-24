@@ -34,9 +34,22 @@ IRS_mileage_rate <- 0.655
 full_travel_matrix <- read_csv("full_travel_matrix.csv")
 tract_centroid_geom <- geojson_sf("full_centroid_geom.geojson")
 
+getDist <- function(from, to){
+  origin = tract_centroid_geom$geometry[tract_centroid_geom$GEOID == from]
+  dest = tract_centroid_geom$geometry[tract_centroid_geom$GEOID == to]
+  st_distance(x = origin, y = dest)*0.000621371 # convert meters to miles
+}
 
+# DO NOT RERUN (takes 1h+) — calculated distance between centroids
 
+#full_travel_matrix <- full_travel_matrix %>%
+  #rowwise() %>%
+  #mutate(drive_miles = units::drop_units(getDist(from_GEOID, to_GEOID))[1])
+```
 
+```{r write csv}
+# output new csv with distance info
+#write_csv(full_travel_matrix, "full_travel_matrix.csv")
 ```
 
 ```{r load nhts}
