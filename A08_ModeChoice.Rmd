@@ -33,6 +33,7 @@ IRS_mileage_rate <- 0.655
 # load travel matrix and geom
 full_travel_matrix <- read_csv("full_travel_matrix.csv")
 tract_centroid_geom <- geojson_sf("full_centroid_geom.geojson")
+tract_flows <- read_csv("tract_flows.csv")
 
 getDist <- function(from, to){
   origin = tract_centroid_geom$geometry[tract_centroid_geom$GEOID == from]
@@ -45,6 +46,21 @@ getDist <- function(from, to){
 #full_travel_matrix <- full_travel_matrix %>%
   #rowwise() %>%
   #mutate(drive_miles = units::drop_units(getDist(from_GEOID, to_GEOID))[1])
+
+# calcuilate drive costs by mile using IRS rate
+full_travel_matrix <- full_travel_matrix %>%
+  mutate(drive_cost = drive_miles*IRS_mileage_rate)
+
+# split costs for carpool
+full_travel_matrix <- full_travel_matrix %>%
+  mutate(carpool_cost_hbo = drive_cost / 2.71,
+         carpool_cost_hbw = drive_cost / 2.42,
+         carpool_cost_nhb = drive_cost / 2.75)
+
+#join flows to ttmatrix
+full_travel_matrix <- full_travel_matrix %>%
+  left_join(tract_flows)
+
 ```
 
 ```{r write csv}
@@ -99,7 +115,7 @@ okc_nhts_trips <- here(nhts_path[3]) %>%
   filter(mode != "other")
 ```
 
-```{r}
+```{r nhtsdata}
 trips_svy <- okc_nhts_trips %>%
   as_survey(weights = WTTRDFIN)
 
@@ -118,8 +134,27 @@ mode_by_purpose <- trips_svy %>%
   select(purpose, pct_SOV, pct_HOV, pct_transit)
 ```
 
+```{r mode by purpose}
+kable(mode_by_purpose)
+```
+
+
 ```{r constant calcs}
-# store mode shares by purpose as individual values
+
+# CONSTANTS
+SOV_const_HBO <- log(SOV_share_HBO / (1 - SOV_share_HBO)) 
+HOV_const_HBO <- log(HOV_share_HBO / (1 - HOV_share_HBO))
+transit_const_HBO <- log(transit_share_HBO / (1 - transit_share_HBO))
+
+SOV_const_HBW <- log(SOV_share_HBW / (1 - SOV_share_HBW))
+HOV_const_HBW <- log(HOV_share_HBW / (1 - HOV_share_HBW))
+transit_const_HBW <- log(transit_share_HBW / (1 - transit_share_HBW))
+
+SOV_const_NHB <- log(SOV_share_NHB / (1 - SOV_share_NHB))
+HOV_const_NHB <- log(HOV_share_NHB / (1 - HOV_share_NHB))
+transit_const_NHB <- log(transit_share_NHB / (1 - transit_share_NHB))
+
+# HBO Model
 SOV_share_HBO <- 
   mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "HBO"]
 
@@ -129,13 +164,10 @@ HOV_share_HBO <-
 transit_share_HBO <- 
   mode_by_purpose$pct_transit[mode_by_purpose$purpose == "HBO"]
 
-# calculating log odds
-SOV_const_HBO <- log(SOV_share_HBO / (1 - SOV_share_HBO)) 
-HOV_const_HBO <- log(HOV_share_HBO / (1 - HOV_share_HBO))
-transit_const_HBO <- log(transit_share_HBO / (1 - transit_share_HBO))
 
 
 
+#  HBW Model
 SOV_share_HBW <- 
   mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "HBW"]
 
@@ -145,12 +177,8 @@ HOV_share_HBW <-
 transit_share_HBW <- 
   mode_by_purpose$pct_transit[mode_by_purpose$purpose == "HBW"]
 
-SOV_const_HBW <- log(SOV_share_HBW / (1 - SOV_share_HBW))
-HOV_const_HBW <- log(HOV_share_HBW / (1 - HOV_share_HBW))
-transit_const_HBW <- log(transit_share_HBW / (1 - transit_share_HBW))
 
-
-
+#  NHB Model
 SOV_share_NHB <- 
   mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "NHB"]
 
@@ -160,22 +188,401 @@ HOV_share_NHB <-
 transit_share_NHB <- 
   mode_by_purpose$pct_transit[mode_by_purpose$purpose == "NHB"]
 
+```
+
+
+```{r utility model}
+# Calculate utility of HBO trips (G model coef)
+full_travel_matrix <- full_travel_matrix %>%
+  mutate(utility_transit_HBO = transit_const_HBO +
+                               ivtt * -0.010  +
+                               ovtt * -0.046 +
+                               fare * -0.029,
+         utility_SOV_HBO = SOV_const_HBO +
+                           drive_time * -0.010 +
+                           drive_cost * -0.029,
+         utility_HOV_HBO = HOV_const_HBO +
+                           drive_time * -0.010 +
+                           carpool_cost_hbo * -0.029) %>%
+  mutate(exp_u_SOV_HBO = exp(utility_SOV_HBO),
+         exp_u_HOV_HBO = exp(utility_HOV_HBO),
+         exp_u_transit_HBO = exp(utility_transit_HBO)) %>%
+  rowwise() %>%
+  mutate(total_utility_HBO = sum(exp_u_SOV_HBO,
+                                 exp_u_HOV_HBO,
+                                 exp_u_transit_HBO,
+                                 na.rm = TRUE)) %>%
+  ungroup()
+
+# Calculate utility of HBW trips (B model coef)
+full_travel_matrix <- full_travel_matrix %>%
+  mutate(utility_transit_HBW = transit_const_HBW +
+                               ivtt * -0.030  +
+                               ovtt * -0.075 +
+                               fare * -0.0043,
+         utility_SOV_HBW = SOV_const_HBW +
+                           drive_time * -0.030 +
+                           drive_cost * -0.0043,
+         utility_HOV_HBW = HOV_const_HBW +
+                           drive_time * -0.030 +
+                           carpool_cost_hbw * -0.0043) %>%
+  mutate(exp_u_SOV_HBW = exp(utility_SOV_HBW),
+         exp_u_HOV_HBW = exp(utility_HOV_HBW),
+         exp_u_transit_HBW = exp(utility_transit_HBW)) %>%
+  rowwise() %>%
+  mutate(total_utility_HBW = sum(exp_u_SOV_HBW,
+                                 exp_u_HOV_HBW,
+                                 exp_u_transit_HBW,
+                                 na.rm = TRUE)) %>%
+  ungroup()
+
+# Calculate utility of NHB trips (D model coef)
+full_travel_matrix <- full_travel_matrix %>%
+  mutate(utility_transit_NHB = transit_const_NHB +
+                               ivtt * -0.011  +
+                               (access_wt + egress_wt) * -0.066 +
+                               init_wt * -0.061 +
+                               transfer_wt * -0.059 +
+                               fare * -0.033,
+         utility_SOV_NHB = SOV_const_NHB +
+                           drive_time * -0.011 +
+                           drive_cost * -0.033,
+         utility_HOV_NHB = HOV_const_NHB +
+                           drive_time * -0.011 +
+                           carpool_cost_nhb * -0.033) %>%
+  mutate(exp_u_SOV_NHB = exp(utility_SOV_NHB),
+         exp_u_HOV_NHB = exp(utility_HOV_NHB),
+         exp_u_transit_NHB = exp(utility_transit_NHB)) %>%
+  rowwise() %>%
+  mutate(total_utility_NHB = sum(exp_u_SOV_NHB,
+                                 exp_u_HOV_NHB,
+                                 exp_u_transit_NHB,
+                                 na.rm = TRUE)) %>%
+  ungroup()
+
+```
+
+```{r probability mode share}
+# determine mode share for HBO
+full_travel_matrix <- full_travel_matrix %>%
+  mutate(p_transit_HBO = exp(utility_transit_HBO) / total_utility_HBO,
+         p_SOV_HBO = exp(utility_SOV_HBO) / total_utility_HBO,
+         p_HOV_HBO = exp(utility_HOV_HBO) / total_utility_HBO) %>%
+  replace_na(list(p_transit_HBO = 0,
+                  p_SOV_HBO = 0,
+                  p_HOV_HBO = 0))
+
+# determine mode share for HBW
+full_travel_matrix <- full_travel_matrix %>%
+  mutate(p_transit_HBW = exp(utility_transit_HBW) / total_utility_HBW,
+         p_SOV_HBW = exp(utility_SOV_HBW) / total_utility_HBW,
+         p_HOV_HBW = exp(utility_HOV_HBW) / total_utility_HBW) %>%
+  replace_na(list(p_transit_HBW = 0,
+                  p_SOV_HBW = 0,
+                  p_HOV_HBW = 0))
+
+# determine mode share for NHB
+full_travel_matrix <- full_travel_matrix %>%
+  mutate(p_transit_NHB = exp(utility_transit_NHB) / total_utility_NHB,
+         p_SOV_NHB = exp(utility_SOV_NHB) / total_utility_NHB,
+         p_HOV_NHB = exp(utility_HOV_NHB) / total_utility_NHB) %>%
+  replace_na(list(p_transit_NHB = 0,
+                  p_SOV_NHB = 0,
+                  p_HOV_NHB = 0))
+```
+
+```{r assign trips}
+
+full_travel_matrix <- full_travel_matrix %>%
+  mutate(n_transit_HBO = round(HBO_flow * p_transit_HBO),
+         n_SOV_HBO = round(HBO_flow * p_SOV_HBO),
+         n_HOV_HBO = round(HBO_flow * p_HOV_HBO),
+         n_transit_HBW = round(HBW_flow * p_transit_HBW),
+         n_SOV_HBW = round(HBW_flow * p_SOV_HBW),
+         n_HOV_HBW = round(HBW_flow * p_HOV_HBW),
+         n_transit_NHB = round(NHB_flow * p_transit_NHB),
+         n_SOV_NHB = round(NHB_flow * p_SOV_NHB),
+         n_HOV_NHB = round(NHB_flow * p_HOV_NHB)) %>%
+  replace_na(list(n_transit_HBO = 0,
+                  n_SOV_HBO = 0,
+                  n_HOV_HBO = 0,
+                  n_transit_HBW = 0,
+                  n_SOV_HBW = 0,
+                  n_HOV_HBW = 0,
+                  n_transit_NHB = 0,
+                  n_SOV_NHB = 0,
+                  n_HOV_NHB = 0)) 
+
+full_travel_matrix %>%
+  select(from_GEOID,
+         to_GEOID,
+         n_transit_HBO,
+         n_SOV_HBO,
+         n_HOV_HBO,
+         n_transit_HBW,
+         n_SOV_HBW,
+         n_HOV_HBW,
+         n_transit_NHB,
+         n_SOV_NHB,
+         n_HOV_NHB)
+```
+
+```{r compare model to nhts}
+
+modeled_mode_by_purpose_1 <- tibble(
+  purpose = c("HBO_model_1", "HBW_model_1", "NHB_model_1"), 
+  pct_transit = c(sum(full_travel_matrix$n_transit_HBO) / 
+                   sum(full_travel_matrix$HBO_flow),
+                 sum(full_travel_matrix$n_transit_HBW) / 
+                   sum(full_travel_matrix$HBW_flow),
+                sum(full_travel_matrix$n_transit_NHB) / 
+                   sum(full_travel_matrix$NHB_flow)),
+  pct_SOV = c(sum(full_travel_matrix$n_SOV_HBO) / 
+                sum(full_travel_matrix$HBO_flow),
+              sum(full_travel_matrix$n_SOV_HBW) / 
+                sum(full_travel_matrix$HBW_flow),
+              sum(full_travel_matrix$n_SOV_NHB) / 
+                   sum(full_travel_matrix$NHB_flow)),
+  pct_HOV = c(sum(full_travel_matrix$n_HOV_HBO) / 
+                sum(full_travel_matrix$HBO_flow),
+              sum(full_travel_matrix$n_HOV_HBW) / 
+                sum(full_travel_matrix$HBW_flow),
+              sum(full_travel_matrix$n_HOV_NHB) / 
+                   sum(full_travel_matrix$NHB_flow)))
+
+model_compare <- rbind(mode_by_purpose, modeled_mode_by_purpose_1) %>%
+  arrange(purpose)
+
+model_compare
+```
+
+
+```{r model_2}
+
+# CONSTANTS
+SOV_const_HBO <- log(SOV_share_HBO / (1 - SOV_share_HBO)) 
+HOV_const_HBO <- -.25
+transit_const_HBO <- log(transit_share_HBO / (1 - transit_share_HBO))
+
+SOV_const_HBW <- 0.7
+HOV_const_HBW <- -2
+transit_const_HBW <- -1 
+
 SOV_const_NHB <- log(SOV_share_NHB / (1 - SOV_share_NHB))
 HOV_const_NHB <- log(HOV_share_NHB / (1 - HOV_share_NHB))
 transit_const_NHB <- log(transit_share_NHB / (1 - transit_share_NHB))
 
+# HBO Model
+SOV_share_HBO <- 
+  mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "HBO"]
+
+HOV_share_HBO <- 
+  mode_by_purpose$pct_HOV[mode_by_purpose$purpose == "HBO"]
+
+transit_share_HBO <- 
+  mode_by_purpose$pct_transit[mode_by_purpose$purpose == "HBO"]
+
+
+
+
+#  HBW Model
+SOV_share_HBW <- 
+  mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "HBW"]
+
+HOV_share_HBW <- 
+  mode_by_purpose$pct_HOV[mode_by_purpose$purpose == "HBW"]
+
+transit_share_HBW <- 
+  mode_by_purpose$pct_transit[mode_by_purpose$purpose == "HBW"]
+
+
+#  NHB Model
+SOV_share_NHB <- 
+  mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "NHB"]
+
+HOV_share_NHB <- 
+  mode_by_purpose$pct_HOV[mode_by_purpose$purpose == "NHB"]
+
+transit_share_NHB <- 
+  mode_by_purpose$pct_transit[mode_by_purpose$purpose == "NHB"]
+
+
+
+
 ```
 
 
-```{r}
+```{r utility model}
+# Calculate utility of HBO trips (G model coef)
+full_travel_matrix <- full_travel_matrix %>%
+  mutate(utility_transit_HBO = transit_const_HBO +
+                               ivtt * -0.010  +
+                               ovtt * -0.046 +
+                               fare * -0.029,
+         utility_SOV_HBO = SOV_const_HBO +
+                           drive_time * -0.010 +
+                           drive_cost * -0.029,
+         utility_HOV_HBO = HOV_const_HBO +
+                           drive_time * -0.010 +
+                           carpool_cost_hbo * -0.029) %>%
+  mutate(exp_u_SOV_HBO = exp(utility_SOV_HBO),
+         exp_u_HOV_HBO = exp(utility_HOV_HBO),
+         exp_u_transit_HBO = exp(utility_transit_HBO)) %>%
+  rowwise() %>%
+  mutate(total_utility_HBO = sum(exp_u_SOV_HBO,
+                                 exp_u_HOV_HBO,
+                                 exp_u_transit_HBO,
+                                 na.rm = TRUE)) %>%
+  ungroup()
+
+# Calculate utility of HBW trips (B model coef)
+full_travel_matrix <- full_travel_matrix %>%
+  mutate(utility_transit_HBW = transit_const_HBW +
+                               ivtt * -0.030  +
+                               ovtt * -0.075 +
+                               fare * -0.0043,
+         utility_SOV_HBW = SOV_const_HBW +
+                           drive_time * -0.030 +
+                           drive_cost * -0.0043,
+         utility_HOV_HBW = HOV_const_HBW +
+                           drive_time * -0.030 +
+                           carpool_cost_hbw * -0.0043) %>%
+  mutate(exp_u_SOV_HBW = exp(utility_SOV_HBW),
+         exp_u_HOV_HBW = exp(utility_HOV_HBW),
+         exp_u_transit_HBW = exp(utility_transit_HBW)) %>%
+  rowwise() %>%
+  mutate(total_utility_HBW = sum(exp_u_SOV_HBW,
+                                 exp_u_HOV_HBW,
+                                 exp_u_transit_HBW,
+                                 na.rm = TRUE)) %>%
+  ungroup()
+
+# Calculate utility of NHB trips (D model coef)
+full_travel_matrix <- full_travel_matrix %>%
+  mutate(utility_transit_NHB = transit_const_NHB +
+                               ivtt * -0.011  +
+                               (access_wt + egress_wt) * -0.066 +
+                               init_wt * -0.061 +
+                               transfer_wt * -0.059 +
+                               fare * -0.033,
+         utility_SOV_NHB = SOV_const_NHB +
+                           drive_time * -0.011 +
+                           drive_cost * -0.033,
+         utility_HOV_NHB = HOV_const_NHB +
+                           drive_time * -0.011 +
+                           carpool_cost_nhb * -0.033) %>%
+  mutate(exp_u_SOV_NHB = exp(utility_SOV_NHB),
+         exp_u_HOV_NHB = exp(utility_HOV_NHB),
+         exp_u_transit_NHB = exp(utility_transit_NHB)) %>%
+  rowwise() %>%
+  mutate(total_utility_NHB = sum(exp_u_SOV_NHB,
+                                 exp_u_HOV_NHB,
+                                 exp_u_transit_NHB,
+                                 na.rm = TRUE)) %>%
+  ungroup()
 
 ```
 
+```{r probability mode share}
+# determine mode share for HBO
+full_travel_matrix <- full_travel_matrix %>%
+  mutate(p_transit_HBO = exp(utility_transit_HBO) / total_utility_HBO,
+         p_SOV_HBO = exp(utility_SOV_HBO) / total_utility_HBO,
+         p_HOV_HBO = exp(utility_HOV_HBO) / total_utility_HBO) %>%
+  replace_na(list(p_transit_HBO = 0,
+                  p_SOV_HBO = 0,
+                  p_HOV_HBO = 0))
+
+# determine mode share for HBW
+full_travel_matrix <- full_travel_matrix %>%
+  mutate(p_transit_HBW = exp(utility_transit_HBW) / total_utility_HBW,
+         p_SOV_HBW = exp(utility_SOV_HBW) / total_utility_HBW,
+         p_HOV_HBW = exp(utility_HOV_HBW) / total_utility_HBW) %>%
+  replace_na(list(p_transit_HBW = 0,
+                  p_SOV_HBW = 0,
+                  p_HOV_HBW = 0))
+
+# determine mode share for NHB
+full_travel_matrix <- full_travel_matrix %>%
+  mutate(p_transit_NHB = exp(utility_transit_NHB) / total_utility_NHB,
+         p_SOV_NHB = exp(utility_SOV_NHB) / total_utility_NHB,
+         p_HOV_NHB = exp(utility_HOV_NHB) / total_utility_NHB) %>%
+  replace_na(list(p_transit_NHB = 0,
+                  p_SOV_NHB = 0,
+                  p_HOV_NHB = 0))
+```
+
+```{r assign trips}
+
+full_travel_matrix <- full_travel_matrix %>%
+  mutate(n_transit_HBO = round(HBO_flow * p_transit_HBO),
+         n_SOV_HBO = round(HBO_flow * p_SOV_HBO),
+         n_HOV_HBO = round(HBO_flow * p_HOV_HBO),
+         n_transit_HBW = round(HBW_flow * p_transit_HBW),
+         n_SOV_HBW = round(HBW_flow * p_SOV_HBW),
+         n_HOV_HBW = round(HBW_flow * p_HOV_HBW),
+         n_transit_NHB = round(NHB_flow * p_transit_NHB),
+         n_SOV_NHB = round(NHB_flow * p_SOV_NHB),
+         n_HOV_NHB = round(NHB_flow * p_HOV_NHB)) %>%
+  replace_na(list(n_transit_HBO = 0,
+                  n_SOV_HBO = 0,
+                  n_HOV_HBO = 0,
+                  n_transit_HBW = 0,
+                  n_SOV_HBW = 0,
+                  n_HOV_HBW = 0,
+                  n_transit_NHB = 0,
+                  n_SOV_NHB = 0,
+                  n_HOV_NHB = 0)) 
+
+full_travel_matrix %>%
+  select(from_GEOID,
+         to_GEOID,
+         n_transit_HBO,
+         n_SOV_HBO,
+         n_HOV_HBO,
+         n_transit_HBW,
+         n_SOV_HBW,
+         n_HOV_HBW,
+         n_transit_NHB,
+         n_SOV_NHB,
+         n_HOV_NHB) 
+```
+
+```{r compare model to nhts}
+
+modeled_mode_by_purpose_2 <- tibble(
+  purpose = c("HBO_model_2", "HBW_model_2", "NHB_model_2"), 
+  pct_transit = c(sum(full_travel_matrix$n_transit_HBO) / 
+                   sum(full_travel_matrix$HBO_flow),
+                 sum(full_travel_matrix$n_transit_HBW) / 
+                   sum(full_travel_matrix$HBW_flow),
+                sum(full_travel_matrix$n_transit_NHB) / 
+                   sum(full_travel_matrix$NHB_flow)),
+  pct_SOV = c(sum(full_travel_matrix$n_SOV_HBO) / 
+                sum(full_travel_matrix$HBO_flow),
+              sum(full_travel_matrix$n_SOV_HBW) / 
+                sum(full_travel_matrix$HBW_flow),
+              sum(full_travel_matrix$n_SOV_NHB) / 
+                   sum(full_travel_matrix$NHB_flow)),
+  pct_HOV = c(sum(full_travel_matrix$n_HOV_HBO) / 
+                sum(full_travel_matrix$HBO_flow),
+              sum(full_travel_matrix$n_HOV_HBW) / 
+                sum(full_travel_matrix$HBW_flow),
+              sum(full_travel_matrix$n_HOV_NHB) / 
+                   sum(full_travel_matrix$NHB_flow)))
+
+model_compare_2 <- rbind(model_compare, modeled_mode_by_purpose_2) %>%
+  arrange(purpose)
+
+model_compare_2
+```
+
+
+```{r charts}
 
 
 
-
-
+```
 
 
 

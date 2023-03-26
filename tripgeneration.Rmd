@@ -487,6 +487,13 @@ ttime_by_purpose_pred <- ttime_by_purpose %>%
 
 kable(ttime_by_purpose_pred)
 ```
+```{r write new file}
+#tract_flows <- full_TTmatrix %>%
+  #select(from_GEOID, to_GEOID, HBO_flow, HBW_flow, NHB_flow)
+
+#write_csv(tract_flows, "tract_flows.csv")
+```
+
 
 
 ## Visualizing Travel Flows by Purpose and County
