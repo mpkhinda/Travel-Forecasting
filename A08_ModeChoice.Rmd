@@ -24,6 +24,9 @@ if (!require(geojsonio)) install.packages("geojsonio"); library(geojsonio)
 if (!require(geojsonsf)) install.packages("geojsonsf"); library(geojsonsf)
 if (!require(survey)) install.packages("survey"); library(survey)
 if (!require(srvyr)) install.packages("srvyr"); library(srvyr)
+if (!require(reshape2)) install.packages("reshape2"); library(reshape2)
+if (!require(metR)) install.packages("metR"); library(metR)
+if (!require(ggnewscale)) install.packages("ggnewscale"); library(ggnewscale)
 ```
 
 
@@ -34,6 +37,7 @@ IRS_mileage_rate <- 0.655
 full_travel_matrix <- read_csv("full_travel_matrix.csv")
 tract_centroid_geom <- geojson_sf("full_centroid_geom.geojson")
 tract_flows <- read_csv("tract_flows.csv")
+tract_trip_info <- geojson_sf("tract_trip_info.geojson")
 
 getDist <- function(from, to){
   origin = tract_centroid_geom$geometry[tract_centroid_geom$GEOID == from]
@@ -576,12 +580,95 @@ model_compare_2 <- rbind(model_compare, modeled_mode_by_purpose_2) %>%
 
 model_compare_2
 ```
+```{r total trip count}
+full_travel_matrix <- full_travel_matrix %>%
+  rowwise() %>%
+  mutate(n_total_total = sum(n_transit_HBO,
+                             n_SOV_HBO,
+                             n_HOV_HBO,
+                             n_transit_HBW,
+                             n_SOV_HBW,
+                             n_HOV_HBW,
+                             n_transit_NHB,
+                             n_SOV_NHB,
+                             n_HOV_NHB),
+           n_transit_total = sum(n_transit_HBO,
+                                 n_transit_HBW,
+                                 n_transit_NHB),
+           n_SOV_total = sum(n_SOV_HBO,
+                             n_SOV_HBW,
+                             n_SOV_NHB),
+           n_HOV_total = sum(n_HOV_HBO,
+                             n_HOV_HBW,
+                             n_HOV_NHB),
+           n_total_HBO = sum(n_transit_HBO,
+                               n_SOV_HBO,
+                               n_HOV_HBO),
+           n_total_HBW = sum(n_transit_HBW,
+                               n_SOV_HBW,
+                               n_HOV_HBW),
+           n_total_NHB = sum(n_transit_NHB,
+                               n_SOV_NHB,
+                               n_HOV_NHB))
+```
 
 
-```{r charts}
+```{r chart mode split}
+ggplot()+
+  stat_summary_bin(data = full_travel_matrix, aes(x = drive_time, y = (n_transit_total/n_total_total)), color = "red", alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
+  stat_summary_bin(data = full_travel_matrix, aes(x = drive_time, y = (n_SOV_total/n_total_total)), color = "blue", alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
+  stat_summary_bin(data = full_travel_matrix, aes(x = drive_time, y = (n_HOV_total/n_total_total)), color = "goldenrod", alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
+  scale_x_continuous(breaks = seq(from =0, to = 240, by = 30)) +
+  labs(title = "Mode Split by Drive Time for all Trip Purposes", x = "Drive Time (mins)", y = "Mode Share (Fraction of Total Trips)") +
+  theme_minimal()
 
+# HBO
+ggplot()+
+  stat_summary_bin(data = full_travel_matrix, aes(x = drive_time, y = (n_transit_HBO/n_total_HBO)), color = "red", alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
+  stat_summary_bin(data = full_travel_matrix, aes(x = drive_time, y = (n_SOV_HBO/n_total_HBO)), color = "blue", alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
+  stat_summary_bin(data = full_travel_matrix, aes(x = drive_time, y = (n_HOV_HBO/n_total_HBO)), color = "goldenrod", alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
+  scale_x_continuous(breaks = seq(from =0, to = 240, by = 30)) +
+  labs(title = "Mode Split by Drive Time for Home-Based Other Trips", x = "Drive Time (mins)", y = "Mode Share (Fraction of Total Trips)") +
+  theme_minimal()
 
+# HBW
+ggplot()+
+  stat_summary_bin(data = full_travel_matrix, aes(x = drive_time, y = (n_transit_HBW/n_total_HBW)), color = "red", alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
+  stat_summary_bin(data = full_travel_matrix, aes(x = drive_time, y = (n_SOV_HBW/n_total_HBW)), color = "blue", alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
+  stat_summary_bin(data = full_travel_matrix, aes(x = drive_time, y = (n_HOV_HBW/n_total_HBW)), color = "goldenrod", alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
+  scale_x_continuous(breaks = seq(from =0, to = 240, by = 30)) +
+  labs(title = "Mode Split by Drive Time for Home-Based Work Trips", x = "Drive Time (mins)", y = "Mode Share (Fraction of Total Trips)") +
+  theme_minimal()
 
+# NHB
+ggplot()+
+  stat_summary_bin(data = full_travel_matrix, aes(x = drive_time, y = (n_transit_NHB/n_total_NHB)), color = "red", alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
+  stat_summary_bin(data = full_travel_matrix, aes(x = drive_time, y = (n_SOV_NHB/n_total_NHB)), color = "blue", alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
+  stat_summary_bin(data = full_travel_matrix, aes(x = drive_time, y = (n_HOV_NHB/n_total_NHB)), color = "goldenrod", alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
+  scale_x_continuous(breaks = seq(from =0, to = 240, by = 30)) +
+  labs(title = "Mode Split by Drive Time for Non Home-Based Trips", x = "Drive Time (mins)", y = "Mode Share (Fraction of Total Trips)") +
+  theme_minimal()
+
+```
+
+```{r map}
+prob_travel_matrix <- full_travel_matrix %>%
+  select(from_GEOID, n_transit_total, n_SOV_total, n_HOV_total, n_total_total) %>%
+  mutate(GEOID = as.character(from_GEOID)) %>%
+  group_by(GEOID) %>%
+  summarise(n_transit_total = sum(n_transit_total), 
+            n_total_total = sum(n_total_total),
+            n_SOV_total = sum(n_SOV_total),
+            n_HOV_total = sum(n_HOV_total)) %>%
+  mutate(pct_transit = (n_transit_total/n_total_total),
+         pct_SOV = (n_SOV_total/n_total_total),
+         pct_HOV = (n_HOV_total/n_total_total)) 
+  
+
+transit_prob_tracts <- tract_trip_info %>% 
+  select(GEOID, geometry) %>% 
+  left_join(prob_travel_matrix) %>%
+  mutate(pct_transit = ifelse(pct_transit < 0.00000000001, NA, pct_transit))
 ```
 
 
