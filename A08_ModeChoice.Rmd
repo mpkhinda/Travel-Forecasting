@@ -1,7 +1,7 @@
 ---
 title: "Oklahoma City Mode Choice"
 author: "Gabriel Barrett-Jackson, Matt Khinda, Samantha Page"
-date: "3/24/2023"
+date: "3/30/2023"
 output:
   html_document:
     theme: cerulean
@@ -66,6 +66,18 @@ full_travel_matrix <- full_travel_matrix %>%
   left_join(tract_flows)
 
 ```
+
+
+# Calculating Travel Cost
+
+To calculate the driving cost of each trip, we estimated the straight-line distance between the origin and destination centroids, converted that distance to miles, and then used the 2023 IRS mileage reimbursement rate (0.655 dollars) to calculate the cost. The most expensive trip is about $60 to cover 91.4 miles, while the shortest trip is about 0.13 dollars to cover 0.2 miles. 
+
+We acknowledge that this is a rough approximation because it uses “as the crow flies” distance, rather than the shortest path traveled along the roadway between two centroids. We decided to take this approach because we believe that the IRS mileage rate more fully captures the cost of driving than using NHTS data to approximate cost by minute based on fuel expenses, even with this distance limitation. Equally, in the future, this method could be updated using more accurate distances along the road network. 
+
+For HOV trips, we established carpool costs using the “Carpool 2+ only—daily” assumptions from NCHRP 716, which divides the previously calculated driving cost by an average number of additional passengers. 
+
+For cost per transit trip, we had already included a transit fare when we initially created our network and skim. As an estimated average of the Embark system’s different fares, we assigned each trip a $2.00 fare with free transfers. 
+
 
 ```{r write csv}
 # output new csv with distance info
@@ -138,25 +150,18 @@ mode_by_purpose <- trips_svy %>%
   select(purpose, pct_SOV, pct_HOV, pct_transit)
 ```
 
+
+# Mode-by-Purpose Table
+
+In setting up the mode-by-purpose table, we noted the overwhelming share of home-based work trips that rely on single-occupancy vehicles (90 percent).
+
+
 ```{r mode by purpose}
 kable(mode_by_purpose)
 ```
 
 
 ```{r constant calcs}
-
-# CONSTANTS
-SOV_const_HBO <- log(SOV_share_HBO / (1 - SOV_share_HBO)) 
-HOV_const_HBO <- log(HOV_share_HBO / (1 - HOV_share_HBO))
-transit_const_HBO <- log(transit_share_HBO / (1 - transit_share_HBO))
-
-SOV_const_HBW <- log(SOV_share_HBW / (1 - SOV_share_HBW))
-HOV_const_HBW <- log(HOV_share_HBW / (1 - HOV_share_HBW))
-transit_const_HBW <- log(transit_share_HBW / (1 - transit_share_HBW))
-
-SOV_const_NHB <- log(SOV_share_NHB / (1 - SOV_share_NHB))
-HOV_const_NHB <- log(HOV_share_NHB / (1 - HOV_share_NHB))
-transit_const_NHB <- log(transit_share_NHB / (1 - transit_share_NHB))
 
 # HBO Model
 SOV_share_HBO <- 
@@ -192,7 +197,36 @@ HOV_share_NHB <-
 transit_share_NHB <- 
   mode_by_purpose$pct_transit[mode_by_purpose$purpose == "NHB"]
 
+
+# CONSTANTS
+SOV_const_HBO <- log(SOV_share_HBO / (1 - SOV_share_HBO)) 
+HOV_const_HBO <- log(HOV_share_HBO / (1 - HOV_share_HBO))
+transit_const_HBO <- log(transit_share_HBO / (1 - transit_share_HBO))
+
+SOV_const_HBW <- log(SOV_share_HBW / (1 - SOV_share_HBW))
+HOV_const_HBW <- log(HOV_share_HBW / (1 - HOV_share_HBW))
+transit_const_HBW <- log(transit_share_HBW / (1 - transit_share_HBW))
+
+SOV_const_NHB <- log(SOV_share_NHB / (1 - SOV_share_NHB))
+HOV_const_NHB <- log(HOV_share_NHB / (1 - HOV_share_NHB))
+transit_const_NHB <- log(transit_share_NHB / (1 - transit_share_NHB))
+
+
 ```
+
+
+## Model Coefficients
+
+When choosing our model coefficients for each trip purpose, we opted not to choose a nested logit model to maintain consistency across all models. At the outset, we did not think it would fundamentally make a difference in our calculations because we posit that people treat driving alone and in a shared car as a distinct choice. Ultimately, though, we do acknowledge that this choice overweights the probability of people driving by assuming that travelers view driving alone and driving with someone else as entirely distinct choices from one another, providing them with two auto-based options to the single transit option.
+
+For all three trip purposes, we selected a model based on its ability to appropriately fit our study area in the following ways:
+
+* More than 1 million people 
+* Excluding non-motorized modes of travel (walking and biking) 
+* Including auto submodes (driving alone and sharing a ride)  
+* Excluding transit submodes
+
+For home-based other trips, we selected model G. For home-based work trips, we selected model B. And for non-home-based trips, we selected model D. All model parameters and values can be found in NCHRP 716 (tables 4.7 – 4.14). 
 
 
 ```{r utility model}
@@ -295,7 +329,7 @@ full_travel_matrix <- full_travel_matrix %>%
                   p_HOV_NHB = 0))
 ```
 
-```{r assign trips}
+```{r assign trips, include = FALSE}
 
 full_travel_matrix <- full_travel_matrix %>%
   mutate(n_transit_HBO = round(HBO_flow * p_transit_HBO),
@@ -331,6 +365,21 @@ full_travel_matrix %>%
          n_HOV_NHB)
 ```
 
+
+# Calibration
+
+Through trial and error, we learned the nuances of balancing out coefficients across the different modes within each trip type. We aimed to be within a 5 percentage point threshold from the observed mode share by purpose data from the NHTS. 
+
+As initial values, all constants were set to the log odds of that particular mode for that purpose from the NHTS. If the resulting predicted value was above or below the accuracy threshold, the values were adjusted manually until the result was satisfactorily close.  
+
+HBO: For SOV kept the coefficient at -0.28; we changed the coefficient for HOV from 0.167 to -0.25; and for transit we kept the coefficient at -3.52.
+HBW: For SOV we went from 2.26 to 0.70; HOV -2.56 to -2.00; transit -3.74 to -1.00
+NHB: All mode shares were within 2 percentage points of the NHTS data shares, so we did not change the coefficients.
+
+
+### Comparison Between NHTS Data and Model 1
+
+
 ```{r compare model to nhts}
 
 modeled_mode_by_purpose_1 <- tibble(
@@ -357,7 +406,7 @@ modeled_mode_by_purpose_1 <- tibble(
 model_compare <- rbind(mode_by_purpose, modeled_mode_by_purpose_1) %>%
   arrange(purpose)
 
-model_compare
+kable(model_compare)
 ```
 
 
@@ -416,7 +465,7 @@ transit_share_NHB <-
 ```
 
 
-```{r utility model}
+```{r utility model 2}
 # Calculate utility of HBO trips (G model coef)
 full_travel_matrix <- full_travel_matrix %>%
   mutate(utility_transit_HBO = transit_const_HBO +
@@ -487,7 +536,7 @@ full_travel_matrix <- full_travel_matrix %>%
 
 ```
 
-```{r probability mode share}
+```{r probability mode share 2}
 # determine mode share for HBO
 full_travel_matrix <- full_travel_matrix %>%
   mutate(p_transit_HBO = exp(utility_transit_HBO) / total_utility_HBO,
@@ -516,7 +565,7 @@ full_travel_matrix <- full_travel_matrix %>%
                   p_HOV_NHB = 0))
 ```
 
-```{r assign trips}
+```{r assign trips 2, include = FALSE}
 
 full_travel_matrix <- full_travel_matrix %>%
   mutate(n_transit_HBO = round(HBO_flow * p_transit_HBO),
@@ -552,7 +601,11 @@ full_travel_matrix %>%
          n_HOV_NHB) 
 ```
 
-```{r compare model to nhts}
+
+### Comparison Between NHTS Data and Final Model
+
+
+```{r compare model to nhts 2}
 
 modeled_mode_by_purpose_2 <- tibble(
   purpose = c("HBO_model_2", "HBW_model_2", "NHB_model_2"), 
@@ -578,9 +631,11 @@ modeled_mode_by_purpose_2 <- tibble(
 model_compare_2 <- rbind(model_compare, modeled_mode_by_purpose_2) %>%
   arrange(purpose)
 
-model_compare_2
+kable(model_compare_2)
 ```
-```{r total trip count}
+
+
+```{r total trip count }
 full_travel_matrix <- full_travel_matrix %>%
   rowwise() %>%
   mutate(n_total_total = sum(n_transit_HBO,
@@ -611,6 +666,19 @@ full_travel_matrix <- full_travel_matrix %>%
                                n_SOV_NHB,
                                n_HOV_NHB))
 ```
+
+
+# Visualizations
+
+In order to understand the relationship between trip length and mode choice, we plotted the percent of trips using a particular mode (as predicted by our model) against the drive time of that trip. We then further subset the data by purpose to illustrate the difference in mode share for different kinds of trips. 
+
+We used drive time as our preferred metric of travel time based on the same assumption we used in the trip generation and distribution calculation — that it most often will be the shortest trip between two zones. Because there are over 130,000 individual origin-destination pairs in our matrix, we decided to create binned scatter plots which more clearly present the trend by reducing the visual noise. The bins are set at roughly 5-minute intervals in drive time, which was done by taking the max drive time of approximately 425 minutes and dividing it by 5. Within each of these bins, the mean share of each mode for all trips is calculated and presented. 
+
+While we think this approach makes the data more understandable, we acknowledge it comes with some limitations. First, because transit ridership overall is very low and there are many trips for which transit is not an option at all, taking the mean transit share results in a value of nearly 0. While this does reflect a general lack of transit use, it may also falsely give the impression that “no-one rides transit” when there are some origin-destination pairs where transit is significantly more common than others. Also, because a mean value is heavily affected by outliers, it can be a less useful or representative metric for small sample sizes. This comes up in particular for the bins of drive times above 90 minutes for which the number of trips is significantly smaller than, for example, the 5-10 minute bin. 
+
+We notice that at trips of about 45 minutes there is a slight bump in the share of HOV trips and a slight dip in the share of SOV trips. This happens again for trips of about 90 minutes. This plot suggests that it is unlikely for people to carpool for trips of 2+ hours, across all trip purposes. We also note that the bumps happen right around 15-minute intervals, suggesting an effect from people’s tendency to round time into more precise intervals. 
+
+We initially mapped this information to understand the spatial distribution of mode choice throughout our study area, too. However, it seemed repetitive of these scatter plots and did not contribute any new interpretations of our analysis. In particular, because the SOV and HOV mode shares are both approximately 40-55% of mode share for all trips, there was little range across the geography. We wonder if this lack of differentiation is a symptom of not having chosen a nested logit model.
 
 
 ```{r chart mode split}
@@ -670,6 +738,3 @@ transit_prob_tracts <- tract_trip_info %>%
   left_join(prob_travel_matrix) %>%
   mutate(pct_transit = ifelse(pct_transit < 0.00000000001, NA, pct_transit))
 ```
-
-
-
