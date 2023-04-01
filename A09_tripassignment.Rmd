@@ -1,0 +1,75 @@
+---
+title: "Oklahoma City Trip Assignment"
+author: "Gabriel Barrett-Jackson, Matt Khinda, Samantha Page"
+date: "4/10/2023"
+output:
+  html_document:
+    theme: cerulean
+    toc: true
+    toc_depth: 6
+    toc_float: true
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE)
+```
+
+```{r libraries}
+if (!require(here)) install.packages("here"); library(here)
+if (!require(tidyverse)) install.packages("tidyverse"); library(tidyverse)
+if (!require(knitr)) install.packages("knitr"); library(knitr)
+if (!require(kableExtra)) install.packages("kableExtra"); library(kableExtra)
+if (!require(sf)) install.packages("sf"); library(sf)
+if (!require(geojsonio)) install.packages("geojsonio"); library(geojsonio)
+if (!require(geojsonsf)) install.packages("geojsonsf"); library(geojsonsf)
+if (!require(survey)) install.packages("survey"); library(survey)
+if (!require(srvyr)) install.packages("srvyr"); library(srvyr)
+if (!require(reshape2)) install.packages("reshape2"); library(reshape2)
+if (!require(metR)) install.packages("metR"); library(metR)
+if (!require(ggnewscale)) install.packages("ggnewscale"); library(ggnewscale)
+```
+
+
+```{r cars}
+full_travel_matrix_with_flows <- read.csv("full_travel_matrix_with_flows.csv") %>%
+  mutate(n_HOV_HBO_veh = n_HOV_HBO / 2.71,
+         n_HOV_HBW_veh = n_HOV_HBW / 2.42,
+         n_HOV_NHB_veh = n_HOV_NHB / 2.75)
+  
+PA_matrix <- full_travel_matrix_with_flows %>%
+  mutate(HOV_flow = n_HOV_HBO_veh + n_HOV_HBW_veh + n_HOV_NHB_veh,
+         SOV_flow = n_SOV_total) %>%
+  mutate(flows = HOV_flow + SOV_flow) %>%
+  select(from_GEOID, to_GEOID, flows)
+
+transcad_ids <- read.csv("ok_msa_w_centroids_updated_2-18.csv") %>%
+  rename(GEOID = ï..GEOID)
+
+get_node_id <- function(GEOID){
+  node_id = transcad_ids$centroid_id[transcad_ids$GEOID == GEOID]
+  return(node_id)
+}
+
+PA_matrix_transcad <- PA_matrix %>%
+  rowwise() %>%
+  mutate(from_node = get_node_id(from_GEOID),
+         to_node = get_node_id(to_GEOID)) %>%
+  select(from_node, to_node, flows)
+
+write.csv(PA_matrix_transcad, "PA_matrix_transcad.csv")
+
+```
+
+```{r}
+TA_flows <- read.csv("okc_roads_prayerhand+okc_LinkFlow.csv")
+
+road_geom <- read_sf("okc_roads_prayerhand_geom 2023-02-20.shp") %>%
+  select(ID, geometry)
+
+TA_flows_geom <- road_geom %>%
+  left_join(TA_flows)
+
+ggplot(TA_flows_geom) + 
+  geom_sf()
+```
+
+
