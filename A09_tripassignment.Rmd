@@ -26,6 +26,7 @@ if (!require(srvyr)) install.packages("srvyr"); library(srvyr)
 if (!require(reshape2)) install.packages("reshape2"); library(reshape2)
 if (!require(metR)) install.packages("metR"); library(metR)
 if (!require(ggnewscale)) install.packages("ggnewscale"); library(ggnewscale)
+if (!require(ggplot2)) install.packages("ggplot2"); library(ggplot2)
 ```
 
 
@@ -71,5 +72,49 @@ TA_flows_geom <- road_geom %>%
 ggplot(TA_flows_geom) + 
   geom_sf()
 ```
+```{r compute congestion time}
+TA_flows_geom <- TA_flows_geom %>%
+  mutate(congestion_time = Max_Time - TravelTime) %>%
+  mutate(congestion_time = ifelse(congestion_time < 0.0001, 0, congestion_time))
+```
 
+```{r mapping excessively long congestion times}
+ggplot(subset(TA_flows_geom, congestion_time > 240)) + 
+  geom_sf(aes(color = congestion_time)) +
+  scale_color_continuous(type = "gradient") + 
+  theme_void()
+```
+```{r mapping normal congestion times}
+ggplot(subset(TA_flows_geom, congestion_time < 240)) + 
+  geom_sf(aes(color = congestion_time)) +
+  scale_color_continuous(type = "gradient") + 
+  theme_void()
+```
+```{r mapping non-connector congestion times}
+ggplot(subset(TA_flows_geom, Type != "")) + 
+  geom_sf(aes(color = log(congestion_time))) +
+  scale_color_continuous(type = "gradient") + 
+  theme_void()
+```
+
+```{r mapping non-connector VMT}
+ggplot(subset(TA_flows_geom, Type != "")) + 
+  geom_sf(aes(color = Tot_VMT)) +
+  scale_color_continuous(type = "viridis", trans = "log") + 
+  theme_void()
+```
+```{r mapping non-connector VMT}
+ggplot(TA_flows_geom) + 
+  geom_sf(aes(color = Tot_VMT)) +
+  facet_wrap(vars(Type)) +
+  scale_color_continuous(type = "viridis", trans = "log") + 
+  theme_void()
+```
+
+```{r sum VMT}
+sum(TA_flows_geom$Tot_VMT)
+```
+```{r total transit ridership}
+sum(full_travel_matrix_with_flows$n_transit_total)
+```
 
