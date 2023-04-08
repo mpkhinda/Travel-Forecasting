@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>3 Our Model | Building a Travel Demand Model for the Oklahoma City Metropolitan Statistical Area</title>
+  <meta name="description" content="3 Our Model | Building a Travel Demand Model for the Oklahoma City Metropolitan Statistical Area" />
+  <meta name="generator" content="bookdown 0.33 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="3 Our Model | Building a Travel Demand Model for the Oklahoma City Metropolitan Statistical Area" />
+  <meta property="og:type" content="book" />
+  
+  
+  
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="3 Our Model | Building a Travel Demand Model for the Oklahoma City Metropolitan Statistical Area" />
+  
+  
+  
+
+<meta name="author" content="Gabe Barrett-Jackson, Matt Khinda, Samantha Page" />
+
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="transportation-in-okc.html"/>
+<link rel="next" href="land-use-employment-population-density.html"/>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+<script src="libs/htmlwidgets-1.6.1/htmlwidgets.js"></script>
+<script src="libs/d3-4.13.0/d3.min.js"></script>
+<script src="libs/d3-tip-0.8.1/index.js"></script>
+<link href="libs/chorddiag-0.1.2.9000/chorddiag.css" rel="stylesheet" />
+<script src="libs/chorddiag-0.1.2.9000/chorddiag.js"></script>
+
+
+
+
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li class="chapter" data-level="1" data-path="introduction-demographics.html"><a href="introduction-demographics.html"><i class="fa fa-check"></i><b>1</b> Introduction + Demographics</a></li>
+<li class="chapter" data-level="2" data-path="transportation-in-okc.html"><a href="transportation-in-okc.html"><i class="fa fa-check"></i><b>2</b> Transportation in OKC</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="transportation-in-okc.html"><a href="transportation-in-okc.html#road-network"><i class="fa fa-check"></i><b>2.1</b> Road Network</a></li>
+<li class="chapter" data-level="2.2" data-path="transportation-in-okc.html"><a href="transportation-in-okc.html#road-network-summary-statistics"><i class="fa fa-check"></i><b>2.2</b> Road Network Summary Statistics</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="our-model.html"><a href="our-model.html"><i class="fa fa-check"></i><b>3</b> Our Model</a></li>
+<li class="chapter" data-level="4" data-path="land-use-employment-population-density.html"><a href="land-use-employment-population-density.html"><i class="fa fa-check"></i><b>4</b> Land Use: Employment &amp; Population Density</a></li>
+<li class="chapter" data-level="5" data-path="accessiblity.html"><a href="accessiblity.html"><i class="fa fa-check"></i><b>5</b> Accessiblity</a></li>
+<li class="chapter" data-level="6" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html"><i class="fa fa-check"></i><b>6</b> Trip Generation + Distribution</a>
+<ul>
+<li class="chapter" data-level="6.1" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#estimating-trip-productions"><i class="fa fa-check"></i><b>6.1</b> Estimating Trip Productions</a>
+<ul>
+<li class="chapter" data-level="6.1.1" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#home-based-other-model"><i class="fa fa-check"></i><b>6.1.1</b> Home-Based Other Model</a></li>
+<li class="chapter" data-level="6.1.2" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#home-based-work-model"><i class="fa fa-check"></i><b>6.1.2</b> Home-Based Work Model</a></li>
+<li class="chapter" data-level="6.1.3" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#non-home-based-model"><i class="fa fa-check"></i><b>6.1.3</b> Non-Home-Based Model</a></li>
+</ul></li>
+<li class="chapter" data-level="6.2" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#estimating-trip-attractions"><i class="fa fa-check"></i><b>6.2</b> Estimating Trip Attractions</a></li>
+<li class="chapter" data-level="6.3" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#assessing-average-travel-time-by-trip-purpose-based-on-nhts-data"><i class="fa fa-check"></i><b>6.3</b> Assessing Average Travel Time by Trip Purpose (based on NHTS data)</a></li>
+<li class="chapter" data-level="6.4" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#determining-travel-flows-using-an-exponential-deterrence-function"><i class="fa fa-check"></i><b>6.4</b> Determining Travel Flows Using an Exponential Deterrence Function</a></li>
+<li class="chapter" data-level="6.5" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#visualizing-travel-flows-by-purpose-and-county"><i class="fa fa-check"></i><b>6.5</b> Visualizing Travel Flows by Purpose and County</a>
+<ul>
+<li class="chapter" data-level="6.5.1" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#home-based-other-flows"><i class="fa fa-check"></i><b>6.5.1</b> Home-Based Other Flows</a></li>
+<li class="chapter" data-level="6.5.2" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#home-based-work-flows"><i class="fa fa-check"></i><b>6.5.2</b> Home-Based Work Flows</a></li>
+<li class="chapter" data-level="6.5.3" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#non-home-based-flows"><i class="fa fa-check"></i><b>6.5.3</b> Non-Home Based Flows</a></li>
+<li class="chapter" data-level="6.5.4" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#home-based-other-trips-by-county"><i class="fa fa-check"></i><b>6.5.4</b> Home-Based Other Trips by County</a></li>
+<li class="chapter" data-level="6.5.5" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#home-based-work-trips-by-county"><i class="fa fa-check"></i><b>6.5.5</b> Home-Based Work Trips by County</a></li>
+<li class="chapter" data-level="6.5.6" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#non-home-based-trips-by-county"><i class="fa fa-check"></i><b>6.5.6</b> Non-Home Based Trips by County</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="7" data-path="mode-choice.html"><a href="mode-choice.html"><i class="fa fa-check"></i><b>7</b> Mode Choice</a>
+<ul>
+<li class="chapter" data-level="7.1" data-path="mode-choice.html"><a href="mode-choice.html#calculating-travel-cost"><i class="fa fa-check"></i><b>7.1</b> Calculating Travel Cost</a></li>
+<li class="chapter" data-level="7.2" data-path="mode-choice.html"><a href="mode-choice.html#mode-by-purpose-table"><i class="fa fa-check"></i><b>7.2</b> Mode-by-Purpose Table</a>
+<ul>
+<li class="chapter" data-level="7.2.1" data-path="mode-choice.html"><a href="mode-choice.html#model-coefficients"><i class="fa fa-check"></i><b>7.2.1</b> Model Coefficients</a></li>
+</ul></li>
+<li class="chapter" data-level="7.3" data-path="mode-choice.html"><a href="mode-choice.html#calibration"><i class="fa fa-check"></i><b>7.3</b> Calibration</a></li>
+<li class="chapter" data-level="7.4" data-path="mode-choice.html"><a href="mode-choice.html#visualizations"><i class="fa fa-check"></i><b>7.4</b> Visualizations</a></li>
+</ul></li>
+<li class="chapter" data-level="8" data-path="trip-assignment.html"><a href="trip-assignment.html"><i class="fa fa-check"></i><b>8</b> Trip Assignment</a></li>
+<li class="chapter" data-level="9" data-path="technical-appendix.html"><a href="technical-appendix.html"><i class="fa fa-check"></i><b>9</b> Technical appendix</a>
+<ul>
+<li class="chapter" data-level="9.1" data-path="technical-appendix.html"><a href="technical-appendix.html#data-dictionary"><i class="fa fa-check"></i><b>9.1</b> Data dictionary</a>
+<ul>
+<li class="chapter" data-level="9.1.1" data-path="technical-appendix.html"><a href="technical-appendix.html#overview-of-data-structures"><i class="fa fa-check"></i><b>9.1.1</b> Overview of data structures</a></li>
+<li class="chapter" data-level="9.1.2" data-path="technical-appendix.html"><a href="technical-appendix.html#definition-of-variables"><i class="fa fa-check"></i><b>9.1.2</b> Definition of Variables</a></li>
+</ul></li>
+<li class="chapter" data-level="9.2" data-path="technical-appendix.html"><a href="technical-appendix.html#code"><i class="fa fa-check"></i><b>9.2</b> Code</a>
+<ul>
+<li class="chapter" data-level="9.2.1" data-path="technical-appendix.html"><a href="technical-appendix.html#stacked-bar-generator"><i class="fa fa-check"></i><b>9.2.1</b> Stacked Bar Generator</a></li>
+<li class="chapter" data-level="9.2.2" data-path="technical-appendix.html"><a href="technical-appendix.html#isochrone-generator"><i class="fa fa-check"></i><b>9.2.2</b> Isochrone Generator</a></li>
+<li class="chapter" data-level="9.2.3" data-path="technical-appendix.html"><a href="technical-appendix.html#cumulative-accessibility"><i class="fa fa-check"></i><b>9.2.3</b> Cumulative Accessibility</a></li>
+<li class="chapter" data-level="9.2.4" data-path="technical-appendix.html"><a href="technical-appendix.html#gravity-based-accessibility-functions"><i class="fa fa-check"></i><b>9.2.4</b> Gravity-based Accessibility Functions</a></li>
+</ul></li>
+</ul></li>
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Building a Travel Demand Model for the Oklahoma City Metropolitan Statistical Area</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="our-model" class="section level1 hasAnchor" number="3">
+<h1><span class="header-section-number">3</span> Our Model<a href="our-model.html#our-model" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<div class="figure" style="text-align: center">
+<img src="A09_fullanalysis_files/figure-html/geography,%20roads,%20transit,%20centroids-1.png" alt="The Components of our Model:Roads, Centroids, Centroid Connectors, and Transit Lines" width="80%" />
+<p class="caption">
+(#fig:geography, roads, transit, centroids)The Components of our Model:Roads, Centroids, Centroid Connectors, and Transit Lines
+</p>
+</div>
+<p>To create the network in TransCAD (Figure <a href="#fig:geography"><strong>??</strong></a>), we imported the Open Street Maps layer and selected for primary, secondary, tertiary, and trunk roads. When creating the centroids and centroid connectors, we allowed for the connectors to extend outside of zone boundaries, at up to 30 miles, and up to 10 connectors per centroid. This resulted in a matrix with only a few gaps, which we resolved by turning surrounding roads two-way. (The major roads in the area were separated highways, so we trust that two-way driving is actually feasible in these zones.)</p>
+<p>Assumptions that were incorporated into our road network include:</p>
+<ul>
+<li>Vehicle speed on primary roads is: 60 mph</li>
+<li>Vehicle speed on secondary roads is: 40 mph</li>
+<li>Vehicle speed on tertiary roads is: 30 mph</li>
+<li>Vehicle speed on trunk roads is: 60 mph</li>
+<li>Vehicle speed on link/centroid connectors is: 15 mph</li>
+</ul>
+<p>Assumptions that were incorporated into our model when we created our transit network include:</p>
+<ul>
+<li>Everyone walks to transit</li>
+<li>Transit vehicle speed is 23 mph</li>
+<li>Walking speed is 2.5 mph</li>
+<li>There is an assumed 15-minute wait time, max wait time, and transfer time</li>
+<li>Fares are $2 and there is a $0 transfer fee</li>
+<li>EMBARK operates a streetcar which was changed in TransCAD to exist as rail</li>
+</ul>
+<p>The charts below illustrate how the timing of various transit trips break down across walk, wait, transfer and travel time (Figure <a href="#fig:stacked-bar-chart"><strong>??</strong></a>).</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:stacked-bar-chart-1"></span>
+<img src="A09_fullanalysis_files/figure-html/stacked-bar-chart-1.png" alt="Travel Time Makes Up the Bulk of Most Trips, but Transfer Wait Time is Also A Large Portion of Trip Duration" width="80%" />
+<p class="caption">
+Figure 3.1: Travel Time Makes Up the Bulk of Most Trips, but Transfer Wait Time is Also A Large Portion of Trip Duration
+</p>
+</div>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:stacked-bar-chart-2"></span>
+<img src="A09_fullanalysis_files/figure-html/stacked-bar-chart-2.png" alt="Travel Time Makes Up the Bulk of Most Trips, but Transfer Wait Time is Also A Large Portion of Trip Duration" width="80%" />
+<p class="caption">
+Figure 3.2: Travel Time Makes Up the Bulk of Most Trips, but Transfer Wait Time is Also A Large Portion of Trip Duration
+</p>
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="transportation-in-okc.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="land-use-employment-population-density.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"whatsapp": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": null,
+"text": null
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": null,
+"search": false,
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>

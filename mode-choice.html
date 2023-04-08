@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>7 Mode Choice | Building a Travel Demand Model for the Oklahoma City Metropolitan Statistical Area</title>
+  <meta name="description" content="7 Mode Choice | Building a Travel Demand Model for the Oklahoma City Metropolitan Statistical Area" />
+  <meta name="generator" content="bookdown 0.33 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="7 Mode Choice | Building a Travel Demand Model for the Oklahoma City Metropolitan Statistical Area" />
+  <meta property="og:type" content="book" />
+  
+  
+  
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="7 Mode Choice | Building a Travel Demand Model for the Oklahoma City Metropolitan Statistical Area" />
+  
+  
+  
+
+<meta name="author" content="Gabe Barrett-Jackson, Matt Khinda, Samantha Page" />
+
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="trip-generation-distribution.html"/>
+<link rel="next" href="trip-assignment.html"/>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+<script src="libs/htmlwidgets-1.6.1/htmlwidgets.js"></script>
+<script src="libs/d3-4.13.0/d3.min.js"></script>
+<script src="libs/d3-tip-0.8.1/index.js"></script>
+<link href="libs/chorddiag-0.1.2.9000/chorddiag.css" rel="stylesheet" />
+<script src="libs/chorddiag-0.1.2.9000/chorddiag.js"></script>
+
+
+
+
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li class="chapter" data-level="1" data-path="introduction-demographics.html"><a href="introduction-demographics.html"><i class="fa fa-check"></i><b>1</b> Introduction + Demographics</a></li>
+<li class="chapter" data-level="2" data-path="transportation-in-okc.html"><a href="transportation-in-okc.html"><i class="fa fa-check"></i><b>2</b> Transportation in OKC</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="transportation-in-okc.html"><a href="transportation-in-okc.html#road-network"><i class="fa fa-check"></i><b>2.1</b> Road Network</a></li>
+<li class="chapter" data-level="2.2" data-path="transportation-in-okc.html"><a href="transportation-in-okc.html#road-network-summary-statistics"><i class="fa fa-check"></i><b>2.2</b> Road Network Summary Statistics</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="our-model.html"><a href="our-model.html"><i class="fa fa-check"></i><b>3</b> Our Model</a></li>
+<li class="chapter" data-level="4" data-path="land-use-employment-population-density.html"><a href="land-use-employment-population-density.html"><i class="fa fa-check"></i><b>4</b> Land Use: Employment &amp; Population Density</a></li>
+<li class="chapter" data-level="5" data-path="accessiblity.html"><a href="accessiblity.html"><i class="fa fa-check"></i><b>5</b> Accessiblity</a></li>
+<li class="chapter" data-level="6" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html"><i class="fa fa-check"></i><b>6</b> Trip Generation + Distribution</a>
+<ul>
+<li class="chapter" data-level="6.1" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#estimating-trip-productions"><i class="fa fa-check"></i><b>6.1</b> Estimating Trip Productions</a>
+<ul>
+<li class="chapter" data-level="6.1.1" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#home-based-other-model"><i class="fa fa-check"></i><b>6.1.1</b> Home-Based Other Model</a></li>
+<li class="chapter" data-level="6.1.2" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#home-based-work-model"><i class="fa fa-check"></i><b>6.1.2</b> Home-Based Work Model</a></li>
+<li class="chapter" data-level="6.1.3" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#non-home-based-model"><i class="fa fa-check"></i><b>6.1.3</b> Non-Home-Based Model</a></li>
+</ul></li>
+<li class="chapter" data-level="6.2" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#estimating-trip-attractions"><i class="fa fa-check"></i><b>6.2</b> Estimating Trip Attractions</a></li>
+<li class="chapter" data-level="6.3" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#assessing-average-travel-time-by-trip-purpose-based-on-nhts-data"><i class="fa fa-check"></i><b>6.3</b> Assessing Average Travel Time by Trip Purpose (based on NHTS data)</a></li>
+<li class="chapter" data-level="6.4" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#determining-travel-flows-using-an-exponential-deterrence-function"><i class="fa fa-check"></i><b>6.4</b> Determining Travel Flows Using an Exponential Deterrence Function</a></li>
+<li class="chapter" data-level="6.5" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#visualizing-travel-flows-by-purpose-and-county"><i class="fa fa-check"></i><b>6.5</b> Visualizing Travel Flows by Purpose and County</a>
+<ul>
+<li class="chapter" data-level="6.5.1" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#home-based-other-flows"><i class="fa fa-check"></i><b>6.5.1</b> Home-Based Other Flows</a></li>
+<li class="chapter" data-level="6.5.2" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#home-based-work-flows"><i class="fa fa-check"></i><b>6.5.2</b> Home-Based Work Flows</a></li>
+<li class="chapter" data-level="6.5.3" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#non-home-based-flows"><i class="fa fa-check"></i><b>6.5.3</b> Non-Home Based Flows</a></li>
+<li class="chapter" data-level="6.5.4" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#home-based-other-trips-by-county"><i class="fa fa-check"></i><b>6.5.4</b> Home-Based Other Trips by County</a></li>
+<li class="chapter" data-level="6.5.5" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#home-based-work-trips-by-county"><i class="fa fa-check"></i><b>6.5.5</b> Home-Based Work Trips by County</a></li>
+<li class="chapter" data-level="6.5.6" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#non-home-based-trips-by-county"><i class="fa fa-check"></i><b>6.5.6</b> Non-Home Based Trips by County</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="7" data-path="mode-choice.html"><a href="mode-choice.html"><i class="fa fa-check"></i><b>7</b> Mode Choice</a>
+<ul>
+<li class="chapter" data-level="7.1" data-path="mode-choice.html"><a href="mode-choice.html#calculating-travel-cost"><i class="fa fa-check"></i><b>7.1</b> Calculating Travel Cost</a></li>
+<li class="chapter" data-level="7.2" data-path="mode-choice.html"><a href="mode-choice.html#mode-by-purpose-table"><i class="fa fa-check"></i><b>7.2</b> Mode-by-Purpose Table</a>
+<ul>
+<li class="chapter" data-level="7.2.1" data-path="mode-choice.html"><a href="mode-choice.html#model-coefficients"><i class="fa fa-check"></i><b>7.2.1</b> Model Coefficients</a></li>
+</ul></li>
+<li class="chapter" data-level="7.3" data-path="mode-choice.html"><a href="mode-choice.html#calibration"><i class="fa fa-check"></i><b>7.3</b> Calibration</a></li>
+<li class="chapter" data-level="7.4" data-path="mode-choice.html"><a href="mode-choice.html#visualizations"><i class="fa fa-check"></i><b>7.4</b> Visualizations</a></li>
+</ul></li>
+<li class="chapter" data-level="8" data-path="trip-assignment.html"><a href="trip-assignment.html"><i class="fa fa-check"></i><b>8</b> Trip Assignment</a></li>
+<li class="chapter" data-level="9" data-path="technical-appendix.html"><a href="technical-appendix.html"><i class="fa fa-check"></i><b>9</b> Technical appendix</a>
+<ul>
+<li class="chapter" data-level="9.1" data-path="technical-appendix.html"><a href="technical-appendix.html#data-dictionary"><i class="fa fa-check"></i><b>9.1</b> Data dictionary</a>
+<ul>
+<li class="chapter" data-level="9.1.1" data-path="technical-appendix.html"><a href="technical-appendix.html#overview-of-data-structures"><i class="fa fa-check"></i><b>9.1.1</b> Overview of data structures</a></li>
+<li class="chapter" data-level="9.1.2" data-path="technical-appendix.html"><a href="technical-appendix.html#definition-of-variables"><i class="fa fa-check"></i><b>9.1.2</b> Definition of Variables</a></li>
+</ul></li>
+<li class="chapter" data-level="9.2" data-path="technical-appendix.html"><a href="technical-appendix.html#code"><i class="fa fa-check"></i><b>9.2</b> Code</a>
+<ul>
+<li class="chapter" data-level="9.2.1" data-path="technical-appendix.html"><a href="technical-appendix.html#stacked-bar-generator"><i class="fa fa-check"></i><b>9.2.1</b> Stacked Bar Generator</a></li>
+<li class="chapter" data-level="9.2.2" data-path="technical-appendix.html"><a href="technical-appendix.html#isochrone-generator"><i class="fa fa-check"></i><b>9.2.2</b> Isochrone Generator</a></li>
+<li class="chapter" data-level="9.2.3" data-path="technical-appendix.html"><a href="technical-appendix.html#cumulative-accessibility"><i class="fa fa-check"></i><b>9.2.3</b> Cumulative Accessibility</a></li>
+<li class="chapter" data-level="9.2.4" data-path="technical-appendix.html"><a href="technical-appendix.html#gravity-based-accessibility-functions"><i class="fa fa-check"></i><b>9.2.4</b> Gravity-based Accessibility Functions</a></li>
+</ul></li>
+</ul></li>
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Building a Travel Demand Model for the Oklahoma City Metropolitan Statistical Area</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="mode-choice" class="section level1 hasAnchor" number="7">
+<h1><span class="header-section-number">7</span> Mode Choice<a href="mode-choice.html#mode-choice" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<div id="calculating-travel-cost" class="section level2 hasAnchor" number="7.1">
+<h2><span class="header-section-number">7.1</span> Calculating Travel Cost<a href="mode-choice.html#calculating-travel-cost" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>To calculate the driving cost of each trip, we estimated the straight-line distance between the origin and destination centroids, converted that distance to miles, and then used the 2023 IRS mileage reimbursement rate (0.655 dollars) to calculate the cost. The most expensive trip is about $60 to cover 91.4 miles, while the shortest trip is about 0.13 dollars to cover 0.2 miles.</p>
+<p>We acknowledge that this is a rough approximation because it uses “as the crow flies” distance, rather than the shortest path traveled along the roadway between two centroids. We decided to take this approach because we believe that the IRS mileage rate more fully captures the cost of driving than using NHTS data to approximate cost by minute based on fuel expenses, even with this distance limitation. Equally, in the future, this method could be updated using more accurate distances along the road network.</p>
+<p>For HOV trips, we established carpool costs using the “Carpool 2+ only—daily” assumptions from NCHRP 716, which divides the previously calculated driving cost by an average number of additional passengers.</p>
+<p>For cost per transit trip, we had already included a transit fare when we initially created our network and skim. As an estimated average of the Embark system’s different fares, we assigned each trip a $2.00 fare with free transfers.</p>
+</div>
+<div id="mode-by-purpose-table" class="section level2 hasAnchor" number="7.2">
+<h2><span class="header-section-number">7.2</span> Mode-by-Purpose Table<a href="mode-choice.html#mode-by-purpose-table" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>In setting up the mode-by-purpose table, we noted the overwhelming share of home-based work trips that rely on single-occupancy vehicles (90 percent).</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+purpose
+</th>
+<th style="text-align:right;">
+pct_SOV
+</th>
+<th style="text-align:right;">
+pct_HOV
+</th>
+<th style="text-align:right;">
+pct_transit
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+HBO
+</td>
+<td style="text-align:right;">
+0.4297638
+</td>
+<td style="text-align:right;">
+0.5415895
+</td>
+<td style="text-align:right;">
+0.0286467
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HBW
+</td>
+<td style="text-align:right;">
+0.9053029
+</td>
+<td style="text-align:right;">
+0.0715927
+</td>
+<td style="text-align:right;">
+0.0231044
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NHB
+</td>
+<td style="text-align:right;">
+0.5104273
+</td>
+<td style="text-align:right;">
+0.4771184
+</td>
+<td style="text-align:right;">
+0.0124543
+</td>
+</tr>
+</tbody>
+</table>
+<div id="model-coefficients" class="section level3 hasAnchor" number="7.2.1">
+<h3><span class="header-section-number">7.2.1</span> Model Coefficients<a href="mode-choice.html#model-coefficients" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>When choosing our model coefficients for each trip purpose, we opted not to choose a nested logit model to maintain consistency across all models. At the outset, we did not think it would fundamentally make a difference in our calculations because we posit that people treat driving alone and in a shared car as a distinct choice. Ultimately, though, we do acknowledge that this choice overweights the probability of people driving by assuming that travelers view driving alone and driving with someone else as entirely distinct choices from one another, providing them with two auto-based options to the single transit option.</p>
+<p>For all three trip purposes, we selected a model based on its ability to appropriately fit our study area in the following ways:</p>
+<ul>
+<li>More than 1 million people</li>
+<li>Excluding non-motorized modes of travel (walking and biking)</li>
+<li>Including auto submodes (driving alone and sharing a ride)<br />
+</li>
+<li>Excluding transit submodes</li>
+</ul>
+<p>For home-based other trips, we selected model G. For home-based work trips, we selected model B. And for non-home-based trips, we selected model D. All model parameters and values can be found in NCHRP 716 (tables 4.7 – 4.14).</p>
+</div>
+</div>
+<div id="calibration" class="section level2 hasAnchor" number="7.3">
+<h2><span class="header-section-number">7.3</span> Calibration<a href="mode-choice.html#calibration" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Through trial and error, we learned the nuances of balancing out coefficients across the different modes within each trip type. We aimed to be within a 5 percentage point threshold from the observed mode share by purpose data from the NHTS.</p>
+<p>As initial values, all constants were set to the log odds of that particular mode for that purpose from the NHTS. If the resulting predicted value was above or below the accuracy threshold, the values were adjusted manually until the result was satisfactorily close.</p>
+<p>HBO: For SOV kept the coefficient at -0.28; we changed the coefficient for HOV from 0.167 to -0.25; and for transit we kept the coefficient at -3.52.
+HBW: For SOV we went from 2.26 to 0.70; HOV -2.56 to -2.00; transit -3.74 to -1.00
+NHB: All mode shares were within 2 percentage points of the NHTS data shares, so we did not change the coefficients.</p>
+<div id="comparison-between-nhts-data-and-model-1" class="section level4 hasAnchor" number="7.3.0.1">
+<h4><span class="header-section-number">7.3.0.1</span> Comparison Between NHTS Data and Model 1<a href="mode-choice.html#comparison-between-nhts-data-and-model-1" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+purpose
+</th>
+<th style="text-align:right;">
+pct_SOV
+</th>
+<th style="text-align:right;">
+pct_HOV
+</th>
+<th style="text-align:right;">
+pct_transit
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+HBO
+</td>
+<td style="text-align:right;">
+0.4297638
+</td>
+<td style="text-align:right;">
+0.5415895
+</td>
+<td style="text-align:right;">
+0.0286467
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HBO_model_1
+</td>
+<td style="text-align:right;">
+0.3703460
+</td>
+<td style="text-align:right;">
+0.6293185
+</td>
+<td style="text-align:right;">
+0.0002652
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HBW
+</td>
+<td style="text-align:right;">
+0.9053029
+</td>
+<td style="text-align:right;">
+0.0715927
+</td>
+<td style="text-align:right;">
+0.0231044
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HBW_model_1
+</td>
+<td style="text-align:right;">
+0.9964629
+</td>
+<td style="text-align:right;">
+0.0035267
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NHB
+</td>
+<td style="text-align:right;">
+0.5104273
+</td>
+<td style="text-align:right;">
+0.4771184
+</td>
+<td style="text-align:right;">
+0.0124543
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NHB_model_1
+</td>
+<td style="text-align:right;">
+0.5098686
+</td>
+<td style="text-align:right;">
+0.4900094
+</td>
+<td style="text-align:right;">
+0.0000343
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="comparison-between-nhts-data-and-final-model" class="section level4 hasAnchor" number="7.3.0.2">
+<h4><span class="header-section-number">7.3.0.2</span> Comparison Between NHTS Data and Final Model<a href="mode-choice.html#comparison-between-nhts-data-and-final-model" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+purpose
+</th>
+<th style="text-align:right;">
+pct_SOV
+</th>
+<th style="text-align:right;">
+pct_HOV
+</th>
+<th style="text-align:right;">
+pct_transit
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+HBO
+</td>
+<td style="text-align:right;">
+0.4297638
+</td>
+<td style="text-align:right;">
+0.5415895
+</td>
+<td style="text-align:right;">
+0.0286467
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HBO_model_1
+</td>
+<td style="text-align:right;">
+0.3703460
+</td>
+<td style="text-align:right;">
+0.6293185
+</td>
+<td style="text-align:right;">
+0.0002652
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HBO_model_2
+</td>
+<td style="text-align:right;">
+0.4707985
+</td>
+<td style="text-align:right;">
+0.5287810
+</td>
+<td style="text-align:right;">
+0.0003479
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HBW
+</td>
+<td style="text-align:right;">
+0.9053029
+</td>
+<td style="text-align:right;">
+0.0715927
+</td>
+<td style="text-align:right;">
+0.0231044
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HBW_model_1
+</td>
+<td style="text-align:right;">
+0.9964629
+</td>
+<td style="text-align:right;">
+0.0035267
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HBW_model_2
+</td>
+<td style="text-align:right;">
+0.9425489
+</td>
+<td style="text-align:right;">
+0.0564987
+</td>
+<td style="text-align:right;">
+0.0007734
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NHB
+</td>
+<td style="text-align:right;">
+0.5104273
+</td>
+<td style="text-align:right;">
+0.4771184
+</td>
+<td style="text-align:right;">
+0.0124543
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NHB_model_1
+</td>
+<td style="text-align:right;">
+0.5098686
+</td>
+<td style="text-align:right;">
+0.4900094
+</td>
+<td style="text-align:right;">
+0.0000343
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NHB_model_2
+</td>
+<td style="text-align:right;">
+0.5098686
+</td>
+<td style="text-align:right;">
+0.4900094
+</td>
+<td style="text-align:right;">
+0.0000343
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="visualizations" class="section level2 hasAnchor" number="7.4">
+<h2><span class="header-section-number">7.4</span> Visualizations<a href="mode-choice.html#visualizations" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>In order to understand the relationship between trip length and mode choice, we plotted the percent of trips using a particular mode (as predicted by our model) against the drive time of that trip (Figure <a href="mode-choice.html#fig:mode-split-all">7.1</a>). We then further subset the data by purpose to illustrate the difference in mode share for different kinds of trips (Figure <a href="mode-choice.html#fig:mode-split-hbo">7.2</a>, <a href="mode-choice.html#fig:mode-split-hbw">7.3</a>, <a href="mode-choice.html#fig:mode-split-nhb">7.4</a>).</p>
+<p>We used drive time as our preferred metric of travel time based on the same assumption we used in the trip generation and distribution calculation — that it most often will be the shortest trip between two zones. Because there are over 130,000 individual origin-destination pairs in our matrix, we decided to create binned scatter plots which more clearly present the trend by reducing the visual noise. The bins are set at roughly 5-minute intervals in drive time, which was done by taking the max drive time of approximately 425 minutes and dividing it by 5. Within each of these bins, the mean share of each mode for all trips is calculated and presented.</p>
+<p>While we think this approach makes the data more understandable, we acknowledge it comes with some limitations. First, because transit ridership overall is very low and there are many trips for which transit is not an option at all, taking the mean transit share results in a value of nearly 0. While this does reflect a general lack of transit use, it may also falsely give the impression that “no-one rides transit” when there are some origin-destination pairs where transit is significantly more common than others. Also, because a mean value is heavily affected by outliers, it can be a less useful or representative metric for small sample sizes. This comes up in particular for the bins of drive times above 90 minutes for which the number of trips is significantly smaller than, for example, the 5-10 minute bin.</p>
+<p>We notice that at trips of about 45 minutes there is a slight bump in the share of HOV trips and a slight dip in the share of SOV trips. This happens again for trips of about 90 minutes. This plot suggests that it is unlikely for people to carpool for trips of 2+ hours, across all trip purposes. We also note that the bumps happen right around 15-minute intervals, suggesting an effect from people’s tendency to round time into more precise intervals.</p>
+<p>We initially mapped this information to understand the spatial distribution of mode choice throughout our study area, too. However, it seemed repetitive of these scatter plots and did not contribute any new interpretations of our analysis. In particular, because the SOV and HOV mode shares are both approximately 40-55% of mode share for all trips, there was little range across the geography. We wonder if this lack of differentiation is a symptom of not having chosen a nested logit model.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:mode-split-all"></span>
+<img src="A09_fullanalysis_files/figure-html/mode-split-all-1.png" alt="Mode Split by Drive Time for all Trip Purposes" width="80%" />
+<p class="caption">
+Figure 7.1: Mode Split by Drive Time for all Trip Purposes
+</p>
+</div>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:mode-split-hbo"></span>
+<img src="A09_fullanalysis_files/figure-html/mode-split-hbo-1.png" alt="Mode Split by Drive Time for Home-Based Other Trips" width="80%" />
+<p class="caption">
+Figure 7.2: Mode Split by Drive Time for Home-Based Other Trips
+</p>
+</div>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:mode-split-hbw"></span>
+<img src="A09_fullanalysis_files/figure-html/mode-split-hbw-1.png" alt="Mode Split by Drive Time for Home-Based Work Trips" width="80%" />
+<p class="caption">
+Figure 7.3: Mode Split by Drive Time for Home-Based Work Trips
+</p>
+</div>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:mode-split-nhb"></span>
+<img src="A09_fullanalysis_files/figure-html/mode-split-nhb-1.png" alt="Mode Split by Drive Time for Non-Home-Based Trips" width="80%" />
+<p class="caption">
+Figure 7.4: Mode Split by Drive Time for Non-Home-Based Trips
+</p>
+</div>
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="trip-generation-distribution.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="trip-assignment.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"whatsapp": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": null,
+"text": null
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": null,
+"search": false,
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>
