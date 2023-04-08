@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>6 Trip Generation + Distribution | Building a Travel Demand Model for the Oklahoma City Metropolitan Statistical Area</title>
+  <meta name="description" content="6 Trip Generation + Distribution | Building a Travel Demand Model for the Oklahoma City Metropolitan Statistical Area" />
+  <meta name="generator" content="bookdown 0.33 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="6 Trip Generation + Distribution | Building a Travel Demand Model for the Oklahoma City Metropolitan Statistical Area" />
+  <meta property="og:type" content="book" />
+  
+  
+  
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="6 Trip Generation + Distribution | Building a Travel Demand Model for the Oklahoma City Metropolitan Statistical Area" />
+  
+  
+  
+
+<meta name="author" content="Gabe Barrett-Jackson, Matt Khinda, Samantha Page" />
+
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="accessiblity.html"/>
+<link rel="next" href="mode-choice.html"/>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+<script src="libs/htmlwidgets-1.6.1/htmlwidgets.js"></script>
+<script src="libs/d3-4.13.0/d3.min.js"></script>
+<script src="libs/d3-tip-0.8.1/index.js"></script>
+<link href="libs/chorddiag-0.1.2.9000/chorddiag.css" rel="stylesheet" />
+<script src="libs/chorddiag-0.1.2.9000/chorddiag.js"></script>
+
+
+
+
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li class="chapter" data-level="1" data-path="introduction-demographics.html"><a href="introduction-demographics.html"><i class="fa fa-check"></i><b>1</b> Introduction + Demographics</a></li>
+<li class="chapter" data-level="2" data-path="transportation-in-okc.html"><a href="transportation-in-okc.html"><i class="fa fa-check"></i><b>2</b> Transportation in OKC</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="transportation-in-okc.html"><a href="transportation-in-okc.html#road-network"><i class="fa fa-check"></i><b>2.1</b> Road Network</a></li>
+<li class="chapter" data-level="2.2" data-path="transportation-in-okc.html"><a href="transportation-in-okc.html#road-network-summary-statistics"><i class="fa fa-check"></i><b>2.2</b> Road Network Summary Statistics</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="our-model.html"><a href="our-model.html"><i class="fa fa-check"></i><b>3</b> Our Model</a></li>
+<li class="chapter" data-level="4" data-path="land-use-employment-population-density.html"><a href="land-use-employment-population-density.html"><i class="fa fa-check"></i><b>4</b> Land Use: Employment &amp; Population Density</a></li>
+<li class="chapter" data-level="5" data-path="accessiblity.html"><a href="accessiblity.html"><i class="fa fa-check"></i><b>5</b> Accessiblity</a></li>
+<li class="chapter" data-level="6" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html"><i class="fa fa-check"></i><b>6</b> Trip Generation + Distribution</a>
+<ul>
+<li class="chapter" data-level="6.1" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#estimating-trip-productions"><i class="fa fa-check"></i><b>6.1</b> Estimating Trip Productions</a>
+<ul>
+<li class="chapter" data-level="6.1.1" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#home-based-other-model"><i class="fa fa-check"></i><b>6.1.1</b> Home-Based Other Model</a></li>
+<li class="chapter" data-level="6.1.2" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#home-based-work-model"><i class="fa fa-check"></i><b>6.1.2</b> Home-Based Work Model</a></li>
+<li class="chapter" data-level="6.1.3" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#non-home-based-model"><i class="fa fa-check"></i><b>6.1.3</b> Non-Home-Based Model</a></li>
+</ul></li>
+<li class="chapter" data-level="6.2" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#estimating-trip-attractions"><i class="fa fa-check"></i><b>6.2</b> Estimating Trip Attractions</a></li>
+<li class="chapter" data-level="6.3" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#assessing-average-travel-time-by-trip-purpose-based-on-nhts-data"><i class="fa fa-check"></i><b>6.3</b> Assessing Average Travel Time by Trip Purpose (based on NHTS data)</a></li>
+<li class="chapter" data-level="6.4" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#determining-travel-flows-using-an-exponential-deterrence-function"><i class="fa fa-check"></i><b>6.4</b> Determining Travel Flows Using an Exponential Deterrence Function</a></li>
+<li class="chapter" data-level="6.5" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#visualizing-travel-flows-by-purpose-and-county"><i class="fa fa-check"></i><b>6.5</b> Visualizing Travel Flows by Purpose and County</a>
+<ul>
+<li class="chapter" data-level="6.5.1" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#home-based-other-flows"><i class="fa fa-check"></i><b>6.5.1</b> Home-Based Other Flows</a></li>
+<li class="chapter" data-level="6.5.2" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#home-based-work-flows"><i class="fa fa-check"></i><b>6.5.2</b> Home-Based Work Flows</a></li>
+<li class="chapter" data-level="6.5.3" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#non-home-based-flows"><i class="fa fa-check"></i><b>6.5.3</b> Non-Home Based Flows</a></li>
+<li class="chapter" data-level="6.5.4" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#home-based-other-trips-by-county"><i class="fa fa-check"></i><b>6.5.4</b> Home-Based Other Trips by County</a></li>
+<li class="chapter" data-level="6.5.5" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#home-based-work-trips-by-county"><i class="fa fa-check"></i><b>6.5.5</b> Home-Based Work Trips by County</a></li>
+<li class="chapter" data-level="6.5.6" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#non-home-based-trips-by-county"><i class="fa fa-check"></i><b>6.5.6</b> Non-Home Based Trips by County</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="7" data-path="mode-choice.html"><a href="mode-choice.html"><i class="fa fa-check"></i><b>7</b> Mode Choice</a>
+<ul>
+<li class="chapter" data-level="7.1" data-path="mode-choice.html"><a href="mode-choice.html#calculating-travel-cost"><i class="fa fa-check"></i><b>7.1</b> Calculating Travel Cost</a></li>
+<li class="chapter" data-level="7.2" data-path="mode-choice.html"><a href="mode-choice.html#mode-by-purpose-table"><i class="fa fa-check"></i><b>7.2</b> Mode-by-Purpose Table</a>
+<ul>
+<li class="chapter" data-level="7.2.1" data-path="mode-choice.html"><a href="mode-choice.html#model-coefficients"><i class="fa fa-check"></i><b>7.2.1</b> Model Coefficients</a></li>
+</ul></li>
+<li class="chapter" data-level="7.3" data-path="mode-choice.html"><a href="mode-choice.html#calibration"><i class="fa fa-check"></i><b>7.3</b> Calibration</a></li>
+<li class="chapter" data-level="7.4" data-path="mode-choice.html"><a href="mode-choice.html#visualizations"><i class="fa fa-check"></i><b>7.4</b> Visualizations</a></li>
+</ul></li>
+<li class="chapter" data-level="8" data-path="trip-assignment.html"><a href="trip-assignment.html"><i class="fa fa-check"></i><b>8</b> Trip Assignment</a></li>
+<li class="chapter" data-level="9" data-path="technical-appendix.html"><a href="technical-appendix.html"><i class="fa fa-check"></i><b>9</b> Technical appendix</a>
+<ul>
+<li class="chapter" data-level="9.1" data-path="technical-appendix.html"><a href="technical-appendix.html#data-dictionary"><i class="fa fa-check"></i><b>9.1</b> Data dictionary</a>
+<ul>
+<li class="chapter" data-level="9.1.1" data-path="technical-appendix.html"><a href="technical-appendix.html#overview-of-data-structures"><i class="fa fa-check"></i><b>9.1.1</b> Overview of data structures</a></li>
+<li class="chapter" data-level="9.1.2" data-path="technical-appendix.html"><a href="technical-appendix.html#definition-of-variables"><i class="fa fa-check"></i><b>9.1.2</b> Definition of Variables</a></li>
+</ul></li>
+<li class="chapter" data-level="9.2" data-path="technical-appendix.html"><a href="technical-appendix.html#code"><i class="fa fa-check"></i><b>9.2</b> Code</a>
+<ul>
+<li class="chapter" data-level="9.2.1" data-path="technical-appendix.html"><a href="technical-appendix.html#stacked-bar-generator"><i class="fa fa-check"></i><b>9.2.1</b> Stacked Bar Generator</a></li>
+<li class="chapter" data-level="9.2.2" data-path="technical-appendix.html"><a href="technical-appendix.html#isochrone-generator"><i class="fa fa-check"></i><b>9.2.2</b> Isochrone Generator</a></li>
+<li class="chapter" data-level="9.2.3" data-path="technical-appendix.html"><a href="technical-appendix.html#cumulative-accessibility"><i class="fa fa-check"></i><b>9.2.3</b> Cumulative Accessibility</a></li>
+<li class="chapter" data-level="9.2.4" data-path="technical-appendix.html"><a href="technical-appendix.html#gravity-based-accessibility-functions"><i class="fa fa-check"></i><b>9.2.4</b> Gravity-based Accessibility Functions</a></li>
+</ul></li>
+</ul></li>
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Building a Travel Demand Model for the Oklahoma City Metropolitan Statistical Area</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="trip-generation-distribution" class="section level1 hasAnchor" number="6">
+<h1><span class="header-section-number">6</span> Trip Generation + Distribution<a href="trip-generation-distribution.html#trip-generation-distribution" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<pre><code>## 
+## HBO HBW NHB 
+## 332 106 266</code></pre>
+<div id="estimating-trip-productions" class="section level2 hasAnchor" number="6.1">
+<h2><span class="header-section-number">6.1</span> Estimating Trip Productions<a href="trip-generation-distribution.html#estimating-trip-productions" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>To generate trip production estimates for our model, we ran linear regressions using observed trip counts by purpose (home-based other, home-based work, and non-home-based) as the dependent variable, and four household characteristics pulled from American Community Survey data as the predictors. The census variables we used for these regressions differed somewhat from those we collected at an earlier stage in our model-building. Initially, we were interested in understanding whether income, family structure, vehicle ownership, and age had any relationship with travel behavior. Upon reviewing the NHTS data, we realized we needed to adjust some of our tract characteristic variables to better align with the ways variables are structured in NHTS. For income, we changed the variable structure from categorical brackets to a continuous number—the median income for each zone. For family structure, we opted for a binary variable that would note the presence of children in the household, regardless of the number of parents or their gender. For vehicle ownership, we found the variable to be insignificant in the first runs of the models, so we switched it out for measures of homeownership instead.</p>
+<p>To support our choice of variables, we looked to the transportation planning literature to understand how others have analyzed the relationships between socioeconomic characteristics and travel behavior. Specifically, we noted that a 2013 paper by Boschmann and Brady found that with increasing age, travelers make fewer and shorter trips, women make fewer and shorter trips than men, and persons with disabilities make the fewest trips compared with all other persons. Equally, Agrawal et. al. found that low-income individuals have distinct travel needs and cost of travel has implications for how individuals travel. Finally, Rosenbloom finds that the presence of children changes travel behavior, more drastically for women than men.</p>
+<p>Based on all of this, we chose to employ the following variables in our model:</p>
+<ul>
+<li>Median income (continuous variable, in thousands of dollars)</li>
+<li>Presence of children in the household (true or false, not further differentiated by gender or number of parents)</li>
+<li>Homeownership (true or false)</li>
+<li>Households with residents age 65 or older (true or false)</li>
+</ul>
+<p>While the variables we chose were based on prior evidence outlined above, we recognize their limits in fully describing households and accurately forecasting travel behavior. For example, while both the presence of children and the presence of residents aged 65 and older tell us something about household structure, they are both proxies for more specific characteristics that define travel patterns (school or daycare enrollment in the case of children, or non-participation in the labor force in the case of people 65 and older) which could be more accurately measured and modeled if those specific data were available. Further, we chose to incorporate an indicator of homeownership as a more individualized measure of household wealth to supplement the zone-level median income.</p>
+<p>In running the linear regression models, we kept all the variables formatted as listed above except for income, for which we applied a log-base 2 transformation (in thousands) to understand the effect of doubling one’s income rather than increasing it by a single dollar. All three models have R-squared values between 0.11 and 0.2, which means that between 11% and 20% of the variation in trip production can be attributed to the predictive variables we selected. This is in keeping with what we would expect for a model using a limited set of characteristics to predict something as complex as travel behavior. A more accurate prediction would likely require separate models for each trip purpose, using a greater number of independent variables, and many iterations of testing to determine the right combination of these variables that best fits the observed travel behavior. Equally, a more accurate model would rely on more local travel survey data, rather than subsetting the NHTS for our study area, which we have done here for the sake of time and data availability.</p>
+<div id="home-based-other-model" class="section level3 hasAnchor" number="6.1.1">
+<h3><span class="header-section-number">6.1.1</span> Home-Based Other Model<a href="trip-generation-distribution.html#home-based-other-model" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<tbody>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+Observations
+</td>
+<td style="text-align:right;">
+95 (10 missing obs. deleted)
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+Dependent variable
+</td>
+<td style="text-align:right;">
+HBO_trips
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+Type
+</td>
+<td style="text-align:right;">
+OLS linear regression
+</td>
+</tr>
+</tbody>
+</table>
+<table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<tbody>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+F(4,90)
+</td>
+<td style="text-align:right;">
+4.99
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+R²
+</td>
+<td style="text-align:right;">
+0.18
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+Adj. R²
+</td>
+<td style="text-align:right;">
+0.15
+</td>
+</tr>
+</tbody>
+</table>
+<table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;border-bottom: 0;">
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+Est.
+</th>
+<th style="text-align:right;">
+S.E.
+</th>
+<th style="text-align:right;">
+t val.
+</th>
+<th style="text-align:right;">
+p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+(Intercept)
+</td>
+<td style="text-align:right;">
+-0.39
+</td>
+<td style="text-align:right;">
+1.40
+</td>
+<td style="text-align:right;">
+-0.28
+</td>
+<td style="text-align:right;">
+0.78
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+log2(inc_k)
+</td>
+<td style="text-align:right;">
+0.47
+</td>
+<td style="text-align:right;">
+0.24
+</td>
+<td style="text-align:right;">
+1.95
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+any_kidsTRUE
+</td>
+<td style="text-align:right;">
+2.84
+</td>
+<td style="text-align:right;">
+0.82
+</td>
+<td style="text-align:right;">
+3.45
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+homeownershipTRUE
+</td>
+<td style="text-align:right;">
+0.25
+</td>
+<td style="text-align:right;">
+0.77
+</td>
+<td style="text-align:right;">
+0.33
+</td>
+<td style="text-align:right;">
+0.74
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+age_65TRUE
+</td>
+<td style="text-align:right;">
+1.48
+</td>
+<td style="text-align:right;">
+0.72
+</td>
+<td style="text-align:right;">
+2.05
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+<td style="padding: 0; " colspan="100%">
+<sup></sup> Standard errors: OLS
+</td>
+</tr>
+</tfoot>
+</table>
+</div>
+<div id="home-based-work-model" class="section level3 hasAnchor" number="6.1.2">
+<h3><span class="header-section-number">6.1.2</span> Home-Based Work Model<a href="trip-generation-distribution.html#home-based-work-model" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<tbody>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+Observations
+</td>
+<td style="text-align:right;">
+95 (10 missing obs. deleted)
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+Dependent variable
+</td>
+<td style="text-align:right;">
+HBW_trips
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+Type
+</td>
+<td style="text-align:right;">
+OLS linear regression
+</td>
+</tr>
+</tbody>
+</table>
+<table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<tbody>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+F(4,90)
+</td>
+<td style="text-align:right;">
+2.68
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+R²
+</td>
+<td style="text-align:right;">
+0.11
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+Adj. R²
+</td>
+<td style="text-align:right;">
+0.07
+</td>
+</tr>
+</tbody>
+</table>
+<table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;border-bottom: 0;">
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+Est.
+</th>
+<th style="text-align:right;">
+S.E.
+</th>
+<th style="text-align:right;">
+t val.
+</th>
+<th style="text-align:right;">
+p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+(Intercept)
+</td>
+<td style="text-align:right;">
+0.33
+</td>
+<td style="text-align:right;">
+0.62
+</td>
+<td style="text-align:right;">
+0.53
+</td>
+<td style="text-align:right;">
+0.60
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+log2(inc_k)
+</td>
+<td style="text-align:right;">
+0.13
+</td>
+<td style="text-align:right;">
+0.11
+</td>
+<td style="text-align:right;">
+1.18
+</td>
+<td style="text-align:right;">
+0.24
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+any_kidsTRUE
+</td>
+<td style="text-align:right;">
+0.24
+</td>
+<td style="text-align:right;">
+0.37
+</td>
+<td style="text-align:right;">
+0.65
+</td>
+<td style="text-align:right;">
+0.52
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+homeownershipTRUE
+</td>
+<td style="text-align:right;">
+0.27
+</td>
+<td style="text-align:right;">
+0.34
+</td>
+<td style="text-align:right;">
+0.77
+</td>
+<td style="text-align:right;">
+0.44
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+age_65TRUE
+</td>
+<td style="text-align:right;">
+-0.73
+</td>
+<td style="text-align:right;">
+0.32
+</td>
+<td style="text-align:right;">
+-2.27
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+<td style="padding: 0; " colspan="100%">
+<sup></sup> Standard errors: OLS
+</td>
+</tr>
+</tfoot>
+</table>
+</div>
+<div id="non-home-based-model" class="section level3 hasAnchor" number="6.1.3">
+<h3><span class="header-section-number">6.1.3</span> Non-Home-Based Model<a href="trip-generation-distribution.html#non-home-based-model" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<tbody>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+Observations
+</td>
+<td style="text-align:right;">
+95 (10 missing obs. deleted)
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+Dependent variable
+</td>
+<td style="text-align:right;">
+NHB_trips
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+Type
+</td>
+<td style="text-align:right;">
+OLS linear regression
+</td>
+</tr>
+</tbody>
+</table>
+<table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<tbody>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+F(4,90)
+</td>
+<td style="text-align:right;">
+5.65
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+R²
+</td>
+<td style="text-align:right;">
+0.20
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+Adj. R²
+</td>
+<td style="text-align:right;">
+0.17
+</td>
+</tr>
+</tbody>
+</table>
+<table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;border-bottom: 0;">
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+Est.
+</th>
+<th style="text-align:right;">
+S.E.
+</th>
+<th style="text-align:right;">
+t val.
+</th>
+<th style="text-align:right;">
+p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+(Intercept)
+</td>
+<td style="text-align:right;">
+1.82
+</td>
+<td style="text-align:right;">
+1.26
+</td>
+<td style="text-align:right;">
+1.44
+</td>
+<td style="text-align:right;">
+0.15
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+log2(inc_k)
+</td>
+<td style="text-align:right;">
+0.07
+</td>
+<td style="text-align:right;">
+0.22
+</td>
+<td style="text-align:right;">
+0.32
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+any_kidsTRUE
+</td>
+<td style="text-align:right;">
+2.93
+</td>
+<td style="text-align:right;">
+0.74
+</td>
+<td style="text-align:right;">
+3.94
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+homeownershipTRUE
+</td>
+<td style="text-align:right;">
+0.28
+</td>
+<td style="text-align:right;">
+0.69
+</td>
+<td style="text-align:right;">
+0.40
+</td>
+<td style="text-align:right;">
+0.69
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+age_65TRUE
+</td>
+<td style="text-align:right;">
+-0.88
+</td>
+<td style="text-align:right;">
+0.65
+</td>
+<td style="text-align:right;">
+-1.35
+</td>
+<td style="text-align:right;">
+0.18
+</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+<td style="padding: 0; " colspan="100%">
+<sup></sup> Standard errors: OLS
+</td>
+</tr>
+</tfoot>
+</table>
+</div>
+</div>
+<div id="estimating-trip-attractions" class="section level2 hasAnchor" number="6.2">
+<h2><span class="header-section-number">6.2</span> Estimating Trip Attractions<a href="trip-generation-distribution.html#estimating-trip-attractions" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>To estimate trip attractions for our model, we relied on the coefficients for “motorized person trips” found in NCHRP 716. Using these values, we calculated attractions for each trip type within each zone, and then balanced them with the productions to ensure an equal number of trips produced and trips attracted in the overall study area.</p>
+<p>As expected, productions and attractions are primarily concentrated in the downtown area—attractions even more so than productions (Figure <a href="trip-generation-distribution.html#fig:density-prod">6.1</a>, <a href="trip-generation-distribution.html#fig:density-attr">6.2</a>). Both generally follow the density maps of residences and employment that we created earlier in the semester.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:density-prod"></span>
+<img src="A09_fullanalysis_files/figure-html/density-prod-1.png" alt="Trip Productions are Primarily Concentrated in the Downtown Area" width="80%" />
+<p class="caption">
+Figure 6.1: Trip Productions are Primarily Concentrated in the Downtown Area
+</p>
+</div>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:density-attr"></span>
+<img src="A09_fullanalysis_files/figure-html/density-attr-1.png" alt="Trip Attractions are Even More Concentrated in the Downtown Area" width="80%" />
+<p class="caption">
+Figure 6.2: Trip Attractions are Even More Concentrated in the Downtown Area
+</p>
+</div>
+</div>
+<div id="assessing-average-travel-time-by-trip-purpose-based-on-nhts-data" class="section level2 hasAnchor" number="6.3">
+<h2><span class="header-section-number">6.3</span> Assessing Average Travel Time by Trip Purpose (based on NHTS data)<a href="trip-generation-distribution.html#assessing-average-travel-time-by-trip-purpose-based-on-nhts-data" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>By summarizing the NHTS trips by purpose we found that Home-Based Work trips had the longest average travel time of 26.45 minutes, while both Home-Based Other and Non-Home-Based trips were significantly shorter with average times of 17.15 and 16.33 minutes respectively. These estimates aligned with our expectations that residents are typically more willing to travel farther to their jobs than for other day-to-day purposes.</p>
+</div>
+<div id="determining-travel-flows-using-an-exponential-deterrence-function" class="section level2 hasAnchor" number="6.4">
+<h2><span class="header-section-number">6.4</span> Determining Travel Flows Using an Exponential Deterrence Function<a href="trip-generation-distribution.html#determining-travel-flows-using-an-exponential-deterrence-function" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Based on the observed values from NHTS data, we calibrated our exponential deterrence function to best fit those travel times. We decided to use an exponential deterrence function in keeping with our exponential accessibility decay , which reflects the same assumed value of travel time. The exponential function is written as:
+<span class="math display">\[\begin{equation}  F_{ijp} = e^{-mt_{ij}} \end{equation}\]</span>
+where <span class="math inline">\(F_{ij}\)</span> is the friction factor for trips with purpose p between zone i and zone j, <span class="math inline">\(t_{ij}\)</span> is the the travel time from zone i to zone j.</p>
+<p>We adjusted the m value for each purpose, to most closely correspond with the average travel time found in NTHS data. For Home-Based Work trips we used a value -0.06, for Home-Based Other trips we used a value of -0.18, and for Non-Home-Based trips we used a value of -0.2. The resulting estimates in our model were all within .2 minutes of the NHTS averages. Though still relatively low, the higher magnitude m values for home-based other and non-home-based trips suggest that those trip types are more sensitive to travel time in our model. This also matches our expectations that home-based work trips are the least sensitive to travel time, as they are the least “negotiable” trips a person typically takes in a given day.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+purpose
+</th>
+<th style="text-align:right;">
+nhts_avg_time
+</th>
+<th style="text-align:right;">
+pred_time
+</th>
+<th style="text-align:right;">
+time_dif
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+HBO
+</td>
+<td style="text-align:right;">
+17.15898
+</td>
+<td style="text-align:right;">
+17.00236
+</td>
+<td style="text-align:right;">
+0.1566160
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HBW
+</td>
+<td style="text-align:right;">
+26.45428
+</td>
+<td style="text-align:right;">
+26.52832
+</td>
+<td style="text-align:right;">
+-0.0740393
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NHB
+</td>
+<td style="text-align:right;">
+16.33240
+</td>
+<td style="text-align:right;">
+16.13501
+</td>
+<td style="text-align:right;">
+0.1973930
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="visualizing-travel-flows-by-purpose-and-county" class="section level2 hasAnchor" number="6.5">
+<h2><span class="header-section-number">6.5</span> Visualizing Travel Flows by Purpose and County<a href="trip-generation-distribution.html#visualizing-travel-flows-by-purpose-and-county" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>To better understand trip distribution within the MSA, we mapped the most frequent origin-destination pairs (those with 250 trips or more between them) by trip type. We noticed that Home-Based Other trips are the most spatially distributed across the region, while Home-Based Work trips were the most concentrated — particularly around what we believe to be the major employment centers just south of Oklahoma City.</p>
+<div id="home-based-other-flows" class="section level3 hasAnchor" number="6.5.1">
+<h3><span class="header-section-number">6.5.1</span> Home-Based Other Flows<a href="trip-generation-distribution.html#home-based-other-flows" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+</div>
+<div id="home-based-work-flows" class="section level3 hasAnchor" number="6.5.2">
+<h3><span class="header-section-number">6.5.2</span> Home-Based Work Flows<a href="trip-generation-distribution.html#home-based-work-flows" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+</div>
+<div id="non-home-based-flows" class="section level3 hasAnchor" number="6.5.3">
+<h3><span class="header-section-number">6.5.3</span> Non-Home Based Flows<a href="trip-generation-distribution.html#non-home-based-flows" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>We also created three chord diagrams showing the intra- and inter-county flows by trip purpose. This allows us to better understand which counties are more attractive or productive for each trip purpose. For example, we noticed that in Cleveland County (southeast of downtown), home-based other and non-home-based trips are more than half of all trips into the county, while home-based work trips are a smaller share. For all trip types with destinations in Cleveland County, Oklahoma County (centrally located) was a major producer, providing yet another illustration of the close relationship between these two central areas in the MSA.</p>
+</div>
+<div id="home-based-other-trips-by-county" class="section level3 hasAnchor" number="6.5.4">
+<h3><span class="header-section-number">6.5.4</span> Home-Based Other Trips by County<a href="trip-generation-distribution.html#home-based-other-trips-by-county" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>We also created three chord diagrams showing the intra- and inter-county flows by trip purpose (Figure <a href="trip-generation-distribution.html#fig:hbo-chord">6.3</a>, <a href="trip-generation-distribution.html#fig:hbw-chord">6.4</a>, <a href="trip-generation-distribution.html#fig:nhb-chord">6.5</a>). This allows us to better understand which counties are more attractive or productive for each trip purpose. For example, we noticed that in Cleveland County (southeast of downtown), home-based other and non-home-based trips are more than half of all trips into the county, while home-based work trips are a smaller share. For all trip types with destinations in Cleveland County, Oklahoma County (centrally located) was a major producer, providing yet another illustration of the close relationship between these two central areas in the MSA.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:hbo-chord"></span>
+<div class="chorddiag html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-3c04ee62331758afe0f0" style="width:80%;height:504px;"></div>
+<script type="application/json" data-for="htmlwidget-3c04ee62331758afe0f0">{"x":{"matrix":[[200572,2419,198565,219,0,0,27894],[285225,600516,4410,15,0,0,17309],[13035,8391,28073,107022,62986,2677,0],[44030,443,242,0,158,74319,0],[63065,72,362,46,0,0,46579],[18883,59814,54453,25,20,328,24],[200572,2419,198565,219,0,0,27894]],"options":{"type":"directional","width":null,"height":null,"margin":100,"showGroupnames":true,"groupNames":["Oklahoma","Cleveland","Canadian","Grady","Lincoln","Logan","McClain"],"groupColors":["#66C2A5","#FC8D62","#8DA0CB","#E78AC3","#A6D854","#FFD92F","#E5C494"],"groupThickness":0.1,"groupPadding":0.0349065850398866,"groupnamePadding":[50,50,50,50,50,50,50],"groupnameFontsize":18,"groupedgeColor":null,"chordedgeColor":"#808080","categoryNames":null,"categorynamePadding":100,"categorynameFontsize":28,"showTicks":true,"tickInterval":50000,"ticklabelFontsize":10,"fadeLevel":0.1,"showTooltips":true,"showZeroTooltips":true,"tooltipNames":["Oklahoma","Cleveland","Canadian","Grady","Lincoln","Logan","McClain"],"tooltipFontsize":12,"tooltipUnit":"","tooltipGroupConnector":" &#x25B6; ","precision":"null","clickAction":null,"clickGroupAction":null}},"evals":[],"jsHooks":[]}</script>
+<p class="caption">
+Figure 6.3: Intra- and Inter-County Flows for Home-Based Other Trips
+</p>
+</div>
+</div>
+<div id="home-based-work-trips-by-county" class="section level3 hasAnchor" number="6.5.5">
+<h3><span class="header-section-number">6.5.5</span> Home-Based Work Trips by County<a href="trip-generation-distribution.html#home-based-work-trips-by-county" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:hbw-chord"></span>
+<div class="chorddiag html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-364db4e711b08ce78c3e" style="width:80%;height:504px;"></div>
+<script type="application/json" data-for="htmlwidget-364db4e711b08ce78c3e">{"x":{"matrix":[[81443,5851,23164,477,0,0,9752],[144844,96920,8291,283,0,0,1720],[13458,3139,5028,25037,13610,929,0],[14143,1158,622,0,119,12377,0],[23672,1064,879,234,0,0,6306],[14478,50517,38657,830,88,2515,2818],[81443,5851,23164,477,0,0,9752]],"options":{"type":"directional","width":null,"height":null,"margin":100,"showGroupnames":true,"groupNames":["Oklahoma","Cleveland","Canadian","Grady","Lincoln","Logan","McClain"],"groupColors":["#66C2A5","#FC8D62","#8DA0CB","#E78AC3","#A6D854","#FFD92F","#E5C494"],"groupThickness":0.1,"groupPadding":0.0349065850398866,"groupnamePadding":[50,50,50,50,50,50,50],"groupnameFontsize":18,"groupedgeColor":null,"chordedgeColor":"#808080","categoryNames":null,"categorynamePadding":100,"categorynameFontsize":28,"showTicks":true,"tickInterval":10000,"ticklabelFontsize":10,"fadeLevel":0.1,"showTooltips":true,"showZeroTooltips":true,"tooltipNames":["Oklahoma","Cleveland","Canadian","Grady","Lincoln","Logan","McClain"],"tooltipFontsize":12,"tooltipUnit":"","tooltipGroupConnector":" &#x25B6; ","precision":"null","clickAction":null,"clickGroupAction":null}},"evals":[],"jsHooks":[]}</script>
+<p class="caption">
+Figure 6.4: Intra- and Inter-County Flows for Home-Based Work Trips
+</p>
+</div>
+</div>
+<div id="non-home-based-trips-by-county" class="section level3 hasAnchor" number="6.5.6">
+<h3><span class="header-section-number">6.5.6</span> Non-Home Based Trips by County<a href="trip-generation-distribution.html#non-home-based-trips-by-county" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:nhb-chord"></span>
+<div class="chorddiag html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-58feaa67bab2a67eae10" style="width:80%;height:504px;"></div>
+<script type="application/json" data-for="htmlwidget-58feaa67bab2a67eae10">{"x":{"matrix":[[82971,564,98830,62,0,0,12435],[125758,270253,1801,5,0,0,6803],[3584,4081,10910,52064,29924,384,0],[17332,97,71,0,329,35737,0],[24929,12,143,31,0,0,23110],[7944,21389,24777,3,97,449,2],[82971,564,98830,62,0,0,12435]],"options":{"type":"directional","width":null,"height":null,"margin":100,"showGroupnames":true,"groupNames":["Oklahoma","Cleveland","Canadian","Grady","Lincoln","Logan","McClain"],"groupColors":["#66C2A5","#FC8D62","#8DA0CB","#E78AC3","#A6D854","#FFD92F","#E5C494"],"groupThickness":0.1,"groupPadding":0.0349065850398866,"groupnamePadding":[50,50,50,50,50,50,50],"groupnameFontsize":18,"groupedgeColor":null,"chordedgeColor":"#808080","categoryNames":null,"categorynamePadding":100,"categorynameFontsize":28,"showTicks":true,"tickInterval":10000,"ticklabelFontsize":10,"fadeLevel":0.1,"showTooltips":true,"showZeroTooltips":true,"tooltipNames":["Oklahoma","Cleveland","Canadian","Grady","Lincoln","Logan","McClain"],"tooltipFontsize":12,"tooltipUnit":"","tooltipGroupConnector":" &#x25B6; ","precision":"null","clickAction":null,"clickGroupAction":null}},"evals":[],"jsHooks":[]}</script>
+<p class="caption">
+Figure 6.5: Intra- and Inter-County Flows for Non-Home-Based Trips
+</p>
+</div>
+</div>
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="accessiblity.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="mode-choice.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"whatsapp": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": null,
+"text": null
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": null,
+"search": false,
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>

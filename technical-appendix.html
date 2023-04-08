@@ -1,0 +1,2857 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>9 Technical appendix | Building a Travel Demand Model for the Oklahoma City Metropolitan Statistical Area</title>
+  <meta name="description" content="9 Technical appendix | Building a Travel Demand Model for the Oklahoma City Metropolitan Statistical Area" />
+  <meta name="generator" content="bookdown 0.33 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="9 Technical appendix | Building a Travel Demand Model for the Oklahoma City Metropolitan Statistical Area" />
+  <meta property="og:type" content="book" />
+  
+  
+  
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="9 Technical appendix | Building a Travel Demand Model for the Oklahoma City Metropolitan Statistical Area" />
+  
+  
+  
+
+<meta name="author" content="Gabe Barrett-Jackson, Matt Khinda, Samantha Page" />
+
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="trip-assignment.html"/>
+
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+<script src="libs/htmlwidgets-1.6.1/htmlwidgets.js"></script>
+<script src="libs/d3-4.13.0/d3.min.js"></script>
+<script src="libs/d3-tip-0.8.1/index.js"></script>
+<link href="libs/chorddiag-0.1.2.9000/chorddiag.css" rel="stylesheet" />
+<script src="libs/chorddiag-0.1.2.9000/chorddiag.js"></script>
+
+
+
+
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li class="chapter" data-level="1" data-path="introduction-demographics.html"><a href="introduction-demographics.html"><i class="fa fa-check"></i><b>1</b> Introduction + Demographics</a></li>
+<li class="chapter" data-level="2" data-path="transportation-in-okc.html"><a href="transportation-in-okc.html"><i class="fa fa-check"></i><b>2</b> Transportation in OKC</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="transportation-in-okc.html"><a href="transportation-in-okc.html#road-network"><i class="fa fa-check"></i><b>2.1</b> Road Network</a></li>
+<li class="chapter" data-level="2.2" data-path="transportation-in-okc.html"><a href="transportation-in-okc.html#road-network-summary-statistics"><i class="fa fa-check"></i><b>2.2</b> Road Network Summary Statistics</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="our-model.html"><a href="our-model.html"><i class="fa fa-check"></i><b>3</b> Our Model</a></li>
+<li class="chapter" data-level="4" data-path="land-use-employment-population-density.html"><a href="land-use-employment-population-density.html"><i class="fa fa-check"></i><b>4</b> Land Use: Employment &amp; Population Density</a></li>
+<li class="chapter" data-level="5" data-path="accessiblity.html"><a href="accessiblity.html"><i class="fa fa-check"></i><b>5</b> Accessiblity</a></li>
+<li class="chapter" data-level="6" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html"><i class="fa fa-check"></i><b>6</b> Trip Generation + Distribution</a>
+<ul>
+<li class="chapter" data-level="6.1" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#estimating-trip-productions"><i class="fa fa-check"></i><b>6.1</b> Estimating Trip Productions</a>
+<ul>
+<li class="chapter" data-level="6.1.1" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#home-based-other-model"><i class="fa fa-check"></i><b>6.1.1</b> Home-Based Other Model</a></li>
+<li class="chapter" data-level="6.1.2" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#home-based-work-model"><i class="fa fa-check"></i><b>6.1.2</b> Home-Based Work Model</a></li>
+<li class="chapter" data-level="6.1.3" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#non-home-based-model"><i class="fa fa-check"></i><b>6.1.3</b> Non-Home-Based Model</a></li>
+</ul></li>
+<li class="chapter" data-level="6.2" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#estimating-trip-attractions"><i class="fa fa-check"></i><b>6.2</b> Estimating Trip Attractions</a></li>
+<li class="chapter" data-level="6.3" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#assessing-average-travel-time-by-trip-purpose-based-on-nhts-data"><i class="fa fa-check"></i><b>6.3</b> Assessing Average Travel Time by Trip Purpose (based on NHTS data)</a></li>
+<li class="chapter" data-level="6.4" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#determining-travel-flows-using-an-exponential-deterrence-function"><i class="fa fa-check"></i><b>6.4</b> Determining Travel Flows Using an Exponential Deterrence Function</a></li>
+<li class="chapter" data-level="6.5" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#visualizing-travel-flows-by-purpose-and-county"><i class="fa fa-check"></i><b>6.5</b> Visualizing Travel Flows by Purpose and County</a>
+<ul>
+<li class="chapter" data-level="6.5.1" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#home-based-other-flows"><i class="fa fa-check"></i><b>6.5.1</b> Home-Based Other Flows</a></li>
+<li class="chapter" data-level="6.5.2" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#home-based-work-flows"><i class="fa fa-check"></i><b>6.5.2</b> Home-Based Work Flows</a></li>
+<li class="chapter" data-level="6.5.3" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#non-home-based-flows"><i class="fa fa-check"></i><b>6.5.3</b> Non-Home Based Flows</a></li>
+<li class="chapter" data-level="6.5.4" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#home-based-other-trips-by-county"><i class="fa fa-check"></i><b>6.5.4</b> Home-Based Other Trips by County</a></li>
+<li class="chapter" data-level="6.5.5" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#home-based-work-trips-by-county"><i class="fa fa-check"></i><b>6.5.5</b> Home-Based Work Trips by County</a></li>
+<li class="chapter" data-level="6.5.6" data-path="trip-generation-distribution.html"><a href="trip-generation-distribution.html#non-home-based-trips-by-county"><i class="fa fa-check"></i><b>6.5.6</b> Non-Home Based Trips by County</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="7" data-path="mode-choice.html"><a href="mode-choice.html"><i class="fa fa-check"></i><b>7</b> Mode Choice</a>
+<ul>
+<li class="chapter" data-level="7.1" data-path="mode-choice.html"><a href="mode-choice.html#calculating-travel-cost"><i class="fa fa-check"></i><b>7.1</b> Calculating Travel Cost</a></li>
+<li class="chapter" data-level="7.2" data-path="mode-choice.html"><a href="mode-choice.html#mode-by-purpose-table"><i class="fa fa-check"></i><b>7.2</b> Mode-by-Purpose Table</a>
+<ul>
+<li class="chapter" data-level="7.2.1" data-path="mode-choice.html"><a href="mode-choice.html#model-coefficients"><i class="fa fa-check"></i><b>7.2.1</b> Model Coefficients</a></li>
+</ul></li>
+<li class="chapter" data-level="7.3" data-path="mode-choice.html"><a href="mode-choice.html#calibration"><i class="fa fa-check"></i><b>7.3</b> Calibration</a></li>
+<li class="chapter" data-level="7.4" data-path="mode-choice.html"><a href="mode-choice.html#visualizations"><i class="fa fa-check"></i><b>7.4</b> Visualizations</a></li>
+</ul></li>
+<li class="chapter" data-level="8" data-path="trip-assignment.html"><a href="trip-assignment.html"><i class="fa fa-check"></i><b>8</b> Trip Assignment</a></li>
+<li class="chapter" data-level="9" data-path="technical-appendix.html"><a href="technical-appendix.html"><i class="fa fa-check"></i><b>9</b> Technical appendix</a>
+<ul>
+<li class="chapter" data-level="9.1" data-path="technical-appendix.html"><a href="technical-appendix.html#data-dictionary"><i class="fa fa-check"></i><b>9.1</b> Data dictionary</a>
+<ul>
+<li class="chapter" data-level="9.1.1" data-path="technical-appendix.html"><a href="technical-appendix.html#overview-of-data-structures"><i class="fa fa-check"></i><b>9.1.1</b> Overview of data structures</a></li>
+<li class="chapter" data-level="9.1.2" data-path="technical-appendix.html"><a href="technical-appendix.html#definition-of-variables"><i class="fa fa-check"></i><b>9.1.2</b> Definition of Variables</a></li>
+</ul></li>
+<li class="chapter" data-level="9.2" data-path="technical-appendix.html"><a href="technical-appendix.html#code"><i class="fa fa-check"></i><b>9.2</b> Code</a>
+<ul>
+<li class="chapter" data-level="9.2.1" data-path="technical-appendix.html"><a href="technical-appendix.html#stacked-bar-generator"><i class="fa fa-check"></i><b>9.2.1</b> Stacked Bar Generator</a></li>
+<li class="chapter" data-level="9.2.2" data-path="technical-appendix.html"><a href="technical-appendix.html#isochrone-generator"><i class="fa fa-check"></i><b>9.2.2</b> Isochrone Generator</a></li>
+<li class="chapter" data-level="9.2.3" data-path="technical-appendix.html"><a href="technical-appendix.html#cumulative-accessibility"><i class="fa fa-check"></i><b>9.2.3</b> Cumulative Accessibility</a></li>
+<li class="chapter" data-level="9.2.4" data-path="technical-appendix.html"><a href="technical-appendix.html#gravity-based-accessibility-functions"><i class="fa fa-check"></i><b>9.2.4</b> Gravity-based Accessibility Functions</a></li>
+</ul></li>
+</ul></li>
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Building a Travel Demand Model for the Oklahoma City Metropolitan Statistical Area</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="technical-appendix" class="section level1 hasAnchor" number="9">
+<h1><span class="header-section-number">9</span> Technical appendix<a href="technical-appendix.html#technical-appendix" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<div id="data-dictionary" class="section level2 hasAnchor" number="9.1">
+<h2><span class="header-section-number">9.1</span> Data dictionary<a href="technical-appendix.html#data-dictionary" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="overview-of-data-structures" class="section level3 hasAnchor" number="9.1.1">
+<h3><span class="header-section-number">9.1.1</span> Overview of data structures<a href="technical-appendix.html#overview-of-data-structures" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:right;">
+retail_emp
+</th>
+<th style="text-align:right;">
+inc_btw_15k_20kE
+</th>
+<th style="text-align:right;">
+inc_gt_200kE
+</th>
+<th style="text-align:right;">
+inc_btw_150k_200kE
+</th>
+<th style="text-align:right;">
+inc_btw_75k_100kE
+</th>
+<th style="text-align:right;">
+service_emp
+</th>
+<th style="text-align:right;">
+inc_btw_40k_45kE
+</th>
+<th style="text-align:right;">
+inc_btw_50k_60kE
+</th>
+<th style="text-align:right;">
+inc_btw_125k_150kE
+</th>
+<th style="text-align:right;">
+inc_btw_100k_125kE
+</th>
+<th style="text-align:right;">
+hh_povlevelE
+</th>
+<th style="text-align:right;">
+inc_btw_35k_40kE
+</th>
+<th style="text-align:right;">
+land_area_sqmeters
+</th>
+<th style="text-align:right;">
+total_hhsE
+</th>
+<th style="text-align:right;">
+inc_btw_30k_35kE
+</th>
+<th style="text-align:right;">
+hh_1personE
+</th>
+<th style="text-align:right;">
+inc_btw_45k_50kE
+</th>
+<th style="text-align:right;">
+inc_btw_60k_75kE
+</th>
+<th style="text-align:right;">
+hh_u18_singleparent_maleE
+</th>
+<th style="text-align:right;">
+tot_popE
+</th>
+<th style="text-align:right;">
+inc_btw_20k_25kE
+</th>
+<th style="text-align:right;">
+hh_3personE
+</th>
+<th style="text-align:right;">
+hh_4person_plusE
+</th>
+<th style="text-align:right;">
+hh_u18_married_coupleE
+</th>
+<th style="text-align:right;">
+tot_disabledE
+</th>
+<th style="text-align:left;">
+GEOID
+</th>
+<th style="text-align:left;">
+NAME
+</th>
+<th style="text-align:right;">
+no_vehE
+</th>
+<th style="text-align:right;">
+inc_btw_25k_30kE
+</th>
+<th style="text-align:right;">
+hh_2personE
+</th>
+<th style="text-align:right;">
+hh_u18_singleparent_femaleE
+</th>
+<th style="text-align:right;">
+total_emp
+</th>
+<th style="text-align:right;">
+hh_65plusE
+</th>
+<th style="text-align:right;">
+inc_lt_10kE
+</th>
+<th style="text-align:right;">
+basic_emp
+</th>
+<th style="text-align:right;">
+inc_btw_10k_15kE
+</th>
+<th style="text-align:right;">
+pop_density
+</th>
+<th style="text-align:right;">
+emp_density
+</th>
+<th style="text-align:right;">
+activity_density
+</th>
+<th style="text-align:right;">
+pct_veh
+</th>
+<th style="text-align:right;">
+hhs_with_kidsE
+</th>
+<th style="text-align:right;">
+med_incE
+</th>
+<th style="text-align:right;">
+owner_occE
+</th>
+<th style="text-align:right;">
+renter_occE
+</th>
+<th style="text-align:left;">
+geometry
+</th>
+<th style="text-align:right;">
+hhs_without_kidsE
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+16
+</td>
+<td style="text-align:right;">
+65
+</td>
+<td style="text-align:right;">
+59
+</td>
+<td style="text-align:right;">
+68
+</td>
+<td style="text-align:right;">
+389
+</td>
+<td style="text-align:right;">
+102
+</td>
+<td style="text-align:right;">
+139
+</td>
+<td style="text-align:right;">
+163
+</td>
+<td style="text-align:right;">
+51
+</td>
+<td style="text-align:right;">
+175
+</td>
+<td style="text-align:right;">
+83
+</td>
+<td style="text-align:right;">
+38
+</td>
+<td style="text-align:right;">
+9951952
+</td>
+<td style="text-align:right;">
+1540
+</td>
+<td style="text-align:right;">
+41
+</td>
+<td style="text-align:right;">
+334
+</td>
+<td style="text-align:right;">
+94
+</td>
+<td style="text-align:right;">
+143
+</td>
+<td style="text-align:right;">
+51
+</td>
+<td style="text-align:right;">
+4371
+</td>
+<td style="text-align:right;">
+25
+</td>
+<td style="text-align:right;">
+167
+</td>
+<td style="text-align:right;">
+530
+</td>
+<td style="text-align:right;">
+1028
+</td>
+<td style="text-align:right;">
+4293
+</td>
+<td style="text-align:left;">
+40027202007
+</td>
+<td style="text-align:left;">
+Census Tract 2020.07, Cleveland County, Oklahoma
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+10
+</td>
+<td style="text-align:right;">
+509
+</td>
+<td style="text-align:right;">
+169
+</td>
+<td style="text-align:right;">
+613
+</td>
+<td style="text-align:right;">
+270
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+495
+</td>
+<td style="text-align:right;">
+80
+</td>
+<td style="text-align:right;">
+0.0004392
+</td>
+<td style="text-align:right;">
+0.0000616
+</td>
+<td style="text-align:right;">
+0.0005008
+</td>
+<td style="text-align:right;">
+0.9961039
+</td>
+<td style="text-align:right;">
+584
+</td>
+<td style="text-align:right;">
+75657
+</td>
+<td style="text-align:right;">
+1249
+</td>
+<td style="text-align:right;">
+291
+</td>
+<td style="text-align:left;">
+POLYGON ((-97.47698 35.3773…
+</td>
+<td style="text-align:right;">
+956
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+26
+</td>
+<td style="text-align:right;">
+66
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:right;">
+236
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+125
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+115
+</td>
+<td style="text-align:right;">
+27
+</td>
+<td style="text-align:right;">
+1295991
+</td>
+<td style="text-align:right;">
+702
+</td>
+<td style="text-align:right;">
+90
+</td>
+<td style="text-align:right;">
+199
+</td>
+<td style="text-align:right;">
+14
+</td>
+<td style="text-align:right;">
+105
+</td>
+<td style="text-align:right;">
+54
+</td>
+<td style="text-align:right;">
+2043
+</td>
+<td style="text-align:right;">
+40
+</td>
+<td style="text-align:right;">
+157
+</td>
+<td style="text-align:right;">
+215
+</td>
+<td style="text-align:right;">
+302
+</td>
+<td style="text-align:right;">
+2043
+</td>
+<td style="text-align:left;">
+40109107217
+</td>
+<td style="text-align:left;">
+Census Tract 1072.17, Oklahoma County, Oklahoma
+</td>
+<td style="text-align:right;">
+22
+</td>
+<td style="text-align:right;">
+66
+</td>
+<td style="text-align:right;">
+131
+</td>
+<td style="text-align:right;">
+265
+</td>
+<td style="text-align:right;">
+291
+</td>
+<td style="text-align:right;">
+202
+</td>
+<td style="text-align:right;">
+39
+</td>
+<td style="text-align:right;">
+29
+</td>
+<td style="text-align:right;">
+73
+</td>
+<td style="text-align:right;">
+0.0015764
+</td>
+<td style="text-align:right;">
+0.0002245
+</td>
+<td style="text-align:right;">
+0.0018009
+</td>
+<td style="text-align:right;">
+0.9686610
+</td>
+<td style="text-align:right;">
+358
+</td>
+<td style="text-align:right;">
+32215
+</td>
+<td style="text-align:right;">
+446
+</td>
+<td style="text-align:right;">
+256
+</td>
+<td style="text-align:left;">
+POLYGON ((-97.54794 35.4207…
+</td>
+<td style="text-align:right;">
+344
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+53
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+540
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+988281
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+581
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+581
+</td>
+<td style="text-align:left;">
+40109103602
+</td>
+<td style="text-align:left;">
+Census Tract 1036.02, Oklahoma County, Oklahoma
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+988
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+395
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+0.0005879
+</td>
+<td style="text-align:right;">
+0.0009997
+</td>
+<td style="text-align:right;">
+0.0015876
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+72935
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:left;">
+POLYGON ((-97.53013 35.4632…
+</td>
+<td style="text-align:right;">
+8
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+148
+</td>
+<td style="text-align:right;">
+64
+</td>
+<td style="text-align:right;">
+65
+</td>
+<td style="text-align:right;">
+42
+</td>
+<td style="text-align:right;">
+255
+</td>
+<td style="text-align:right;">
+484
+</td>
+<td style="text-align:right;">
+40
+</td>
+<td style="text-align:right;">
+230
+</td>
+<td style="text-align:right;">
+71
+</td>
+<td style="text-align:right;">
+143
+</td>
+<td style="text-align:right;">
+55
+</td>
+<td style="text-align:right;">
+71
+</td>
+<td style="text-align:right;">
+6203874
+</td>
+<td style="text-align:right;">
+2019
+</td>
+<td style="text-align:right;">
+101
+</td>
+<td style="text-align:right;">
+795
+</td>
+<td style="text-align:right;">
+39
+</td>
+<td style="text-align:right;">
+457
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+4021
+</td>
+<td style="text-align:right;">
+60
+</td>
+<td style="text-align:right;">
+255
+</td>
+<td style="text-align:right;">
+175
+</td>
+<td style="text-align:right;">
+320
+</td>
+<td style="text-align:right;">
+3955
+</td>
+<td style="text-align:left;">
+40027202002
+</td>
+<td style="text-align:left;">
+Census Tract 2020.02, Cleveland County, Oklahoma
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+156
+</td>
+<td style="text-align:right;">
+794
+</td>
+<td style="text-align:right;">
+136
+</td>
+<td style="text-align:right;">
+1138
+</td>
+<td style="text-align:right;">
+551
+</td>
+<td style="text-align:right;">
+84
+</td>
+<td style="text-align:right;">
+506
+</td>
+<td style="text-align:right;">
+141
+</td>
+<td style="text-align:right;">
+0.0006481
+</td>
+<td style="text-align:right;">
+0.0001834
+</td>
+<td style="text-align:right;">
+0.0008316
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+<td style="text-align:right;">
+437
+</td>
+<td style="text-align:right;">
+70633
+</td>
+<td style="text-align:right;">
+900
+</td>
+<td style="text-align:right;">
+1119
+</td>
+<td style="text-align:left;">
+POLYGON ((-97.52126 35.3771…
+</td>
+<td style="text-align:right;">
+1582
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+514
+</td>
+<td style="text-align:right;">
+36
+</td>
+<td style="text-align:right;">
+80
+</td>
+<td style="text-align:right;">
+63
+</td>
+<td style="text-align:right;">
+117
+</td>
+<td style="text-align:right;">
+1050
+</td>
+<td style="text-align:right;">
+64
+</td>
+<td style="text-align:right;">
+124
+</td>
+<td style="text-align:right;">
+79
+</td>
+<td style="text-align:right;">
+93
+</td>
+<td style="text-align:right;">
+22
+</td>
+<td style="text-align:right;">
+131
+</td>
+<td style="text-align:right;">
+6752251
+</td>
+<td style="text-align:right;">
+1370
+</td>
+<td style="text-align:right;">
+55
+</td>
+<td style="text-align:right;">
+534
+</td>
+<td style="text-align:right;">
+24
+</td>
+<td style="text-align:right;">
+158
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+3238
+</td>
+<td style="text-align:right;">
+97
+</td>
+<td style="text-align:right;">
+164
+</td>
+<td style="text-align:right;">
+236
+</td>
+<td style="text-align:right;">
+505
+</td>
+<td style="text-align:right;">
+3113
+</td>
+<td style="text-align:left;">
+40027201508
+</td>
+<td style="text-align:left;">
+Census Tract 2015.08, Cleveland County, Oklahoma
+</td>
+<td style="text-align:right;">
+9
+</td>
+<td style="text-align:right;">
+171
+</td>
+<td style="text-align:right;">
+436
+</td>
+<td style="text-align:right;">
+219
+</td>
+<td style="text-align:right;">
+1612
+</td>
+<td style="text-align:right;">
+340
+</td>
+<td style="text-align:right;">
+70
+</td>
+<td style="text-align:right;">
+48
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+0.0004795
+</td>
+<td style="text-align:right;">
+0.0002387
+</td>
+<td style="text-align:right;">
+0.0007183
+</td>
+<td style="text-align:right;">
+0.9934307
+</td>
+<td style="text-align:right;">
+406
+</td>
+<td style="text-align:right;">
+63879
+</td>
+<td style="text-align:right;">
+646
+</td>
+<td style="text-align:right;">
+724
+</td>
+<td style="text-align:left;">
+POLYGON ((-97.51263 35.2038…
+</td>
+<td style="text-align:right;">
+964
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+14
+</td>
+<td style="text-align:right;">
+9
+</td>
+<td style="text-align:right;">
+200
+</td>
+<td style="text-align:right;">
+256
+</td>
+<td style="text-align:right;">
+240
+</td>
+<td style="text-align:right;">
+566
+</td>
+<td style="text-align:right;">
+104
+</td>
+<td style="text-align:right;">
+128
+</td>
+<td style="text-align:right;">
+250
+</td>
+<td style="text-align:right;">
+347
+</td>
+<td style="text-align:right;">
+35
+</td>
+<td style="text-align:right;">
+10
+</td>
+<td style="text-align:right;">
+10308637
+</td>
+<td style="text-align:right;">
+1990
+</td>
+<td style="text-align:right;">
+75
+</td>
+<td style="text-align:right;">
+202
+</td>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:right;">
+155
+</td>
+<td style="text-align:right;">
+168
+</td>
+<td style="text-align:right;">
+6832
+</td>
+<td style="text-align:right;">
+19
+</td>
+<td style="text-align:right;">
+384
+</td>
+<td style="text-align:right;">
+705
+</td>
+<td style="text-align:right;">
+1467
+</td>
+<td style="text-align:right;">
+6832
+</td>
+<td style="text-align:left;">
+40017301008
+</td>
+<td style="text-align:left;">
+Census Tract 3010.08, Canadian County, Oklahoma
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+71
+</td>
+<td style="text-align:right;">
+699
+</td>
+<td style="text-align:right;">
+27
+</td>
+<td style="text-align:right;">
+796
+</td>
+<td style="text-align:right;">
+510
+</td>
+<td style="text-align:right;">
+71
+</td>
+<td style="text-align:right;">
+216
+</td>
+<td style="text-align:right;">
+10
+</td>
+<td style="text-align:right;">
+0.0006627
+</td>
+<td style="text-align:right;">
+0.0000772
+</td>
+<td style="text-align:right;">
+0.0007400
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+<td style="text-align:right;">
+867
+</td>
+<td style="text-align:right;">
+112361
+</td>
+<td style="text-align:right;">
+1771
+</td>
+<td style="text-align:right;">
+219
+</td>
+<td style="text-align:left;">
+POLYGON ((-97.70691 35.4496…
+</td>
+<td style="text-align:right;">
+1123
+</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th style="text-align:right;">
+from_GEOID
+</th>
+<th style="text-align:right;">
+to_GEOID
+</th>
+<th style="text-align:right;">
+drive_time
+</th>
+<th style="text-align:right;">
+total_time_mins
+</th>
+<th style="text-align:right;">
+num_transfers
+</th>
+<th style="text-align:right;">
+access_wt
+</th>
+<th style="text-align:right;">
+init_wt
+</th>
+<th style="text-align:right;">
+ivtt
+</th>
+<th style="text-align:right;">
+transfer_wt
+</th>
+<th style="text-align:right;">
+egress_wt
+</th>
+<th style="text-align:right;">
+ovtt
+</th>
+<th style="text-align:right;">
+perceived_time
+</th>
+<th style="text-align:right;">
+fare
+</th>
+<th style="text-align:right;">
+drive_miles
+</th>
+<th style="text-align:right;">
+drive_cost
+</th>
+<th style="text-align:right;">
+carpool_cost_hbo
+</th>
+<th style="text-align:right;">
+carpool_cost_hbw
+</th>
+<th style="text-align:right;">
+carpool_cost_nhb
+</th>
+<th style="text-align:right;">
+HBO_flow
+</th>
+<th style="text-align:right;">
+HBW_flow
+</th>
+<th style="text-align:right;">
+NHB_flow
+</th>
+<th style="text-align:right;">
+utility_transit_HBO
+</th>
+<th style="text-align:right;">
+utility_SOV_HBO
+</th>
+<th style="text-align:right;">
+utility_HOV_HBO
+</th>
+<th style="text-align:right;">
+exp_u_SOV_HBO
+</th>
+<th style="text-align:right;">
+exp_u_HOV_HBO
+</th>
+<th style="text-align:right;">
+exp_u_transit_HBO
+</th>
+<th style="text-align:right;">
+total_utility_HBO
+</th>
+<th style="text-align:right;">
+utility_transit_HBW
+</th>
+<th style="text-align:right;">
+utility_SOV_HBW
+</th>
+<th style="text-align:right;">
+utility_HOV_HBW
+</th>
+<th style="text-align:right;">
+exp_u_SOV_HBW
+</th>
+<th style="text-align:right;">
+exp_u_HOV_HBW
+</th>
+<th style="text-align:right;">
+exp_u_transit_HBW
+</th>
+<th style="text-align:right;">
+total_utility_HBW
+</th>
+<th style="text-align:right;">
+utility_transit_NHB
+</th>
+<th style="text-align:right;">
+utility_SOV_NHB
+</th>
+<th style="text-align:right;">
+utility_HOV_NHB
+</th>
+<th style="text-align:right;">
+exp_u_SOV_NHB
+</th>
+<th style="text-align:right;">
+exp_u_HOV_NHB
+</th>
+<th style="text-align:right;">
+exp_u_transit_NHB
+</th>
+<th style="text-align:right;">
+total_utility_NHB
+</th>
+<th style="text-align:right;">
+p_transit_HBO
+</th>
+<th style="text-align:right;">
+p_SOV_HBO
+</th>
+<th style="text-align:right;">
+p_HOV_HBO
+</th>
+<th style="text-align:right;">
+p_transit_HBW
+</th>
+<th style="text-align:right;">
+p_SOV_HBW
+</th>
+<th style="text-align:right;">
+p_HOV_HBW
+</th>
+<th style="text-align:right;">
+p_transit_NHB
+</th>
+<th style="text-align:right;">
+p_SOV_NHB
+</th>
+<th style="text-align:right;">
+p_HOV_NHB
+</th>
+<th style="text-align:right;">
+n_transit_HBO
+</th>
+<th style="text-align:right;">
+n_SOV_HBO
+</th>
+<th style="text-align:right;">
+n_HOV_HBO
+</th>
+<th style="text-align:right;">
+n_transit_HBW
+</th>
+<th style="text-align:right;">
+n_SOV_HBW
+</th>
+<th style="text-align:right;">
+n_HOV_HBW
+</th>
+<th style="text-align:right;">
+n_transit_NHB
+</th>
+<th style="text-align:right;">
+n_SOV_NHB
+</th>
+<th style="text-align:right;">
+n_HOV_NHB
+</th>
+<th style="text-align:right;">
+n_total_total
+</th>
+<th style="text-align:right;">
+n_transit_total
+</th>
+<th style="text-align:right;">
+n_SOV_total
+</th>
+<th style="text-align:right;">
+n_HOV_total
+</th>
+<th style="text-align:right;">
+n_total_HBO
+</th>
+<th style="text-align:right;">
+n_total_HBW
+</th>
+<th style="text-align:right;">
+n_total_NHB
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+40027202007
+</td>
+<td style="text-align:right;">
+40109107217
+</td>
+<td style="text-align:right;">
+19.17474
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+6.302551
+</td>
+<td style="text-align:right;">
+4.128171
+</td>
+<td style="text-align:right;">
+1.5233103
+</td>
+<td style="text-align:right;">
+1.7058558
+</td>
+<td style="text-align:right;">
+1.5011531
+</td>
+<td style="text-align:right;">
+17
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+-0.5942791
+</td>
+<td style="text-align:right;">
+-0.4859234
+</td>
+<td style="text-align:right;">
+0.5519603
+</td>
+<td style="text-align:right;">
+0.6151289
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.1670892
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.1070066
+</td>
+<td style="text-align:right;">
+-2.582577
+</td>
+<td style="text-align:right;">
+1.1129416
+</td>
+<td style="text-align:right;">
+0.0755790
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.1885206
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+-0.3054364
+</td>
+<td style="text-align:right;">
+-0.3520506
+</td>
+<td style="text-align:right;">
+0.7368018
+</td>
+<td style="text-align:right;">
+0.7032445
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.4400463
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.4729375
+</td>
+<td style="text-align:right;">
+0.5270625
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.9364092
+</td>
+<td style="text-align:right;">
+0.0635908
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.5116515
+</td>
+<td style="text-align:right;">
+0.4883485
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+9
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+28
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+15
+</td>
+<td style="text-align:right;">
+13
+</td>
+<td style="text-align:right;">
+17
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+8
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+40027202007
+</td>
+<td style="text-align:right;">
+40109103602
+</td>
+<td style="text-align:right;">
+19.97458
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+7.975788
+</td>
+<td style="text-align:right;">
+5.224141
+</td>
+<td style="text-align:right;">
+1.9277274
+</td>
+<td style="text-align:right;">
+2.1587360
+</td>
+<td style="text-align:right;">
+1.8996877
+</td>
+<td style="text-align:right;">
+14
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+-0.6340607
+</td>
+<td style="text-align:right;">
+-0.5056499
+</td>
+<td style="text-align:right;">
+0.5304335
+</td>
+<td style="text-align:right;">
+0.6031135
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.1335470
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.0782988
+</td>
+<td style="text-align:right;">
+-2.608520
+</td>
+<td style="text-align:right;">
+1.0814457
+</td>
+<td style="text-align:right;">
+0.0736435
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.1550892
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+-0.3504016
+</td>
+<td style="text-align:right;">
+-0.3740005
+</td>
+<td style="text-align:right;">
+0.7044051
+</td>
+<td style="text-align:right;">
+0.6879766
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.3923817
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.4679413
+</td>
+<td style="text-align:right;">
+0.5320587
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.9362444
+</td>
+<td style="text-align:right;">
+0.0637556
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.5058994
+</td>
+<td style="text-align:right;">
+0.4941006
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+28
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+18
+</td>
+<td style="text-align:right;">
+10
+</td>
+<td style="text-align:right;">
+14
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+7
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+40027202007
+</td>
+<td style="text-align:right;">
+40027202002
+</td>
+<td style="text-align:right;">
+13.36041
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+2.792722
+</td>
+<td style="text-align:right;">
+1.829233
+</td>
+<td style="text-align:right;">
+0.6749936
+</td>
+<td style="text-align:right;">
+0.7558813
+</td>
+<td style="text-align:right;">
+0.6651755
+</td>
+<td style="text-align:right;">
+131
+</td>
+<td style="text-align:right;">
+15
+</td>
+<td style="text-align:right;">
+70
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+-0.4694666
+</td>
+<td style="text-align:right;">
+-0.4031789
+</td>
+<td style="text-align:right;">
+0.6253357
+</td>
+<td style="text-align:right;">
+0.6681925
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.2935282
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.2913219
+</td>
+<td style="text-align:right;">
+-2.404063
+</td>
+<td style="text-align:right;">
+1.3381953
+</td>
+<td style="text-align:right;">
+0.0903501
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.4285454
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+-0.1656138
+</td>
+<td style="text-align:right;">
+-0.2605058
+</td>
+<td style="text-align:right;">
+0.8473734
+</td>
+<td style="text-align:right;">
+0.7706617
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.6180351
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.4834341
+</td>
+<td style="text-align:right;">
+0.5165659
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.9367537
+</td>
+<td style="text-align:right;">
+0.0632463
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.5237052
+</td>
+<td style="text-align:right;">
+0.4762948
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+63
+</td>
+<td style="text-align:right;">
+68
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+14
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+37
+</td>
+<td style="text-align:right;">
+33
+</td>
+<td style="text-align:right;">
+216
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+114
+</td>
+<td style="text-align:right;">
+102
+</td>
+<td style="text-align:right;">
+131
+</td>
+<td style="text-align:right;">
+15
+</td>
+<td style="text-align:right;">
+70
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+40027202007
+</td>
+<td style="text-align:right;">
+40027201508
+</td>
+<td style="text-align:right;">
+25.63375
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+11.331620
+</td>
+<td style="text-align:right;">
+7.422211
+</td>
+<td style="text-align:right;">
+2.7388234
+</td>
+<td style="text-align:right;">
+3.0670295
+</td>
+<td style="text-align:right;">
+2.6989859
+</td>
+<td style="text-align:right;">
+14
+</td>
+<td style="text-align:right;">
+14
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+-0.7543964
+</td>
+<td style="text-align:right;">
+-0.5857634
+</td>
+<td style="text-align:right;">
+0.4702944
+</td>
+<td style="text-align:right;">
+0.5566807
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.0269752
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+-0.1009280
+</td>
+<td style="text-align:right;">
+-2.782201
+</td>
+<td style="text-align:right;">
+0.9039981
+</td>
+<td style="text-align:right;">
+0.0619021
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.9659003
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+-0.4851888
+</td>
+<td style="text-align:right;">
+-0.4626282
+</td>
+<td style="text-align:right;">
+0.6155810
+</td>
+<td style="text-align:right;">
+0.6296267
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.2452076
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.4579414
+</td>
+<td style="text-align:right;">
+0.5420586
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.9359125
+</td>
+<td style="text-align:right;">
+0.0640875
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.4943601
+</td>
+<td style="text-align:right;">
+0.5056399
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+13
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+31
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+20
+</td>
+<td style="text-align:right;">
+11
+</td>
+<td style="text-align:right;">
+14
+</td>
+<td style="text-align:right;">
+14
+</td>
+<td style="text-align:right;">
+3
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+40027202007
+</td>
+<td style="text-align:right;">
+40017301008
+</td>
+<td style="text-align:right;">
+31.53315
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+14.361104
+</td>
+<td style="text-align:right;">
+9.406523
+</td>
+<td style="text-align:right;">
+3.4710417
+</td>
+<td style="text-align:right;">
+3.8869930
+</td>
+<td style="text-align:right;">
+3.4205538
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+-0.8709355
+</td>
+<td style="text-align:right;">
+-0.6659917
+</td>
+<td style="text-align:right;">
+0.4185598
+</td>
+<td style="text-align:right;">
+0.5137638
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.9323236
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+-0.2864426
+</td>
+<td style="text-align:right;">
+-2.962709
+</td>
+<td style="text-align:right;">
+0.7509302
+</td>
+<td style="text-align:right;">
+0.0516787
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.8026089
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+-0.6155645
+</td>
+<td style="text-align:right;">
+-0.5513334
+</td>
+<td style="text-align:right;">
+0.5403358
+</td>
+<td style="text-align:right;">
+0.5761810
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.1165168
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.4489427
+</td>
+<td style="text-align:right;">
+0.5510573
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.9356115
+</td>
+<td style="text-align:right;">
+0.0643885
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.4839477
+</td>
+<td style="text-align:right;">
+0.5160523
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+14
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+3
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+40027202007
+</td>
+<td style="text-align:right;">
+40109108221
+</td>
+<td style="text-align:right;">
+42.48836
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+22.623607
+</td>
+<td style="text-align:right;">
+14.818463
+</td>
+<td style="text-align:right;">
+5.4680673
+</td>
+<td style="text-align:right;">
+6.1233316
+</td>
+<td style="text-align:right;">
+5.3885318
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+-1.1374338
+</td>
+<td style="text-align:right;">
+-0.8334575
+</td>
+<td style="text-align:right;">
+0.3206408
+</td>
+<td style="text-align:right;">
+0.4345442
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.7551850
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+-0.6383701
+</td>
+<td style="text-align:right;">
+-3.300981
+</td>
+<td style="text-align:right;">
+0.5281525
+</td>
+<td style="text-align:right;">
+0.0368470
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.5649995
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+-0.9146658
+</td>
+<td style="text-align:right;">
+-0.7367839
+</td>
+<td style="text-align:right;">
+0.4006505
+</td>
+<td style="text-align:right;">
+0.4786508
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.8793013
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.4245858
+</td>
+<td style="text-align:right;">
+0.5754142
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.9347840
+</td>
+<td style="text-align:right;">
+0.0652160
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.4556464
+</td>
+<td style="text-align:right;">
+0.5443536
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="definition-of-variables" class="section level3 hasAnchor" number="9.1.2">
+<h3><span class="header-section-number">9.1.2</span> Definition of Variables<a href="technical-appendix.html#definition-of-variables" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p><strong>GEOID</strong> - Numerical ID for census tract<br />
+<strong>NAME</strong> - Census tract, county, and state<br />
+<strong>tot_popE</strong> - Total number of people<br />
+<strong>no_vehE</strong> - Households with no vehicle present
+<strong>pct_veh</strong> - Percent of households with at least one vehicle
+<strong>total_hhsE</strong> - Total number of households<br />
+<strong>hh_1personE</strong> - Number of households with 1 person<br />
+<strong>hh_2personE</strong> - Number of households with 2 persons<br />
+<strong>hh_3personE</strong> - Number of households with 3 persons<br />
+<strong>hh_4person_plusE</strong> - Number of households with 4 or more persons<br />
+<strong>hh_u18_married_coupleE</strong> - Number of households with a person under 18 and a married couple head-of-household<br />
+<strong>hh_u18_singleparent_maleE</strong> - Number of households with a person under 18 and a single male head-of-household<br />
+<strong>hh_u18_singleparent_femaleE</strong> - Number of households with a person under 18 and a single female head-of-household<br />
+<strong>hh_65plusE</strong> - Number of households with a person age 65 or older<br />
+<strong>tot_disabledE</strong> - Number of people with a disability<br />
+<strong>inc_lt_10kE</strong> - Number of households with income less than $10,000<br />
+<strong>inc_btw_10k_15kE</strong> - Households with income between $10,000 and $15,000<br />
+<strong>inc_btw_15k_20kE</strong> - Households with income between $15,000 and $20,000<br />
+<strong>inc_btw_20k_25kE</strong> - Households with income between $20,000 and $25,000<br />
+<strong>inc_btw_25k_30kE</strong> - Households with income between $25,000 and $30,000<br />
+<strong>inc_btw_30k_35kE</strong> - Households with income between $30,000 and $35,000<br />
+<strong>inc_btw_35k_40kE</strong> - Households with income between $35,000 and $40,000<br />
+<strong>inc_btw_40k_45kE</strong> - Households with income between $40,000 and $45,000<br />
+<strong>inc_btw_45k_50kE</strong> - Households with income between $45,000 and $50,000<br />
+<strong>inc_btw_50k_60kE</strong> - Households with income between $50,000 and $60,000<br />
+<strong>inc_btw_60k_75kE</strong> - Households with income between $60,000 and $75,000<br />
+<strong>inc_btw_75k_100kE</strong> - Households with income between $75,000 and $100,000<br />
+<strong>inc_btw_100k_125kE</strong> - Households with income between $100,000 and $125,000<br />
+<strong>inc_btw_125k_150kE</strong> - Households with income between $125,000 and $150,000<br />
+<strong>inc_btw_150k_200kE</strong> - Households with income between $150,000 and 200,000<br />
+<strong>inc_gt_200kE</strong> - Households with income greater than $200,000<br />
+<strong>hh_povlevelE</strong> - Number of households below the poverty level<br />
+<strong>total_emp</strong> - Total number of people employed<br />
+<strong>basic_emp</strong> - Total number of people employed in the following sectors:
+Agriculture, Forestry, Fishing, and Hunting (CNS01)
+Mining and extraction (CNS02)
+Utilities (CNS03)
+Construction (CNS04)
+Manufacturing (CNS05)
+Wholesale trade (CNS06)
+Transportation and warehousing (CNS06)<br />
+<strong>retail_emp</strong> - Total number of people employed in retail<br />
+<strong>service_emp</strong> - Total number of people employed in remaining sectors<br />
+<strong>land_area_sqmeters</strong> - Land area in square meters<br />
+<strong>geometry</strong> - Geographic coordinates of census tract outlines<br />
+<strong>pop_density</strong> - People per square meter (calculated)<br />
+<strong>emp_density</strong> - Employees per square meter (calculated)<br />
+<strong>activity_density</strong> - People and employees per square meter (calculated)
+<strong>from_GEOID</strong> - Trip origin
+<strong>to_GEOID</strong> - Trip destination
+<strong>drive_time</strong> - Total length of car trip in minutes
+<strong>total_time_mins</strong> - Total length of transit trip in minutes
+<strong>num_transfers</strong> - Number of transfers per transit trip
+<strong>access_wt</strong> - Walk time to access transit
+<strong>init_wt</strong> - Initial wait time for transit trip
+<strong>ivtt</strong> - In-vehicle travel time for transit trip
+<strong>transfer_wt</strong> - Wait time for transfers, set at a maximum of 15 minutes
+<strong>egress_wt</strong> - Walk time to destination after transit trip
+<strong>ovtt</strong> - Out-of-vehicle travel time for transit trip
+<strong>perceived_time</strong> - Weighted travel time for transit trip (ovtt + 1.5*ivtt)
+<strong>fare</strong> - Total cost of transit trip, assuming fares are $2 and transfers are free (based on generalization of EMBARK fares)</p>
+</div>
+</div>
+<div id="code" class="section level2 hasAnchor" number="9.2">
+<h2><span class="header-section-number">9.2</span> Code<a href="technical-appendix.html#code" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="stacked-bar-generator" class="section level3 hasAnchor" number="9.2.1">
+<h3><span class="header-section-number">9.2.1</span> Stacked Bar Generator<a href="technical-appendix.html#stacked-bar-generator" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>transit_stackedbar_generator &lt;- function(iso_origin){
+temp_matrix &lt;- full_travel_matrix %&gt;%
+filter(from_GEOID == iso_origin) %&gt;%
+select(to_GEOID, access_wt, init_wt, ivtt, transfer_wt, egress_wt)</p>
+<p>temp_matrix_stacked &lt;- melt(temp_matrix, id = “to_GEOID”)</p>
+<p>ggplot(temp_matrix_stacked, aes(x = reorder(to_GEOID, value), y = value, fill = variable)) +
+geom_bar(stat = “identity”) +
+scale_fill_manual(values = c(“steelblue”,“thistle”, “gold”, “red”, “green”), label = c(“Walk time”, “Wait time”, “Travel time”, “Transfer time”, “Egress time”)) +
+scale_y_continuous(labels = scales::comma) +
+labs(y = “Number of Minutes”, x = ” “, fill =”Public Transportation Activity”, title = paste(“Transit Time to all zones from”, iso_origin, “(minutes)”)) +
+labs(subtitle = “Figs. 15 and 16 - Travel Time Makes Up the Bulk of Most Trips,Transfer Wait Time is Also A Large Portion of Trip Duration”) +
+theme(legend.position = “top”, axis.text.x=element_blank(), axis.ticks.x=element_blank())
+}</p>
+<p>transit_stackedbar_generator(x)</p>
+</div>
+<div id="isochrone-generator" class="section level3 hasAnchor" number="9.2.2">
+<h3><span class="header-section-number">9.2.2</span> Isochrone Generator<a href="technical-appendix.html#isochrone-generator" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>drive_isochrone_generator &lt;- function(iso_origin){
+temp_matrix &lt;- full_travel_matrix %&gt;%
+filter(from_GEOID == iso_origin)</p>
+<p>#get tract geometry from ok_msa
+iso_drivetime_from_origin &lt;- full_tract_info %&gt;%
+select(GEOID, geometry) %&gt;%
+full_join(temp_matrix, by = c(“GEOID” = “to_GEOID”))</p>
+<p>selected_centroid &lt;- full_centroid_geom %&gt;%
+filter(GEOID == iso_origin)</p>
+<p>#change NA to 0
+iso_drivetime_from_origin[is.na(iso_drivetime_from_origin)] &lt;- 0</p>
+<p>ggplot(iso_drivetime_from_origin) +
+annotation_map_tile(zoomin = 0, progress = “none”, type = “cartolight”) +
+geom_sf(aes(fill = drive_time)) +
+scale_fill_gradient2(low = “white”, mid = “thistle”, high = “orchid4”,
+midpoint = 50, #median(iso_drivetime_from_origin$travel_time_mins),
+name = paste(“Drive Timeallfrom”, iso_origin, “(minutes)”)) +
+labs(subtitle = “Figs. 9, 10, and 11 - Drive-time Isochrones Show Access to All Zones in the Study Area”) +
+geom_sf(data = selected_centroid, shape = 19, size = 1.5) +
+annotation_scale(location = ‘br’, text_cex = 0.5) +
+theme()
+}</p>
+<p>transit_isochrone_generator &lt;- function(iso_origin){
+temp_matrix &lt;- full_travel_matrix %&gt;%
+filter(from_GEOID == iso_origin)</p>
+<p>#get tract geometry from ok_msa
+iso_transittime_from_origin &lt;- full_tract_info %&gt;%
+select(GEOID, geometry) %&gt;%
+full_join(temp_matrix, by = c(“GEOID” = “to_GEOID”))</p>
+<p>selected_centroid &lt;- full_centroid_geom %&gt;%
+filter(GEOID == iso_origin)</p>
+<p>ggplot(iso_transittime_from_origin) +
+annotation_map_tile(zoomin = 0, progress = “none”, type = “cartolight”) +
+geom_sf(aes(fill = total_time_mins)) +
+scale_fill_gradient2(low = “white”, mid = “thistle”, high = “orchid4”,
+midpoint = 50, #median(iso_drivetime_from_origin$travel_time_mins),
+name = paste(“Transit Timeallfrom”, iso_origin, “(minutes)”)) +
+labs(subtitle = “Figs. 12, 13, and 14 - Transit-time Isochrones Show Limited Access within the Study Area”) +
+geom_sf(data = selected_centroid, shape = 19, size = 1.5) +
+annotation_scale(location = ‘br’, text_cex = 0.5) +
+theme()
+}
+drive_isochrone_generator(x)
+transit_isochrone_generator(x)</p>
+</div>
+<div id="cumulative-accessibility" class="section level3 hasAnchor" number="9.2.3">
+<h3><span class="header-section-number">9.2.3</span> Cumulative Accessibility<a href="technical-appendix.html#cumulative-accessibility" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>drive_accessibility_matrix &lt;- full_travel_matrix %&gt;%
+filter(drive_time&lt;30) %&gt;%
+group_by(from_GEOID) %&gt;%
+tally() %&gt;%
+rename(score = n)</p>
+<p>drive_accessibility_geom &lt;- full_tract_info %&gt;%
+select(GEOID, geometry) %&gt;%
+left_join(drive_accessibility_matrix,
+by = c(“GEOID” = “from_GEOID”))</p>
+<p>ggplot(drive_accessibility_geom) +
+annotation_map_tile(zoomin = 0, progress = “none”, type = “cartolight”) +
+geom_sf(aes(fill=score)) +
+labs(subtitle = “Fig. 8 - Zonal-Based Accessibility Shows Greatest Access to Other ZonesCentered in Downtown Oklahoma City”) +
+annotation_scale(location = ‘br’, text_cex = 0.5) +
+theme()</p>
+</div>
+<div id="gravity-based-accessibility-functions" class="section level3 hasAnchor" number="9.2.4">
+<h3><span class="header-section-number">9.2.4</span> Gravity-based Accessibility Functions<a href="technical-appendix.html#gravity-based-accessibility-functions" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<blockquote>
+<blockquote>
+<blockquote>
+<blockquote>
+<blockquote>
+<blockquote>
+<blockquote>
+<p>a7397251799aa95fd9aecdcd2a5f54203021da4b
+accessibility_summary &lt;- accessibility_summary %&gt;%
+left_join(full_tract_info %&gt;%
+select(GEOID, geometry),
+by = c(“from_GEOID” = “GEOID”)) %&gt;%
+as.data.frame()</p>
+</blockquote>
+</blockquote>
+</blockquote>
+</blockquote>
+</blockquote>
+</blockquote>
+</blockquote>
+<p>tract_accessibility &lt;- full_tract_info %&gt;%
+select(GEOID, geometry) %&gt;%
+left_join(accessibility_summary,
+by = c(“GEOID” = “from_GEOID”))</p>
+<p>ggplot(tract_accessibility) +
+annotation_map_tile(type = “cartolight”,
+zoomin = 0,
+progress = “none”) +
+geom_sf(aes(fill = drive_index),
+color = NA,
+alpha = 0.6) +
+scale_fill_viridis_c(name = “Drive accessibility”,
+#trans = “log”,
+#breaks = c(0.000001,100),
+#labels = c(“Low”,
+#“High”),
+option = “A”) +
+labs(subtitle = “Fig. 17 - Accessibility by Car is Strongest in Downtown Oklahoma City,Some Zones on the Periphery Indicating Very Low Accessibility”) +
+theme()</p>
+<p>ggplot(tract_accessibility) +
+annotation_map_tile(type = “cartolight”,
+zoomin = 0,
+progress = “none”) +
+geom_sf(aes(fill = transit_index),
+color = NA,
+alpha = 0.6) +
+scale_fill_viridis_c(name = “Transit accessibility”,
+trans = “log”,
+breaks = c(0.000001,100),
+#labels = c(“Low”,
+#“High”),
+option = “A”) +
+labs(subtitle = “Fig. 18 - Accessibility by Transit is Concentrated in the Downtown Area,Some Accessibility around a Southern Transit Hub in Norman”) +
+theme()</p>
+<div id="references" class="section level4 hasAnchor" number="9.2.4.1">
+<h4><span class="header-section-number">9.2.4.1</span> References<a href="technical-appendix.html#references" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<ul>
+<li>Agrawal et. al. “Getting around When You’re Just Getting by : The Travel Behavior and Transportation Expenditures of Low-Income Adults.” Welcome to ROSA P. Mineta Transportation Institute, January 1, 2011. <a href="https://rosap.ntl.bts.gov/view/dot/18612" class="uri">https://rosap.ntl.bts.gov/view/dot/18612</a>.</li>
+<li>Rosenbloom, Sandra. “The Impact of Growing Children on Their Parents’ Travel Behavior: A Comparative Analysis .” Transportation Research Board, 1987. <a href="https://onlinepubs.trb.org/Onlinepubs/trr/1987/1135/1135-003.pdf" class="uri">https://onlinepubs.trb.org/Onlinepubs/trr/1987/1135/1135-003.pdf</a>.</li>
+<li>Boschmann E.E., Brady S. Travel behaviors, sustainable mobility, and transit-oriented developments: A travel count analysis of older adults in the Denver, Colorado metropolitan area. J. Transp. Geogr. 2013;33:1–11. doi: 10.1016/j.jtrangeo.2013.09.001.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="trip-assignment.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"whatsapp": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": null,
+"text": null
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": null,
+"search": false,
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>
