@@ -1,17 +1,9 @@
 ---
 title: "Building a Travel Demand Model for the Oklahoma City Metropolitan Statistical Area"
 author: "Gabe Barrett-Jackson, Matt Khinda, Samantha Page"
-#output:
- # html_document:
-  #  theme: cerulean
-   # toc: true
-  #  toc_depth: 6
-   # toc_float: true
-#date: "2023-04-10"
-site: bookdown::bookdown_site
-documentclass: book
-output:
-  bookdown::gitbook: default
+output: rmdformats::robobook 
+always_allow_html: true
+date: 04-10-2023
 ---
 
 ```{r setup, include=FALSE}
@@ -43,6 +35,7 @@ if (!require(tidytransit)) install.packages("tidytransit"); library(tidytransit)
 if (!require(tidyverse)) install.packages("tidyverse"); library(tidyverse)
 if (!require(tigris)) install.packages("tigris"); library(tigris)
 if (!require(bookdown)) install.packages("bookdown"); library(bookdown)
+if (!require(rmdformats)) install.packages("rmdformats"); library(rmdformats)
 
 # uses remotes package to load from github
 install_github("https://github.com/c-voulgaris/scenRios")
@@ -50,6 +43,7 @@ library(scenRios)
 install_github("https://github.com/mattflor/chorddiag")
 library(chorddiag)
 ```
+
 
 ```{r reading in data frames, include=FALSE}
 full_tract_info <- geojson_sf("ok_geom.geojson") %>%
