@@ -167,7 +167,7 @@ Road classifications are determined by Open Street Maps, from which we extracted
 # Our Model 
 
 
-```{r geography, roads, transit, centroids, echo=FALSE, fig.cap='The Components of our Model:Roads, Centroids, Centroid Connectors, and Transit Lines', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r centroids_zones, echo=FALSE, fig.cap='Components of our Model: Zones and their Centroids', out.width='80%', fig.asp=.75, fig.align='center'}
 county_geom <- full_tract_info %>%
     separate(NAME, into = c("tract-num", "county", "state"), sep = ", ") %>%
     group_by(county) %>%
@@ -175,10 +175,36 @@ county_geom <- full_tract_info %>%
 
 ggplot() +
   annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
-  geom_sf(data = full_tract_info, aes(), fill = NA, color="darkgrey", size=0.1) +
+  geom_sf(data = full_tract_info, aes(), fill = NA, color="darkgrey", size=0.5) +
+  geom_sf(data = county_geom, aes(), fill = NA, color="black", size=0.5) +
+  geom_sf(data = full_centroid_geom, aes(), fill = "green") +
+  geom_sf_label(data = county_geom, aes(label = county), alpha = 0, label.size = NA, size =4, fontface = "bold") +
+  annotation_scale(location = 'br', text_cex = 0.5) +
+  labs(x = "", 
+       y = "") +
+  theme(legend.position = "none")
+```
+
+
+```{r roads, echo=FALSE, fig.cap='The Components of our Model:Roads, Centroids, Centroid Connectors, and Transit Lines', out.width='80%', fig.asp=.75, fig.align='center'}
+ggplot() +
+  annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
+  #geom_sf(data = full_tract_info, aes(), fill = NA, color="darkgrey", size=0.1) +
   geom_sf(data = county_geom, aes(), fill = NA, color="black", size=0.5) +
   geom_sf(data = ok_roads, aes(), fill = NA, color="red", size=0.2) +
-  geom_sf(data = full_centroid_geom, aes(), fill = "green") +
+  geom_sf_label(data = county_geom, aes(label = county), alpha = 0, label.size = NA, size =4, fontface = "bold") +
+  annotation_scale(location = 'br', text_cex = 0.5) +
+  labs(x = "", 
+       y = "") +
+  theme(legend.position = "none")
+```
+
+
+```{r transit, echo=FALSE, fig.cap='The Components of our Model:Roads, Centroids, Centroid Connectors, and Transit Lines', out.width='80%', fig.asp=.75, fig.align='center'}
+ggplot() +
+  annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
+  geom_sf(data = full_tract_info, aes(), fill = NA, color="darkgrey", size=0.1) +
+  geom_sf(data = county_geom, aes(), fill = NA, color="black", size=0.5) +
   geom_sf(data = transit_geom, aes(color = shape_id)) +
   geom_sf_label(data = county_geom, aes(label = county), alpha = 0, label.size = NA, size =4, fontface = "bold") +
   annotation_scale(location = 'br', text_cex = 0.5) +
@@ -220,7 +246,7 @@ temp_matrix_stacked <- melt(temp_matrix, id = "to_GEOID")
 
 ggplot(temp_matrix_stacked, aes(x = reorder(to_GEOID, value), y = value, fill = variable)) + 
   geom_bar(stat = "identity") +
-  scale_fill_manual(values = c("steelblue","thistle", "gold", "red", "green"), label = c("Walk time", "Wait time", "Travel time", "Transfer time", "Egress time")) +
+  scale_fill_manual(values = c("steelblue","thistle", "gold", "red", "green"), label = c("Initial walk time", "Initial wait time", "Travel time", "Transfer wait time", "Egress walk time")) +
   scale_y_continuous(labels = scales::comma) +
   labs(y = "Number of Minutes", x = " ", fill = "Public Transportation Activity") + 
     labs(subtitle = paste("Transit Time to all zones from", iso_origin, "(minutes)")) +
@@ -1750,6 +1776,17 @@ transit_prob_tracts <- tract_trip_info %>%
 # Trip Assignment
 
 
+To begin, we read in our travel matrix and calculated HOV vehicles from HOV commuter (person) counts. We then worked to provide more granular detail about the HOV trips. This was done because of NCHRP 716 precedent, where the assumed number of people sharing a vehicle for HOV trips differs by purpose. For HBO trips an average of 2.71 people is assumed, for HBW trips an average of 2.42 people is assumed, and for NHB trips an average of 2.75 people is assumed. This allowed for use to generate a 1-hour Origin-Destination (O-D) matrix.
+
+When generating our one hour OD Matrix we decided to create a report illustrating trips during rush hour (5pm to 6pm). We believe rush hour will present greater trip volume than other times of day, as a result of a high share of commute-related trips occurring during that time frame. HBW was 90% SOV driving, so we expect to see a large volume of cars at that time. ***additionally, when accounting for everyday of the week we assume that 5pm ….***
+
+We defined capacity as 1800 * NumLanes * (VehSpeed/60), which uses the typical hourly volume of a highway (1800-1900 cars/hours) and scales it based on the number of road lanes and the speed of those lanes.
+
+Delay method: We chose the Bureau of Public Roads delay function, because our preliminary research indicated that it is a common standard in travel demand modeling. 
+
+Method: For our traffic assignment method, we chose stochastic equilibrium, to acknowledge the limited information that travelers have when making route assignment choices. 
+
+
 ```{r cars, echo=FALSE, include=FALSE}
 full_travel_matrix_with_flows <- read.csv("full_travel_matrix_with_flows.csv") %>%
   mutate(n_HOV_HBO_veh = n_HOV_HBO / 2.71,
@@ -1779,7 +1816,7 @@ PA_matrix_transcad <- PA_matrix %>%
 #write.csv(PA_matrix_transcad, "PA_matrix_transcad.csv")
 ```
 
-```{r flows geom processing, fig.cap='Oklahoma County has the Most Employees in the MSA, and the Majority Are Service Sector Workers', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r flows geom processing, echo = FALSE, include=FALSE}
 TA_flows <- read.csv("okc_roads_prayerhand+okc_LinkFlow.csv")
 
 road_geom <- read_sf("okc_roads_prayerhand_geom 2023-02-20.shp") %>%
@@ -1788,8 +1825,8 @@ road_geom <- read_sf("okc_roads_prayerhand_geom 2023-02-20.shp") %>%
 TA_flows_geom <- road_geom %>%
   left_join(TA_flows)
 
-ggplot(TA_flows_geom) + 
-  geom_sf()
+#ggplot(TA_flows_geom) + 
+ # geom_sf()
 ```
 
 ```{r compute congestion time, echo=FALSE, include=FALSE}
@@ -1798,34 +1835,45 @@ TA_flows_geom <- TA_flows_geom %>%
   mutate(congestion_time = ifelse(congestion_time < 0.0001, 0, congestion_time))
 ```
 
-```{r map-cong-time-all, fig.cap='TKTK', out.width='80%', fig.asp=.75, fig.align='center'}
+
+## Visualizations
+
+The congestion and resulting travel times were severely impacted by the sparseness of the road network and the longer connectors that are surrounded by many one-way roads. This led to some entirely unrealistic travel times of many days. As an example, Connector 1081745 has a length of 14.8 miles and an A-B travel time of 19,000 minutes and a B-A travel time of 59 minutes. If we were to extrapolate travel times from our model into the context of the real world the B-A travel time appears to be in the realm of possible travel times. However, A-B is clearly wildly inaccurate. This presents a clear limit to our model and has caused us to question how to proceed with the remaining assignments.
+
+
+```{r map-cong-time-all, fig.cap='Some Roads in Our Network are Unrealistically Congested, with Travel Times of More than 6 Hours', out.width='80%', fig.asp=.75, fig.align='center'}
 ggplot(subset(TA_flows_geom, congestion_time > 240)) + 
   geom_sf(aes(color = congestion_time)) +
   scale_color_continuous(type = "gradient") + 
   theme_void()
 ```
 
-```{r map-cong-time-filter, fig.cap='TKTK', out.width='80%', fig.asp=.75, fig.align='center'}
+
+When visualizing our findings we chose to represent traffic congestion without the drastic outliers by filtering our flows to trips less than 240 minutes and to exclude connector roads. 
+
+
+```{r map-cong-time-filter, fig.cap='Connectors are Often the Most Congested Roadways in the Network', out.width='80%', fig.asp=.75, fig.align='center'}
 ggplot(subset(TA_flows_geom, congestion_time < 240)) + 
   geom_sf(aes(color = congestion_time)) +
   scale_color_continuous(type = "gradient") + 
   theme_void()
 ```
-```{r map-cong-time-non-connector, fig.cap='TKTK', out.width='80%', fig.asp=.75, fig.align='center'}
+
+```{r map-cong-time-non-connector, fig.cap='Finding the Log of Congested Travel Times Reveals More Variation throughout the Network', out.width='80%', fig.asp=.75, fig.align='center'}
 ggplot(subset(TA_flows_geom, Type != "")) + 
   geom_sf(aes(color = log(congestion_time))) +
   scale_color_continuous(type = "gradient") + 
   theme_void()
 ```
 
-```{r map-non-connector-VMT-filter, fig.cap='TKTK', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r map-non-connector-VMT-filter, fig.cap='When Filtering out Connector Roads, VMT is Greater on Long Peripheral Roads', out.width='80%', fig.asp=.75, fig.align='center'}
 ggplot(subset(TA_flows_geom, Type != "")) + 
   geom_sf(aes(color = Tot_VMT)) +
   scale_color_continuous(type = "viridis", trans = "log") + 
   theme_void()
 ```
 
-```{r map-non-connector-VMT, fig.cap='TKTK', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r map-non-connector-VMT, fig.cap='Visualizing VMT by Road Type Shows More Traffic on Connector Roads', out.width='80%', fig.asp=.75, fig.align='center'}
 ggplot(TA_flows_geom) + 
   geom_sf(aes(color = Tot_VMT)) +
   facet_wrap(vars(Type)) +
@@ -1836,9 +1884,12 @@ ggplot(TA_flows_geom) +
 ```{r sum VMT}
 sum(TA_flows_geom$Tot_VMT)
 ```
+
 ```{r total transit ridership}
 sum(full_travel_matrix_with_flows$n_transit_total)
 ```
+
+Overall, total VMT in the network is 24,150,645 miles, and total transit ridership in the system 2584.
 
 
 # Technical appendix
