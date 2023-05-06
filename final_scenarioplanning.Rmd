@@ -49,14 +49,28 @@ library(chorddiag)
 full_tract_info <- geojson_sf("ok_geom.geojson") %>%
   mutate(pct_veh = (1-(no_vehE/total_hhsE)))
 
+transcad_ids <- read.csv("ok_msa_w_centroids_updated_2-18.csv") %>%
+  rename(GEOID = ï..GEOID)
+
+get_node_id <- function(GEOID){
+  node_id = transcad_ids$centroid_id[transcad_ids$GEOID == GEOID]
+  return(node_id)
+}
+
 full_travel_matrix <- read_csv("full_travel_matrix.csv") %>%
+  rowwise() %>%
   mutate(from_GEOID = as.character(from_GEOID), 
-         to_GEOID = as.character(to_GEOID)) %>%
+         to_GEOID = as.character(to_GEOID),
+         from_node = get_node_id(from_GEOID),
+         to_node = get_node_id(to_GEOID)) %>%
   left_join(full_tract_info %>%
               select(GEOID, total_emp, basic_emp, service_emp, retail_emp), 
             by = c("to_GEOID" = "GEOID"))
 
-full_centroid_geom <- geojson_sf("full_centroid_geom.geojson")
+full_centroid_geom <- geojson_sf("full_centroid_geom.geojson") %>%
+  rowwise() %>%
+  mutate(node_ID = get_node_id(GEOID)) %>%
+  st_write("full_centroid_geom_GEOID.geojson")
 
 #okc_gtfs <- read_gtfs("https://embarkok.com/data/gtfs/google_transit.zip")
 #routes <- route_type_names
@@ -71,6 +85,7 @@ purp_pal <- brewer.pal(5, "Purples")
 green_pal <- brewer.pal(5,"Greens")
 orange_pal <- brewer.pal(5,"Oranges")
 ```
+
 
 # Introduction + Demographics 
 
@@ -2661,10 +2676,15 @@ PA_matrix_transcad_UBI <- PA_matrix_UBI %>%
   rowwise() %>%
   mutate(from_node = get_node_id(from_GEOID),
          to_node = get_node_id(to_GEOID)) %>%
-  select(from_node, to_node, flows_UBI)
+  select(from_node, to_node, from_GEOID, to_GEOID, flows_UBI)
 
 write.csv(PA_matrix_transcad_UBI, "PA_matrix_transcad_UBI.csv")
 ```
+
+```{r}
+
+```
+
 
 
 
