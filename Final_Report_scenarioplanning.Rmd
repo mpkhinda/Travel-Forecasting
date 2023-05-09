@@ -77,13 +77,13 @@ green_pal <- brewer.pal(5,"Greens")
 orange_pal <- brewer.pal(5,"Oranges")
 ```
 
-#Scenario and Evaluation Criteria
+# Scenario and Evaluation Criteria
 
 What is the impact of a universal basic income (UBI) program on travel demand in the Oklahoma City region? We hypothesize that the total number of trips will increase. More granularly, we believe that non home-based (NHB) and home-based other (HBO) trips will increase more significantly than home-based work trips (HBW). Our original model suggests that median income has a significant, positive relationship to the number of home-based other trips. With this precedent, we expect that changing income for a large portion of the population will further increase the number of HBO trips. Equally, we will draw on recent pilot UBI program evaluations to incorporate the effect of additional income on rates of car ownership, employment, and other household characteristics.
 
-To achieve this we proposed a $12,000 unconditional cash transfer to all residents of the MSA; modeled as a naive form of UBI which has been proposed by some politicians (Andrew Yang). An unconditional cash transfer has the purpose of improving quality of life for residents. For the purposes of our study we wanted to set out to empirically test the impact an unconditional cash transfer would have on travel. We hypothesize that the result will be an increase in the number of overall trips, specifically non-work-related trips. At the outset of our study we assumed that increase in trips would result in an increase in VMT.
+To achieve this **we proposed a $12,000 unconditional cash transfer to all residents of the MSA**; modeled as a naive form of UBI which has been proposed by some politicians (Andrew Yang). An unconditional cash transfer has the purpose of improving quality of life for residents. For the purposes of our study we wanted to set out to empirically test the impact an unconditional cash transfer would have on travel. We hypothesize that the result will be an increase in the number of overall trips, specifically non-work-related trips. At the outset of our study we assumed that increase in trips would result in an increase in VMT.
 
-To test this we changed median income to reflect the $12,000 cash transfer, reran a linear regression in trip generation stage, generated a new number of productions and attractions, and compared to number of trips (and share of trips by purpose) in original model (we performed this same comparison for the number of VMT), finally, we reran trip distribution, mode choice, trip assignment.  
+To test this we changed median income to reflect the $12,000 cash transfer; reran a linear regression in the trip generation stage; generated a new number of productions and attractions, and compared this to the number of trips (and share of trips by purpose) in the original model (we performed this same comparison for the number of VMT); and finally, we reran trip distribution, mode choice, trip assignment.  
 
 We had a number of assumptions when conducting this study: residents will not relocate given an increase in income, residents will keep the same jobs and level of employment, meaning the income is entirely supplemental, any resulting change in vehicle ownership would not be captured by our current model of productions/attractions, households will not have more children based on their change in income, households will not be more likely to move from renting to owning a home as a result of this this income, households will not be more or less likely to have someone 65 or older living in them because of this income.
 
@@ -95,9 +95,9 @@ We had a number of assumptions when conducting this study: residents will not re
 
 The Oklahoma City (OKC) metropolitan statistical area (MSA) is composed of seven counties centrally located in Oklahoma: Canadian County, Cleveland County, Grady County, Lincoln County, Logan County, McClain County, and Oklahoma County. Across these counties there are a total of **363 census tracts** (based on the 2010 census tracts). The MSA has a total land area of approximately **1,427,500 square kilometers**. Together, these counties are home to 1,382,800 people, according to the 2019 ACS 5-Year Estimates. The Oklahoma City MSA makes up about 35% of the state’s total population of 3,932,900.
 
-The Oklahoma City MSA is predominantly white, with 64.3% of residents identifying as white alone, followed by 13.3% Hispanic or Latino, 10.1% Black, 3.3% American Indian and Alaska Native, 3.1% Asian, 0.1% Native Hawaiian and Pacific Islander. 36.8% of residents in the study are are ages 35-64, 24.7% are under the age of 18, 25.0% are ages 18-34, and 13.6% are ages 65 and older. The median household income in 2021 was $59,084 (Figure 1) – higher than the statewide average and lower than the national average. About 13.9% of residents live below the poverty line (Figure 2) – lower than the statewide average and higher than the national average.
+The Oklahoma City MSA is predominantly white, with 64.3% of residents identifying as white alone, followed by 13.3% Hispanic or Latino, 10.1% Black, 3.3% American Indian and Alaska Native, 3.1% Asian, 0.1% Native Hawaiian and Pacific Islander. 36.8% of residents in the study are are ages 35-64, 24.7% are under the age of 18, 25.0% are ages 18-34, and 13.6% are ages 65 and older. The median household income in 2021 was $59,084 – higher than the statewide average and lower than the national average. About 13.9% of residents live below the poverty line (Figure 1) – lower than the statewide average and higher than the national average.
 
-```{r poverty-line, echo=FALSE, warning=FALSE, fig.cap='Figure 2. Households Living Below the Federal Poverty Line are Concentrated Near Downtown Oklahoma City', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r poverty-line, echo=FALSE, warning=FALSE, fig.cap='Figure 1. Households Living Below the Federal Poverty Line are Concentrated Near Downtown Oklahoma City', out.width='80%', fig.asp=.75, fig.align='center'}
 #map of families living below poverty line
 ggplot(full_tract_info) +
   annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
@@ -116,17 +116,17 @@ ggplot(full_tract_info) +
 
 Major employment sectors in the Oklahoma City metro area include government, higher education, aerospace, healthcare, and retail. According to the Greater Oklahoma City Chamber of Commerce, major employers include the State of Oklahoma, Tinker Air Force Base, the University of Oklahoma, Integris Health, and Amazon. In 2021, the metropolitan area added 10,825 jobs (1.7% increase), and further job growth was expected in 2022 as stated in the 2022 Greater Oklahoma City Economic Outlook.
 
-Assumptions inherent in our model related to employment and population include:
-* Everyone lives at centroid of their zone
-* Retail jobs represent both employment and attractions
-* We assume that employment exists in three categories (Figure 9):
-    + Retail
-    + Service
-    + Basic
+Assumptions inherent in our model related to employment and population include: 
+* Everyone lives at centroid of their zone 
+* Retail jobs represent both employment and attractions 
+* We assume that employment exists in three categories (Figure 2):
+    * Retail
+    * Service
+    * Basic 
 * We also include total employment as a measure of all three categories
 
 
-```{r employment-county, echo=FALSE, fig.cap='Figure 9. Oklahoma County has the Most Employees in the MSA, and the Majority Are Service Sector Workers', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r employment-county, echo=FALSE, fig.cap='Figure 2. Oklahoma County has the Most Employees in the MSA, and the Majority Are Service Sector Workers', out.width='90%', fig.asp=.75, fig.align='center'}
 county_employment <- full_tract_info %>%
     separate(NAME, into = c("tract-num", "county", "state"), sep = ", ") %>%
     group_by(county) %>%
@@ -150,12 +150,12 @@ ggplot(county_employment_stacked, aes(x = county, y = value, fill = variable)) +
 ```
 
 
-OKC generally follows a monocentric pattern of development with the greatest density of people living and working in downtown Oklahoma City (Figures 10-11), located in the center of the MSA.
+OKC generally follows a monocentric pattern of development with the greatest density of people living and working in downtown Oklahoma City (Figures 3-4), located in the center of the MSA.
 
 This employment density aligns with heightened public transit connectivity, too. In the urban core of Oklahoma City, we notice an overlap between a central business district, higher employment density, and increased public transit connectivity. 
 
 
-```{r emp-density, echo=FALSE, fig.cap='Figure 10. Population Density is Greatest in the Center of the Oklahoma City MSA', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r emp-density, echo=FALSE, fig.cap='Figure 3. Population Density is Greatest in the Center of the Oklahoma City MSA', out.width='80%', fig.asp=.75, fig.align='center'}
 emp_density_map <- ggplot(full_tract_info) +
   annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
   geom_sf(aes(fill = emp_density), color=NA, size=0.1) +
@@ -169,7 +169,7 @@ emp_density_map <- ggplot(full_tract_info) +
 emp_density_map
 ```
 
-```{r pop-density, echo=FALSE, fig.cap='Figure 11. Job Density is Also Concentrated in the Center of the Oklahoma City MSA', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r pop-density, echo=FALSE, fig.cap='Figure 4. Job Density is Also Concentrated in the Center of the Oklahoma City MSA', out.width='80%', fig.asp=.75, fig.align='center'}
 
 pop_density_map <- ggplot(full_tract_info) +
   annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
@@ -186,9 +186,9 @@ pop_density_map
 
 ## Transportation in OKC
 
-EMBARK, the area’s transit authority, operates all public transit in greater Oklahoma City, which includes fixed-route bus service, the OKC Streetcar, paratransit service, river ferry transit, and a bikeshare network. Beyond transit, car-ownership and use is prevalent in the Oklahoma City MSA with only 2.6% of households reporting that they do not have access to a vehicle (Figure 3), and a median number of vehicles per household of 2.3. According to the 2019 ACS 5-Year Estimates, cars, trucks, or vans are the most common means of transportation to work for workers 16 and over (used by 92.6% of respondents), while commuting by public transportation is far less common (used by 0.5% of respondents). Based on the same ACS data, the average travel time to work is 23 minutes.
+EMBARK, the area’s transit authority, operates all public transit in greater Oklahoma City, which includes fixed-route bus service, the OKC Streetcar, paratransit service, river ferry transit, and a bikeshare network. Beyond transit, car-ownership and use is prevalent in the Oklahoma City MSA with only 2.6% of households reporting that they do not have access to a vehicle (Figure 5), and a median number of vehicles per household of 2.3. According to the 2019 ACS 5-Year Estimates, cars, trucks, or vans are the most common means of transportation to work for workers 16 and over (used by 92.6% of respondents), while commuting by public transportation is far less common (used by 0.5% of respondents). Based on the same ACS data, the average travel time to work is 23 minutes.
 
-```{r veh-ownership, echo=FALSE, fig.cap='Figure 3. Most Households in the Oklahoma City MSA Own at least One Vehicle', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r veh-ownership, echo=FALSE, fig.cap='Figure 5. Most Households in the Oklahoma City MSA Own at least One Vehicle', out.width='80%', fig.asp=.75, fig.align='center'}
 #pct of vehicle ownership
 ggplot(full_tract_info) +
   geom_histogram(aes(x = pct_veh), fill = "orangered3", bins = 50) + 
@@ -205,7 +205,7 @@ The measurement of accessibility has been suggested as the ultimate benchmark fo
 
 After calculating and creating our initial visualization of zonal-based accessibility we came to understand that the number of zones one can reach is less relevant than the number of opportunities one can reach. Our definition of accessibility also changed to reflect this understanding. We turn to the definition provided by Carole, accessibility: The ease with which a person can fully participate in the economic, civic, and social life of their society. In the case of our model we have chosen to limit accessibility to access to job opportunities. Our model still holds assumptions, for example, zones are assigned value based on what the jobs they contain. In this way we employ a gravity-based accessibility measure that considers the attractiveness and distance of destinations within a particular area. This measure considers that the more attractive a destination is and the closer it is to a particular location, the more accessible it is to people living or working in that area.
 
-We have decided to keep measures of car and transit accessibility separate, rather than create a combined metric of the two (Figures 12-13). We are more interested in comparing access across the two different modes than conceptualizing one measure of both car and transit accessibility. However, we did weight transit travel time to account for perceptions that out-of-vehicle travel time on public transportation trips is more onerous than in-vehicle travel time, multiplying OVTT by 1.5. 
+We have decided to keep measures of car and transit accessibility separate, rather than create a combined metric of the two (Figures 6-7). We are more interested in comparing access across the two different modes than conceptualizing one measure of both car and transit accessibility. However, we did weight transit travel time to account for perceptions that out-of-vehicle travel time on public transportation trips is more onerous than in-vehicle travel time, multiplying OVTT by 1.5. 
           
 
 ```{r define decay functions, echo=FALSE, include=FALSE}
@@ -237,7 +237,7 @@ accessibility_summary <- full_travel_matrix %>%
          transit_index = 100*transit_access/max(transit_access))
 ```
 
-``` {r access-indices, echo=FALSE, fig.cap='Figure 12. The Transit Hub South of Downtown Oklahoma City is A Recognizable Blip on this Plot Showing Car and Transit Accessibility Plotted Against One Another', out.width='80%', fig.asp=.75, fig.align='center'}
+``` {r access-indices, echo=FALSE, fig.cap='Figure 6. The Transit Hub South of Downtown Oklahoma City is A Recognizable Blip on this Plot Showing Car and Transit Accessibility Plotted Against One Another', out.width='80%', fig.asp=.75, fig.align='center'}
 ggplot(accessibility_summary) +
   geom_point(aes(x = drive_index,
                  y = transit_index),
@@ -250,7 +250,7 @@ ggplot(accessibility_summary) +
 ```
 
 
-```{r access-histogram, echo=FALSE, fig.cap='Figure 13. Nearly Two-Thirds of Zones Do Not Have Any Transit Accessibility', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r access-histogram, echo=FALSE, fig.cap='Figure 7. Nearly Two-Thirds of Zones Do Not Have Any Transit Accessibility', out.width='80%', fig.asp=.75, fig.align='center'}
 ggplot(accessibility_summary) +
   geom_histogram(aes(x = drive_index),
                  bins = 30,
@@ -268,10 +268,10 @@ ggplot(accessibility_summary) +
 ```
 
 
-For our models, we selected the exponential function for car travel and the logistic function for transit travel (Figures 14-15). Our rationale is that the exponential function captures the long-reaching value of a private vehicle in achieving accessibility, as the measure of accessibility never quite reaches 0, no matter how long the travel time. The benefit of a logistic function for transit, however, reflects the perception of great access within short trips on a transit network. For both functions, we set a half-life/inflection point of 30 minutes, which aligns with our personal conceptions of reasonable work- and personal-trip distances.
+For our models, we selected the exponential function for car travel and the logistic function for transit travel (Figures 8-9). Our rationale is that the exponential function captures the long-reaching value of a private vehicle in achieving accessibility, as the measure of accessibility never quite reaches 0, no matter how long the travel time. The benefit of a logistic function for transit, however, reflects the perception of great access within short trips on a transit network. For both functions, we set a half-life/inflection point of 30 minutes, which aligns with our personal conceptions of reasonable work- and personal-trip distances.
 
 
-```{r spatial-access-car, echo=FALSE, warning=FALSE, fig.cap='Figure 14. Accessibility by Car is Strongest in Downtown Oklahoma City, with Some Zones on the Periphery Indicating Very Low Accessibility', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r spatial-access-car, echo=FALSE, warning=FALSE, fig.cap='Figure 8. Accessibility by Car is Strongest in Downtown Oklahoma City, with Some Zones on the Periphery Indicating Very Low Accessibility', out.width='80%', fig.asp=.75, fig.align='center'}
 accessibility_summary <- accessibility_summary %>%
   left_join(full_tract_info %>%
               select(GEOID, geometry),
@@ -299,7 +299,7 @@ ggplot(tract_accessibility) +
   theme()
 ```
 
-```{r spatial-access-transit, echo=FALSE, warning=FALSE, fig.cap='Figure 15. Accessibility by Transit is Concentrated in the Downtown Area, with Some Accessibility around a Southern Transit Hub in Norman', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r spatial-access-transit, echo=FALSE, warning=FALSE, fig.cap='Figure 9. Accessibility by Transit is Concentrated in the Downtown Area, with Some Accessibility around a Southern Transit Hub in Norman', out.width='80%', fig.asp=.75, fig.align='center'}
 
 ggplot(tract_accessibility) +
   annotation_map_tile(type = "cartolight",
@@ -321,7 +321,7 @@ ggplot(tract_accessibility) +
 # Our Model 
 
 
-```{r centroids_zones, echo=FALSE, fig.cap='Figure 4. Components of our Model: Zones and their Centroids', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r centroids_zones, echo=FALSE, fig.cap='Figure 10. Components of our Model: Zones and their Centroids', out.width='80%', fig.asp=.75, fig.align='center'}
 county_geom <- full_tract_info %>%
     separate(NAME, into = c("tract-num", "county", "state"), sep = ", ") %>%
     group_by(county) %>%
@@ -340,7 +340,7 @@ ggplot() +
 ```
 
 
-```{r roads, echo=FALSE, fig.cap='Figure 5. Components of our Model:Roads, Centroids, Centroid Connectors, and Transit Lines', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r roads, echo=FALSE, fig.cap='Figure 11. Components of our Model:Roads, Centroids, Centroid Connectors, and Transit Lines', out.width='80%', fig.asp=.75, fig.align='center'}
 ggplot() +
   annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
   #geom_sf(data = full_tract_info, aes(), fill = NA, color="darkgrey", size=0.1) +
@@ -354,7 +354,7 @@ ggplot() +
 ```
 
 
-```{r transit, echo=FALSE, fig.cap='Figure 6. Components of our Model:Roads, Centroids, Centroid Connectors, and Transit Lines', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r transit, echo=FALSE, fig.cap='Figure 12. Components of our Model:Roads, Centroids, Centroid Connectors, and Transit Lines', out.width='80%', fig.asp=.75, fig.align='center'}
 ggplot() +
   annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
   geom_sf(data = full_tract_info, aes(), fill = NA, color="darkgrey", size=0.1) +
@@ -382,7 +382,7 @@ Road classifications are determined by Open Street Maps, from which we extracted
 * Trunk roads: 299.0 miles
 * Links/Centroid Connectors: 3306.2 miles
 
-To create the network in TransCAD (Figures 4-6), we imported the Open Street Maps layer and selected for primary, secondary, tertiary, and trunk roads. When creating the centroids and centroid connectors, we allowed for the connectors to extend outside of zone boundaries, at up to 30 miles, and up to 10 connectors per centroid. This resulted in a matrix with only a few gaps, which we resolved by turning surrounding roads two-way. (The major roads in the area were separated highways, so we trust that two-way driving is actually feasible in these zones.)
+To create the network in TransCAD (Figures 10-12), we imported the Open Street Maps layer and selected for primary, secondary, tertiary, and trunk roads. When creating the centroids and centroid connectors, we allowed for the connectors to extend outside of zone boundaries, at up to 30 miles, and up to 10 connectors per centroid. This resulted in a matrix with only a few gaps, which we resolved by turning surrounding roads two-way. (The major roads in the area were separated highways, so we trust that two-way driving is actually feasible in these zones.)
 
 Assumptions that were incorporated into our road network include:
 
@@ -401,10 +401,10 @@ Assumptions that were incorporated into our model when we created our transit ne
 * Fares are $2 and there is a $0 transfer fee
 * EMBARK operates a streetcar which was changed in TransCAD to exist as rail
 
-The charts below illustrate how the timing of various transit trips break down across walk, wait, transfer and travel time (Figures 7-8).
+The charts below illustrate how the timing of various transit trips break down across walk, wait, transfer and travel time (Figures 13-14).
 
 
-```{r stacked-bar-chart, echo=FALSE, warning=FALSE, fig.cap='Figures 7 and 8. Travel Time Makes Up the Bulk of Most Trips, but Transfer Wait Time is Also A Large Portion of Trip Duration', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r stacked-bar-chart, echo=FALSE, warning=FALSE, fig.cap='Figures 13 and 14. Travel Time Makes Up the Bulk of Most Trips, but Transfer Wait Time is Also A Large Portion of Trip Duration', out.width='80%', fig.asp=.75, fig.align='center'}
 transit_stackedbar_generator <- function(iso_origin){
   temp_matrix <- full_travel_matrix %>%
   filter(from_GEOID == iso_origin) %>%
@@ -686,20 +686,15 @@ tract_trip_info <- tract_trip_info %>%
 sum(tract_trip_info$nhb_bal_attr)
 ```
 
-```{r write a new file, echo=FALSE, warning=FALSE}
-#tract_trip_info %>%
-  #st_write("tract_trip_info.geojson")
-```
-
 
 #### Estimating Trip Attractions
 
 To estimate trip attractions for our model, we relied on the coefficients for “motorized person trips” found in NCHRP 716. Using these values, we calculated attractions for each trip type within each zone, and then balanced them with the productions to ensure an equal number of trips produced and trips attracted in the overall study area.  
 
-As expected, productions and attractions are primarily concentrated in the downtown area—attractions even more so than productions (Figures 16-17). Both generally follow the density maps of residences and employment that we created earlier in the semester.
+As expected, productions and attractions are primarily concentrated in the downtown area—attractions even more so than productions (Figures 15-16). Both generally follow the density maps of residences and employment that we created earlier in the semester.
 
 
-```{r density-prod, echo=FALSE, fig.cap='Figure 16. Trip Productions are Primarily Concentrated in the Downtown Area', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r density-prod, echo=FALSE, fig.cap='Figure 15. Trip Productions are Primarily Concentrated in the Downtown Area', out.width='80%', fig.asp=.75, fig.align='center'}
 #productions dot density map
 hbo_prod_pts <- st_sample(tract_trip_info, 
                               size = ceiling(tract_trip_info$hbo_trip_prod/1000))
@@ -737,7 +732,7 @@ ggplot(full_tract_info) +
   guides(color = guide_legend(override.aes = list(size=5, alpha = 0.6)))
 ```
 
-```{r density-attr, echo=FALSE, fig.cap='Figure 17. Trip Attractions are Even More Concentrated in the Downtown Area', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r density-attr, echo=FALSE, fig.cap='Figure 16. Trip Attractions are Even More Concentrated in the Downtown Area', out.width='80%', fig.asp=.75, fig.align='center'}
 #attractions
 hbo_att_pts <- st_sample(tract_trip_info, 
                               size = ceiling(tract_trip_info$hbo_trip_attr/1000))
@@ -813,7 +808,6 @@ We adjusted the m value for each purpose, to most closely correspond with the av
 
 
 ```{r estimate travel flows, echo = FALSE}
-
 HBO_dist <- grvty_balancing(od_zones = tract_trip_info,
                             friction = full_TTmatrix,
                             zone_id = "GEOID",
@@ -952,13 +946,13 @@ dimnames(nhb_mat) <- list(production = county_names,
 ```
 
 
-To better understand trip distribution within the MSA, we created three chord diagrams showing the intra- and inter-county flows by trip purpose. This allows us to better understand which counties are more attractive or productive for each trip purpose. For example, we noticed that in Cleveland County (southeast of downtown), home-based other and non-home-based trips are more than half of all trips into the county, while home-based work trips are a smaller share. For all trip types with destinations in Cleveland County, Oklahoma County (centrally located) was a major producer, providing yet another illustration of the close relationship between these two central areas in the MSA.
+To better understand trip distribution within the MSA, we created three chord diagrams showing the intra- and inter-county flows by trip purpose (Figures 17-19). This allows us to better understand which counties are more attractive or productive for each trip purpose. For example, we noticed that in Cleveland County (southeast of downtown), home-based other and non-home-based trips are more than half of all trips into the county, while home-based work trips are a smaller share. For all trip types with destinations in Cleveland County, Oklahoma County (centrally located) was a major producer, providing yet another illustration of the close relationship between these two central areas in the MSA.
 
 
 ##### Home-Based Other Trips by County
 
 
-```{r hbo-chord, echo = FALSE, fig.cap='Figure 18. Intra- and Inter-County Flows for Home-Based Other Trips', fig.align='center'}
+```{r hbo-chord, echo = FALSE, fig.cap='Figure 17. Intra- and Inter-County Flows for Home-Based Other Trips', fig.align='center'}
 chorddiag(hbo_mat, groupColors = brewer.pal(7, "Set2"), groupnamePadding = 50, tickInterval = 50000)
 ```
 
@@ -966,14 +960,14 @@ chorddiag(hbo_mat, groupColors = brewer.pal(7, "Set2"), groupnamePadding = 50, t
 ##### Home-Based Work Trips by County
 
 
-```{r hbw-chord, echo = FALSE, fig.cap='Figure 19. Intra- and Inter-County Flows for Home-Based Work Trips', fig.align='center'}
+```{r hbw-chord, echo = FALSE, fig.cap='Figure 18. Intra- and Inter-County Flows for Home-Based Work Trips', fig.align='center'}
 chorddiag(hbw_mat, groupColors = brewer.pal(7, "Set2"), groupnamePadding = 50, tickInterval = 10000)
 ```
 
 
 ##### Non-Home Based Trips by County
 
-```{r nhb-chord, echo = FALSE, fig.cap='Figure 20. Intra- and Inter-County Flows for Non-Home-Based Trips', fig.align='center'}
+```{r nhb-chord, echo = FALSE, fig.cap='Figure 19. Intra- and Inter-County Flows for Non-Home-Based Trips', fig.align='center'}
 chorddiag(nhb_mat, groupColors = brewer.pal(7, "Set2"), groupnamePadding = 50, tickInterval = 10000)
 ```
 
@@ -1083,105 +1077,30 @@ difference_df <- difference_df %>%
 ```
 
 
-Compared to the number of trip productions generated in the model reflecting existing conditions, the model with an unconditional cash transfer had slightly greater trip productions for all trip types. The tracts with the greatest increases in trip productions are not particularly geographically concentrated. 
+Compared to the number of trip productions generated in the model reflecting existing conditions, the model with an unconditional cash transfer had slightly greater trip productions for all trip types (Figures 20-22). The tracts with the greatest increases in trip productions are not particularly geographically concentrated. 
 
 
-```{r plot hbo difference, echo=FALSE, fig.cap='Figure XX. Difference in Number of Home-Based Other Trip Productions in Scenario B compared to Scenario A', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r plot hbo difference, echo=FALSE, fig.cap='Figure 20. Difference in Number of Home-Based Other Trip Productions in Scenario B compared to Scenario A', out.width='80%', fig.asp=.75, fig.align='center'}
 ggplot(difference_df) +
   geom_sf(aes(fill=diff_hbo)) +
   scale_fill_continuous(name = "Number of Trip Productions") + 
   theme_minimal()
 ```
 
-```{r plot hbw difference, echo=FALSE, fig.cap='Figure XX. Difference in Number of Home-Based Work Trip Productions in Scenario B compared to Scenario A', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r plot hbw difference, echo=FALSE, fig.cap='Figure 21. Difference in Number of Home-Based Work Trip Productions in Scenario B compared to Scenario A', out.width='80%', fig.asp=.75, fig.align='center'}
 ggplot(difference_df) +
   geom_sf(aes(fill=diff_hbw)) +
   scale_fill_continuous(name = "Number of Trip Productions") + 
   theme_minimal()
 ```
 
-```{r plot nhb difference, echo=FALSE, fig.cap='Figure XX. Difference in Number of Non-Home-Based Trip Productions in Scenario B compared to Scenario A', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r plot nhb difference, echo=FALSE, fig.cap='Figure 22. Difference in Number of Non-Home-Based Trip Productions in Scenario B compared to Scenario A', out.width='80%', fig.asp=.75, fig.align='center'}
 ggplot(difference_df) +
   geom_sf(aes(fill=diff_nhb)) +
   scale_fill_continuous(name = "Number of Trip Productions") + 
   theme_minimal()
 ```
 
-```{r density-prod UBI, echo=FALSE, fig.cap='Figure 16. Trip Productions are Primarily Concentrated in the Downtown Area', out.width='80%', fig.asp=.75, fig.align='center'}
-#productions dot density map
-hbo_prod_pts <- st_sample(tract_trip_info_UBI, 
-                              size = ceiling(tract_trip_info_UBI$hbo_trip_prod/1000))
- 
-hbo_prod_df <- tibble(trip_type = rep("Home-Based Other",
-                                            length(hbo_prod_pts))) %>%
-  st_sf(geom = hbo_prod_pts)
-
-hbw_prod_pts <- st_sample(tract_trip_info_UBI,
-                               size = ceiling(tract_trip_info_UBI$hbw_trip_prod/1000))
-
-hbw_prod_df <- tibble(trip_type = rep("Home-Based Work", 
-                                              length(hbw_prod_pts))) %>%
-  st_sf(geom = hbw_prod_pts)
-
-nhb_prod_pts <- st_sample(tract_trip_info_UBI,
-                               size = ceiling(tract_trip_info_UBI$nhb_trip_prod/1000))
-
-nhb_prod_df <- tibble(trip_type = rep("Non-Home-Based", 
-                                              length(nhb_prod_pts))) %>%
-  st_sf(geom = nhb_prod_pts)
-
-production_points <- rbind(hbo_prod_df, hbw_prod_df, nhb_prod_df)
-
-
-ggplot(tract_trip_info_UBI) +
-  geom_sf(color = "white") +
-  geom_sf(data = production_points,
-          aes(color = trip_type),
-          alpha = 0.5,
-          size = 0.15) +
-  scale_color_brewer("Production Distribution\n(each points represents\n1000 productions)",
-                     palette = "Set2") +
-  theme_void()  +
-  guides(color = guide_legend(override.aes = list(size=5, alpha = 0.6)))
-```
-
-```{r density-attr UBI, echo=FALSE, fig.cap='Figure 17. Trip Attractions are Even More Concentrated in the Downtown Area', out.width='80%', fig.asp=.75, fig.align='center'}
-#attractions
-hbo_att_pts <- st_sample(tract_trip_info_UBI, 
-                              size = ceiling(tract_trip_info_UBI$hbo_trip_attr/1000))
- 
-hbo_att_df <- tibble(trip_type = rep("Home-Based Other",
-                                            length(hbo_att_pts))) %>%
-  st_sf(geom = hbo_att_pts)
-
-hbw_att_pts <- st_sample(tract_trip_info_UBI,
-                               size = ceiling(tract_trip_info_UBI$hbw_trip_attr/1000))
-
-hbw_att_df <- tibble(trip_type = rep("Home-Based Work", 
-                                              length(hbw_att_pts))) %>%
-  st_sf(geom = hbw_att_pts)
-
-nhb_att_pts <- st_sample(tract_trip_info_UBI,
-                               size = ceiling(tract_trip_info_UBI$nhb_trip_attr/1000))
-
-nhb_att_df <- tibble(trip_type = rep("Non-Home-Based", 
-                                              length(nhb_att_pts))) %>%
-  st_sf(geom = nhb_att_pts)
-
-attraction_points <- rbind(hbo_att_df, hbw_att_df, nhb_att_df)
-
-
-ggplot(tract_trip_info_UBI) +
-  geom_sf(color = "white") +
-  geom_sf(data = attraction_points,
-          aes(color = trip_type),
-          alpha = 0.5,
-          size = 0.15) +
-  scale_color_brewer("Attraction Distribution\n(each points represents\n1000 attractions)",
-                     palette = "Set1") +
-  theme_void()  +
-  guides(color = guide_legend(override.aes = list(size=5, alpha = 0.6)))
-```
 
 ```{r estimate travel flows UBI, echo = FALSE}
 full_TTmatrix_UBI <- full_TTmatrix %>%
@@ -1256,9 +1175,12 @@ ttime_by_purpose_pred_UBI <- ttime_by_purpose %>%
 kable(ttime_by_purpose_pred_UBI)
 ```
 
+For the friction factors for the gravity balancing functions, we initially tried the same variable values as those we used in the original model. This resulted in estimated average trip times that were within the 0.2 minute threshold for HBO and HBW trips, but not for NHB trips. We adjusted the value down slightly, from -0.22 to -0.19, to be within the threshold.
+
+
 ### Visualizing Travel Flows by Purpose and County
 
-Trip flows within and between counties remained fairly consistent across the two scenarios. 
+Trip flows within and between counties remained fairly consistent across the two scenarios (Figures 23-25). 
 
 
 ```{r chord diagram UBI, echo = FALSE, message = FALSE}
@@ -1324,7 +1246,7 @@ dimnames(nhb_mat_UBI) <- list(production = county_names,
 ##### Home-Based Other Trips by County
 
 
-```{r hbo-chord-UBI, echo = FALSE, fig.cap='Figure 18. Intra- and Inter-County Flows for Home-Based Other Trips', fig.align='center'}
+```{r hbo-chord-UBI, echo = FALSE, fig.cap='Figure 23. Intra- and Inter-County Flows for Home-Based Other Trips', fig.align='center'}
 chorddiag(hbo_mat_UBI, groupColors = brewer.pal(7, "Set2"), groupnamePadding = 50, tickInterval = 50000)
 ```
 
@@ -1332,14 +1254,14 @@ chorddiag(hbo_mat_UBI, groupColors = brewer.pal(7, "Set2"), groupnamePadding = 5
 ##### Home-Based Work Trips by County
 
 
-```{r hbw-chord-UBI, echo = FALSE, fig.cap='Figure 19. Intra- and Inter-County Flows for Home-Based Work Trips', fig.align='center'}
+```{r hbw-chord-UBI, echo = FALSE, fig.cap='Figure 24. Intra- and Inter-County Flows for Home-Based Work Trips', fig.align='center'}
 chorddiag(hbw_mat_UBI, groupColors = brewer.pal(7, "Set2"), groupnamePadding = 50, tickInterval = 10000)
 ```
 
 
 ##### Non-Home Based Trips by County
 
-```{r nhb-chord-UBI, echo = FALSE, fig.cap='Figure 20. Intra- and Inter-County Flows for Non-Home-Based Trips', fig.align='center'}
+```{r nhb-chord-UBI, echo = FALSE, fig.cap='Figure 25. Intra- and Inter-County Flows for Non-Home-Based Trips', fig.align='center'}
 chorddiag(nhb_mat_UBI, groupColors = brewer.pal(7, "Set2"), groupnamePadding = 50, tickInterval = 10000)
 ```
 
@@ -1485,8 +1407,6 @@ HOV_share_HBO <-
 
 transit_share_HBO <- 
   mode_by_purpose$pct_transit[mode_by_purpose$purpose == "HBO"]
-
-
 
 
 #  HBW Model
@@ -1718,8 +1638,6 @@ modeled_mode_by_purpose_1 <- tibble(
 
 model_compare <- rbind(mode_by_purpose, modeled_mode_by_purpose_1) %>%
   arrange(purpose)
-
-kable(model_compare)
 ```
 
 
@@ -1739,38 +1657,38 @@ HOV_const_NHB <- log(HOV_share_NHB / (1 - HOV_share_NHB))
 transit_const_NHB <- log(transit_share_NHB / (1 - transit_share_NHB))
 
 # HBO Model
-SOV_share_HBO <- 
-  mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "HBO"]
+#SOV_share_HBO <- 
+ # mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "HBO"]
 
-HOV_share_HBO <- 
-  mode_by_purpose$pct_HOV[mode_by_purpose$purpose == "HBO"]
+#HOV_share_HBO <- 
+ # mode_by_purpose$pct_HOV[mode_by_purpose$purpose == "HBO"]
 
-transit_share_HBO <- 
-  mode_by_purpose$pct_transit[mode_by_purpose$purpose == "HBO"]
+#transit_share_HBO <- 
+ # mode_by_purpose$pct_transit[mode_by_purpose$purpose == "HBO"]
 
 
 
 
 #  HBW Model
-SOV_share_HBW <- 
-  mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "HBW"]
+#SOV_share_HBW <- 
+#  mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "HBW"]
 
-HOV_share_HBW <- 
-  mode_by_purpose$pct_HOV[mode_by_purpose$purpose == "HBW"]
+#HOV_share_HBW <- 
+#  mode_by_purpose$pct_HOV[mode_by_purpose$purpose == "HBW"]
 
-transit_share_HBW <- 
-  mode_by_purpose$pct_transit[mode_by_purpose$purpose == "HBW"]
+#transit_share_HBW <- 
+#  mode_by_purpose$pct_transit[mode_by_purpose$purpose == "HBW"]
 
 
 #  NHB Model
-SOV_share_NHB <- 
-  mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "NHB"]
+#SOV_share_NHB <- 
+#  mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "NHB"]
 
-HOV_share_NHB <- 
-  mode_by_purpose$pct_HOV[mode_by_purpose$purpose == "NHB"]
+#HOV_share_NHB <- 
+#  mode_by_purpose$pct_HOV[mode_by_purpose$purpose == "NHB"]
 
-transit_share_NHB <- 
-  mode_by_purpose$pct_transit[mode_by_purpose$purpose == "NHB"]
+#transit_share_NHB <- 
+#  mode_by_purpose$pct_transit[mode_by_purpose$purpose == "NHB"]
 
 ```
 
@@ -1980,7 +1898,7 @@ full_travel_matrix <- full_travel_matrix %>%
 
 #### Visualizations
 
-In order to understand the relationship between trip length and mode choice, we plotted the percent of trips using a particular mode (as predicted by our model) against the drive time of that trip (Figure 21). We then further subset the data by purpose to illustrate the difference in mode share for different kinds of trips (Figures 22-24). 
+In order to understand the relationship between trip length and mode choice, we plotted the percent of trips using a particular mode (as predicted by our model) against the drive time of that trip (Figure 26). We then further subset the data by purpose to illustrate the difference in mode share for different kinds of trips (Figures 27-29). 
 
 We used drive time as our preferred metric of travel time based on the same assumption we used in the trip generation and distribution calculation — that it most often will be the shortest trip between two zones. Because there are over 130,000 individual origin-destination pairs in our matrix, we decided to create binned scatter plots which more clearly present the trend by reducing the visual noise. The bins are set at roughly 5-minute intervals in drive time, which was done by taking the max drive time of approximately 425 minutes and dividing it by 5. Within each of these bins, the mean share of each mode for all trips is calculated and presented. 
 
@@ -1991,7 +1909,7 @@ We notice that at trips of about 45 minutes there is a slight bump in the share 
 We initially mapped this information to understand the spatial distribution of mode choice throughout our study area, too. However, it seemed repetitive of these scatter plots and did not contribute any new interpretations of our analysis. In particular, because the SOV and HOV mode shares are both approximately 40-55% of mode share for all trips, there was little range across the geography. We wonder if this lack of differentiation is a symptom of not having chosen a nested logit model.
 
 
-```{r mode-split-all, fig.cap='Figure 21. Mode Split by Drive Time for all Trip Purposes', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r mode-split-all, fig.cap='Figure 26. Mode Split by Drive Time for all Trip Purposes', out.width='80%', fig.asp=.75, fig.align='center'}
 ggplot()+
   stat_summary_bin(data = full_travel_matrix, aes(x = drive_time, y = (n_transit_total/n_total_total), color = "Transit"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
   stat_summary_bin(data = full_travel_matrix, aes(x = drive_time, y = (n_SOV_total/n_total_total), color = "SOV"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
@@ -2001,7 +1919,7 @@ ggplot()+
   theme_minimal()
 ```
 
-```{r mode-split-hbo, fig.cap='Figure 22. Mode Split by Drive Time for Home-Based Other Trips', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r mode-split-hbo, fig.cap='Figure 27. Mode Split by Drive Time for Home-Based Other Trips', out.width='80%', fig.asp=.75, fig.align='center'}
 # HBO
 ggplot()+
   stat_summary_bin(data = full_travel_matrix, aes(x = drive_time, y = (n_transit_HBO/n_total_HBO), color = "Transit"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
@@ -2012,7 +1930,7 @@ ggplot()+
   theme_minimal()
 ```
 
-```{r mode-split-hbw, fig.cap='Figure 23. Mode Split by Drive Time for Home-Based Work Trips', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r mode-split-hbw, fig.cap='Figure 28. Mode Split by Drive Time for Home-Based Work Trips', out.width='80%', fig.asp=.75, fig.align='center'}
 # HBW
 ggplot()+
   stat_summary_bin(data = full_travel_matrix, aes(x = drive_time, y = (n_transit_HBW/n_total_HBW), color = "Transit"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
@@ -2023,7 +1941,7 @@ ggplot()+
   theme_minimal()
 ```
 
-```{r mode-split-nhb, fig.cap='Figure 24. Mode Split by Drive Time for Non-Home-Based Trips', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r mode-split-nhb, fig.cap='Figure 29. Mode Split by Drive Time for Non-Home-Based Trips', out.width='80%', fig.asp=.75, fig.align='center'}
 # NHB
 ggplot()+
   stat_summary_bin(data = full_travel_matrix, aes(x = drive_time, y = (n_transit_NHB/n_total_NHB), color = "Transit"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
@@ -2061,87 +1979,55 @@ We used the same assumptions for travel cost in our unconditional cash transfer 
 
 #### Mode-by-Purpose Table
 
+We compared mode split by trip type to the same observed data from NHTS as we used in Scenario A. 
 
 ```{r mode by purpose for UBI scenario, echo=FALSE}
 kable(mode_by_purpose)
 ```
 
 
+#### Model Coefficients + Calibration 
+
+We started by assigning the coefficients from our Scenario A mode choice model to the Scenario B mode choice model. We applied the same standard for Scenario B, as well, aiming to have any discrepancies between the model and observed data from NHTS below a 5 percentage point threshold. 
+
+HBO: SOV = -0.28, HOV = -0.25, transit = -3.52
+HBW: SOV = 0.70, -2.00, transit = -1.00
+NHB: original constants (log odds of that particular mode for that purpose from the NHTS)
+
 ```{r constant calcs UBI, echo=FALSE, include=FALSE}
-
 # HBO Model
-SOV_share_HBO_UBI <- 
-  mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "HBO"]
+#SOV_share_HBO_UBI <- 
+#  mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "HBO"]
 
-HOV_share_HBO_UBI <- 
-  mode_by_purpose$pct_HOV[mode_by_purpose$purpose == "HBO"]
+#HOV_share_HBO_UBI <- 
+#  mode_by_purpose$pct_HOV[mode_by_purpose$purpose == "HBO"]
 
-transit_share_HBO <- 
-  mode_by_purpose$pct_transit[mode_by_purpose$purpose == "HBO"]
+#transit_share_HBO_UBI <- 
+#  mode_by_purpose$pct_transit[mode_by_purpose$purpose == "HBO"]
 
 
 #  HBW Model
-SOV_share_HBW <- 
-  mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "HBW"]
+#SOV_share_HBW_UBI <- 
+#  mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "HBW"]
 
-HOV_share_HBW <- 
-  mode_by_purpose$pct_HOV[mode_by_purpose$purpose == "HBW"]
+#HOV_share_HBW_UBI <- 
+#  mode_by_purpose$pct_HOV[mode_by_purpose$purpose == "HBW"]
 
-transit_share_HBW <- 
-  mode_by_purpose$pct_transit[mode_by_purpose$purpose == "HBW"]
+#transit_share_HBW_UBI <- 
+#  mode_by_purpose$pct_transit[mode_by_purpose$purpose == "HBW"]
 
 
 #  NHB Model
-SOV_share_NHB <- 
-  mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "NHB"]
+#SOV_share_NHB_UBI <- 
+#  mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "NHB"]
 
-HOV_share_NHB <- 
-  mode_by_purpose$pct_HOV[mode_by_purpose$purpose == "NHB"]
+#HOV_share_NHB_UBI <- 
+#  mode_by_purpose$pct_HOV[mode_by_purpose$purpose == "NHB"]
 
-transit_share_NHB <- 
-  mode_by_purpose$pct_transit[mode_by_purpose$purpose == "NHB"]
-
-
-# CONSTANTS
-SOV_const_HBO <- log(SOV_share_HBO / (1 - SOV_share_HBO)) 
-HOV_const_HBO <- log(HOV_share_HBO / (1 - HOV_share_HBO))
-transit_const_HBO <- log(transit_share_HBO / (1 - transit_share_HBO))
-
-SOV_const_HBW <- log(SOV_share_HBW / (1 - SOV_share_HBW))
-HOV_const_HBW <- log(HOV_share_HBW / (1 - HOV_share_HBW))
-transit_const_HBW <- log(transit_share_HBW / (1 - transit_share_HBW))
-
-SOV_const_NHB <- log(SOV_share_NHB / (1 - SOV_share_NHB))
-HOV_const_NHB <- log(HOV_share_NHB / (1 - HOV_share_NHB))
-transit_const_NHB <- log(transit_share_NHB / (1 - transit_share_NHB))
-
-```
+#transit_share_NHB_UBI <- 
+#  mode_by_purpose$pct_transit[mode_by_purpose$purpose == "NHB"]
 
 
-#### Model Coefficients + Calibration 
-
-We started by assigning the coefficients from our Scenario A mode choice model to the Scenario B mode choice model, and then calibrated from there. 
-
-The coefficients for home-based work and non-home-based trips resulted in mode share splits within a 5 percentage point threshold of the observed mode share by purpose data from the NHTS. With a small amount of calibration, we found that the coefficient for non-home-based trips decreased slightly from -0.
-
-******
-
-HBO_UBI   -0.18 (Same as existing conditions)
-HBW_UBI  -0.06 (Same as existing conditions)
-NHB_UBI   -0.19 
-
-******
-
-Through trial and error, we learned the nuances of balancing out coefficients across the different modes within each trip type. We aimed to be within a 5 percentage point threshold from the observed mode share by purpose data from the NHTS. 
-
-As initial values, all constants were set to the log odds of that particular mode for that purpose from the NHTS. If the resulting predicted value was above or below the accuracy threshold, the values were adjusted manually until the result was satisfactorily close.  
-
-HBO: For SOV kept the coefficient at -0.28; we changed the coefficient for HOV from 0.167 to -0.25; and for transit we kept the coefficient at -3.52.
-HBW: For SOV we went from 2.26 to 0.70; HOV -2.56 to -2.00; transit -3.74 to -1.00
-NHB: All mode shares were within 2 percentage points of the NHTS data shares, so we did not change the coefficients.
-
-
-```{r model_2_UBI, echo=FALSE, include=FALSE}
 # CONSTANTS
 SOV_const_HBO_UBI <- SOV_const_HBO
 HOV_const_HBO_UBI <- HOV_const_HBO
@@ -2155,6 +2041,7 @@ SOV_const_NHB_UBI <- SOV_const_NHB
 HOV_const_NHB_UBI <- HOV_const_NHB
 transit_const_NHB_UBI <- transit_const_NHB
 ```
+
 
 ```{r mode choice discrete model UBI, echo=FALSE}
 full_TTmatrix_UBI <- full_TTmatrix_UBI %>%
@@ -2317,17 +2204,19 @@ modeled_mode_by_purpose_UBI <- tibble(
                 sum(full_TTmatrix_UBI$n_transit_NHB_UBI) / 
                    sum(full_TTmatrix_UBI$NHB_flow_UBI)))
 
-model_compare_UBI <- rbind(modeled_mode_by_purpose_2, modeled_mode_by_purpose_UBI) %>%
+model_compare_UBI <- rbind(mode_by_purpose, modeled_mode_by_purpose_UBI) %>%
   arrange(purpose) 
 
 kable(model_compare_UBI)
 ```
 
+The differences between the Scenario B modeled mode shares and the NHTS data were within the 5 percentage point threshold on the first run of our model, so no further calibration was necessary. This aligns with expectations that mode choice would not significantly change due to a slight increase in trip productions. [????]
+
+
 #### Visualizations
 
-[[anything to add here??]]
 
-This confirms our expectation that mode choice isn't significantly affected by an additional influx of income. 
+This visualizations further confirm our expectation that mode choice is not significantly affected by an additional influx of income (Figures 30-33). 
 
 
 ```{r total trip count UBI, echo=FALSE, include=FALSE}
@@ -2363,25 +2252,48 @@ full_TTmatrix_UBI <- full_TTmatrix_UBI %>%
 ```
 
 
-```{r mode-split-all-ubi, fig.cap='Figure 21. Mode Split by Drive Time for all Trip Purposes', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r mode-split-all-ubi, fig.cap='Figure 30. Mode Split by Drive Time for all Trip Purposes, in an Unconditional Cash Flow Scenario', out.width='80%', fig.asp=.75, fig.align='center'}
 ggplot()+
-  stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_transit_total_UBI/n_total_total_UBI)), color = "red", alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
-  stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_SOV_total_UBI/n_total_total_UBI)), color = "blue", alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
-  stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_HOV_total_UBI/n_total_total_UBI)), color = "goldenrod", alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
+  stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_transit_total_UBI/n_total_total_UBI), color = "Transit"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
+  stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_SOV_total_UBI/n_total_total_UBI), color = "SOV"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
+  stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_HOV_total_UBI/n_total_total_UBI), color = "HOV"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
   scale_x_continuous(breaks = seq(from =0, to = 240, by = 30)) +
   labs(x = "Drive Time (mins)", y = "Mode Share (Fraction of Total Trips)") +
   theme_minimal()
 ```
 
-```{r mode-split-hbo-ubi, fig.cap='Figure 22. Mode Split by Drive Time for Home-Based Other Trips', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r mode-split-hbo-ubi, fig.cap='Figure 31. Mode Split by Drive Time for Home-Based Other Trips, in an Unconditional Cash Flow Scenario', out.width='80%', fig.asp=.75, fig.align='center'}
 # HBO
 ggplot()+
-  stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_transit_HBO_UBI/n_total_HBO_UBI)), color = "red", alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
-  stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_SOV_HBO_UBI/n_total_HBO_UBI)), color = "blue", alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
-  stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_HOV_HBO_UBI/n_total_HBO_UBI)), color = "goldenrod", alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
+  stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_transit_HBO_UBI/n_total_HBO_UBI), color = "Transit"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
+  stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_SOV_HBO_UBI/n_total_HBO_UBI), color = "SOV"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
+  stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_HOV_HBO_UBI/n_total_HBO_UBI), color = "HOV"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
   scale_x_continuous(breaks = seq(from =0, to = 240, by = 30)) +
   labs(title = "Mode Split by Drive Time for Home-Based Other Trips", x = "Drive Time (mins)", y = "Mode Share (Fraction of Total Trips)") +
   theme_minimal()
+```
+
+```{r mode-split-hbw-ubi, fig.cap='Figure 32. Mode Split by Drive Time for Home-Based Work Trips, in an Unconditional Cash Flow Scenario', out.width='80%', fig.asp=.75, fig.align='center'}
+# HBW
+ggplot()+
+  stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_transit_HBW_UBI/n_total_HBW_UBI), color = "Transit"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
+  stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_SOV_HBW_UBI/n_total_HBW_UBI), color = "SOV"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
+  stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_HOV_HBW_UBI/n_total_HBW_UBI), color = "HOV"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
+  scale_x_continuous(breaks = seq(from =0, to = 240, by = 30)) +
+  labs(title = "Mode Split by Drive Time for Home-Based Work Trips", x = "Drive Time (mins)", y = "Mode Share (Fraction of Total Trips)") +
+  theme_minimal()
+```
+
+```{r mode-split-nhb-ubi, fig.cap='Figure 33. Mode Split by Drive Time for Non-Home-Based Trips, in an Unconditional Cash Flow Scenario', out.width='80%', fig.asp=.75, fig.align='center'}
+# NHB
+ggplot()+
+  stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_transit_NHB_UBI/n_total_NHB_UBI), color = "Transit"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
+  stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_SOV_NHB_UBI/n_total_NHB_UBI), color = "SOV"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
+  stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_HOV_NHB_UBI/n_total_NHB_UBI), color = "HOV"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
+  scale_x_continuous(breaks = seq(from =0, to = 240, by = 30)) +
+  labs(title = "Mode Split by Drive Time for Non Home-Based Trips", x = "Drive Time (mins)", y = "Mode Share (Fraction of Total Trips)") +
+  theme_minimal()
+
 ```
 
 
@@ -2457,12 +2369,12 @@ TA_flows_geom <- TA_flows_geom %>%
 
 #### Visualizations
 
-The congestion and resulting travel times were severely impacted by the sparseness of the road network and the longer connectors that are surrounded by many one-way roads. This led to some entirely unrealistic travel times of many days (Figure 25). As an example, Connector 1081745 has a length of 14.8 miles and an A-B travel time of 19,000 minutes and a B-A travel time of 59 minutes. If we were to extrapolate travel times from our model into the context of the real world the B-A travel time appears to be in the realm of possible travel times. However, A-B is clearly wildly inaccurate. This presents a clear limit to our model and has caused us to question how to proceed with the remaining assignments.
+The congestion and resulting travel times were severely impacted by the sparseness of the road network and the longer connectors that are surrounded by many one-way roads. This led to some entirely unrealistic travel times of many days (Figure 34). As an example, Connector 1081745 has a length of 14.8 miles and an A-B travel time of 19,000 minutes and a B-A travel time of 59 minutes. If we were to extrapolate travel times from our model into the context of the real world the B-A travel time appears to be in the realm of possible travel times. However, A-B is clearly wildly inaccurate. This presents a clear limit to our model and has caused us to question how to proceed with the remaining assignments.
 
 When visualizing our findings we chose to represent traffic congestion without the drastic outliers by filtering our flows to trips less than 240 minutes and to exclude connector roads. Additionally, we also filtered our traffic flows by road time to see where congestion was amassing. Overall, total VMT in the network is 24,150,645 miles, and total transit ridership in the system 2584.
 
 
-```{r map-cong-time-all, fig.cap='Figure 25. Some Roads in Our Network are Unrealistically Congested, with Travel Times of More than 6 Hours', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r map-cong-time-all, fig.cap='Figure 34. Some Roads in Our Network are Unrealistically Congested, with Travel Times of More than 6 Hours', out.width='80%', fig.asp=.75, fig.align='center'}
 ggplot(subset(TA_flows_geom, congestion_time > 240)) + 
   geom_sf(aes(color = congestion_time)) +
   scale_color_continuous(type = "gradient") + 
@@ -2470,17 +2382,17 @@ ggplot(subset(TA_flows_geom, congestion_time > 240)) +
 ```
 
 
-When visualizing our findings we chose to represent traffic congestion without the drastic outliers by filtering our flows to trips less than 240 minutes and to exclude connector roads (Figures 26-27). 
+When visualizing our findings we chose to represent traffic congestion without the drastic outliers by filtering our flows to trips less than 240 minutes and to exclude connector roads (Figures 35-36). 
 
 
-```{r map-cong-time-filter, fig.cap='Figure 26. Connectors are Often the Most Congested Roadways in the Network', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r map-cong-time-filter, fig.cap='Figure 35. Connectors are Often the Most Congested Roadways in the Network', out.width='80%', fig.asp=.75, fig.align='center'}
 ggplot(subset(TA_flows_geom, congestion_time < 240)) + 
   geom_sf(aes(color = congestion_time)) +
   scale_color_continuous(type = "gradient") + 
   theme_void()
 ```
 
-```{r map-cong-time-non-connector, fig.cap='Figure 27. Finding the Log of Congested Travel Times Reveals More Variation throughout the Network', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r map-cong-time-non-connector, fig.cap='Figure 36. Finding the Log of Congested Travel Times Reveals More Variation throughout the Network', out.width='80%', fig.asp=.75, fig.align='center'}
 ggplot(subset(TA_flows_geom, Type != "")) + 
   geom_sf(aes(color = log(congestion_time))) +
   scale_color_continuous(type = "gradient") + 
@@ -2488,17 +2400,17 @@ ggplot(subset(TA_flows_geom, Type != "")) +
 ```
 
 
-Additionally, we also filtered our traffic flows by road type to see where congestion was amassing (Figures 28-29). Overall, total VMT in the network is 24,150,645 miles, and total transit ridership in the system 2584.
+Additionally, we also filtered our traffic flows by road type to see where congestion was amassing (Figures 37-38). Overall, total VMT in the network is 24,150,645 miles, and total transit ridership in the system 2584.
 
 
-```{r map-non-connector-VMT-filter, fig.cap='Figure 28. When Filtering out Connector Roads, VMT is Greater on Long Peripheral Roads', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r map-non-connector-VMT-filter, fig.cap='Figure 37. When Filtering out Connector Roads, VMT is Greater on Long Peripheral Roads', out.width='80%', fig.asp=.75, fig.align='center'}
 ggplot(subset(TA_flows_geom, Type != "")) + 
   geom_sf(aes(color = Tot_VMT)) +
   scale_color_continuous(type = "viridis", trans = "log") + 
   theme_void()
 ```
 
-```{r map-non-connector-VMT, fig.cap='Figure 29. Visualizing VMT by Road Type Shows More Traffic on Connector Roads', out.width='80%', fig.asp=.75, fig.align='center'}
+```{r map-non-connector-VMT, fig.cap='Figure 38. Visualizing VMT by Road Type Shows More Traffic on Connector Roads', out.width='80%', fig.asp=.75, fig.align='center'}
 ggplot(TA_flows_geom) + 
   geom_sf(aes(color = Tot_VMT)) +
   facet_wrap(vars(Type)) +
@@ -2506,7 +2418,7 @@ ggplot(TA_flows_geom) +
   theme_void()
 ```
 
-## Scenario B: Unconditional Cash Transfer
+### Scenario B: Unconditional Cash Transfer
 
 We held constant assumptions and methods from our Scenario A. Overall, we were more interested VMT and total trips than we were in congestion, and were surprised that our model demonstrated less overall VMT despite and increase in total trips. 
 
@@ -2558,6 +2470,10 @@ TA_flows_geom_UBI <- road_geom %>%
 
 
 # Results
+
+Total number of trips increased from 7,684,930 to 7,768,877 (about 84,000 trip or 1.1% increase). Trips went up across all purpose types.
+
+Total VMT decreased from 24,150,645 to 23,650,677 (about 500,000 miles less or 2.1% decrease). 
 
 ```{r summary table, echo=FALSE, include=FALSE}
 summary_table <- data.frame (matrix(NA, nrow = 8, ncol = 4))
@@ -2611,35 +2527,26 @@ summary_table$`Difference (Percentage)`[5] <- ((summary_table$`Scenario B`[5]-su
 summary_table$`Difference (Percentage)`[6] <- ((summary_table$`Scenario B`[6]-summary_table$`Scenario A`[6])/summary_table$`Scenario A`[6])*100
 summary_table$`Difference (Percentage)`[7] <- ((summary_table$`Scenario B`[7]-summary_table$`Scenario A`[7])/summary_table$`Scenario A`[7])*100
 summary_table$`Difference (Percentage)`[8] <- ((summary_table$`Scenario B`[8]-summary_table$`Scenario A`[8])/summary_table$`Scenario A`[8])*100
+
+kable(summary_table)
 ```
-
-
-Total number of trips increased from 7,684,930 to 7,768,877 (about 84,000 trip or 1.1% increase). By purpose: Trips went up across all purpose types: HBO trips, HBW trips, NHB trips.Total VMT decreased from 24,150,645 to 23,650,677 (about 500,000 miles less or 2.1% decrease). 
 
 
 # Analysis + Discussion
 
-[opening sentence to come]
+The results of our model for an unconditional cash transfer scenario are mixed and leave many questions unanswered. The juxtaposition of increased trip numbers and decreased VMT is surprising and counterintuitive. We have observed higher concentrations of households below the poverty line in the center of the MSA. We are wondering, if lower income people are concentrated in the city center, would increasing their income result in an increase in trip numbers and the least possible change in VMT? 
 
-Mode choice: if home-based other has the highest share of HOV trips AND HOV trips is the most common mode choice for home-based other trips. AND home-based other trips saw the largest percentage increase as a result of our UCT. Then it makes sense that the share of HOV trips should increase overall.
+One possible explanation for the relatively high increase in HOV trips could be related to mode choice across the various trip types: home-based other trips saw the largest percentage increase as a result of our unconditional cash transfer. Among all home-based other trips, HOV is the most common mode choice. Therefore, it makes sense that the share of HOV trips should increase overall relative to other modes.
 
-We have observed higher concentrations of households below the poverty line in the center of the MSA. We are wondering, if lower income people are concentrated in the city center, would increasing their income result in an increase in trip numbers and the least possible change in VMT? 
+---------------------------------------------------------------
 
+When we set out to create this model, we were interested in understanding the travel externalities of unconditional cash transfers. Economic programs like UBI are not often discussed within the context of transportation planning, and we were curious to understand how changes to income could affect travel demand and behavior. We also wanted to explore the idea that higher incomes are related to more trips, and that the number of trips in a region is a potentially useful proxy for its vitality (economically, socially, etc).
 
-What can decision makers learn?
-  - Further research should focus on the impact of cash transfers/UBI on those households in particular to see how travel behavior changes with increased income.
-  - What did we want to learn / what do we think if done in another context could be learned?
-  - UBI and other economic programs do not fall within the realm of travel -- interesting to understand the cobenefits/nonbenefits
-  - Relates to nexus of higher income = higher trips; trip number is potentially useful proxy to vitality of a region (economically, socially, etc)
-  - Travel externalities of unconditional cash transfers 
-  
-What important questions have not been addressed?
-  - What happened to the VMT ?!?!?!
-  - We tried to systematically tease apart each step -- a more in depth and localized model would be a more sound approach.
-  - Address the way in which a cash transfer program was structured. And the effects of structuring it in a different way.
+While the utility of this specific model may be limited, further research should focus on the impact of cash transfers/universal basic income programs on low-income households in particular, to see how travel behavior changes with increased income. 
 
-What What important questions cannot been addressed from an analysis like this?
-  - We make a lot of assumptions of things that don't change, which is an unrealistic approach. An analysis of cash transfer impact on travel behavior would need to make assumptions of things that would change or else it would not account for these changes (i.e., modeling what this would look like and assume that more individuals would buy cars, or have all else remain constant and miss an important behavioral change that could influence results).
+If time had allowed for further development of this model, we would want to better what happened to the VMT in our unconditional cash transfer scenario. We tried to systematically tease apart each step, but a more in depth and localized model would be a more sound approach to understanding what resulted in the combined trip number increase and VMT decrease. Additionally, more time spent on thinking through the structure of an unconditional cash transfer program would be beneficial to the realism of the modeled scenario. 
+ 
+One limitation of analyzing an unconditional cash transfer program within the context of a travel demand model is the need to grapple with a variety of assumptions at the outset. We made a number of assumptions about household characteristics (e.g., vehicle ownership, employment) by asserting that they would remain constant in our Scenario B. We recognize that this is unrealistic, but would need significantly more research to capture the full impact of the program on other behaviors that could influence travel demand. 
 
 
 # Technical appendix
