@@ -108,7 +108,7 @@ ggplot(full_tract_info) +
                        name = "% of households below federal poverty line", 
                        labels = paste(seq(0,5),"%")) + 
   annotation_scale(location = 'br', text_cex = 0.5) +
-  theme_minimal()
+  theme_void()
 ```
 
 
@@ -164,7 +164,7 @@ emp_density_map <- ggplot(full_tract_info) +
   labs(x = "",
        y = "") +
   annotation_scale(location = 'br', text_cex = 0.5) +
-  theme()
+  theme_void()
 
 emp_density_map
 ```
@@ -179,7 +179,7 @@ pop_density_map <- ggplot(full_tract_info) +
   labs(x = "",
        y = "") +
   annotation_scale(location = 'br', text_cex = 0.5) +
-  theme()
+  theme_void()
 
 pop_density_map
 ```
@@ -262,7 +262,7 @@ ggplot(accessibility_summary) +
                  color = "red",
                  fill = "pink", 
                  alpha = 0.3) +
-  scale_x_continuous(name = "Car and transit accessibility index") +
+  scale_x_continuous(name = "Car (blue) and transit (red) accessibility index") +
   scale_y_continuous(name = "Number of census tracts") +
   theme_minimal()
 ```
@@ -296,7 +296,7 @@ ggplot(tract_accessibility) +
                        #labels = c("Low",
                                   #"High"),
                        option = "A") +
-  theme()
+  theme_void()
 ```
 
 ```{r spatial-access-transit, echo=FALSE, warning=FALSE, fig.cap='Figure 9. Accessibility by Transit is Concentrated in the Downtown Area, with Some Accessibility around a Southern Transit Hub in Norman', out.width='80%', fig.asp=.75, fig.align='center'}
@@ -314,7 +314,7 @@ ggplot(tract_accessibility) +
                        #labels = c("Low",
                                   #"High"),
                        option = "A") +
-  theme()
+  theme_void()
 ```
 
 
@@ -336,7 +336,7 @@ ggplot() +
   annotation_scale(location = 'br', text_cex = 0.5) +
   labs(x = "", 
        y = "") +
-  theme(legend.position = "none")
+  theme_void()
 ```
 
 
@@ -350,7 +350,7 @@ ggplot() +
   annotation_scale(location = 'br', text_cex = 0.5) +
   labs(x = "", 
        y = "") +
-  theme(legend.position = "none")
+  theme_void()
 ```
 
 
@@ -359,12 +359,12 @@ ggplot() +
   annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
   geom_sf(data = full_tract_info, aes(), fill = NA, color="darkgrey", size=0.1) +
   geom_sf(data = county_geom, aes(), fill = NA, color="black", size=0.5) +
-  geom_sf(data = transit_geom, aes(color = shape_id)) +
+  geom_sf(data = transit_geom, aes(color = shape_id), show.legend = FALSE) +
   geom_sf_label(data = county_geom, aes(label = county), alpha = 0, label.size = NA, size =4, fontface = "bold") +
   annotation_scale(location = 'br', text_cex = 0.5) +
   labs(x = "", 
        y = "") +
-  theme(legend.position = "none")
+  theme_void()
 ```
 
 
@@ -408,6 +408,7 @@ The charts below illustrate how the timing of various transit trips break down a
 transit_stackedbar_generator <- function(iso_origin){
   temp_matrix <- full_travel_matrix %>%
   filter(from_GEOID == iso_origin) %>%
+  filter(!is.na(ivtt)) %>%  
   select(to_GEOID, access_wt, init_wt, ivtt, transfer_wt, egress_wt)
 
 temp_matrix_stacked <- melt(temp_matrix, id = "to_GEOID")
@@ -417,9 +418,8 @@ ggplot(temp_matrix_stacked, aes(x = reorder(to_GEOID, value), y = value, fill = 
   scale_fill_manual(values = c("steelblue","thistle", "gold", "red", "green"), label = c("Initial walk time", "Initial wait time", "Travel time", "Transfer wait time", "Egress walk time")) +
   scale_y_continuous(labels = scales::comma) +
   labs(y = "Number of Minutes", x = " ", fill = "Public Transportation Activity") + 
-    labs(subtitle = paste("Transit Time to all zones from", iso_origin, "(minutes)")) +
-  theme(legend.position = "top", axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
-  theme_minimal()
+    labs(subtitle = paste("Transit Time to all zones accessible from", iso_origin, "(minutes)")) +
+  theme(legend.position = "bottom", axis.text.x=element_blank(), axis.ticks.x=element_blank(), panel.background = element_rect(fill = "white"))
 }
 
 transit_stackedbar_generator(40109107212)
@@ -456,7 +456,7 @@ okc_trips <- here(nhts_path[3]) %>%
                              home_based ~ "HBO",
                              TRUE ~ "NHB"))
 
-table(okc_trips$purpose)
+#table(okc_trips$purpose)
 ```
 
 
@@ -1084,21 +1084,21 @@ Compared to the number of trip productions generated in the model reflecting exi
 ggplot(difference_df) +
   geom_sf(aes(fill=diff_hbo)) +
   scale_fill_continuous(name = "Number of Trip Productions") + 
-  theme_minimal()
+  theme_void()
 ```
 
 ```{r plot hbw difference, echo=FALSE, fig.cap='Figure 21. Difference in Number of Home-Based Work Trip Productions in Scenario B compared to Scenario A', out.width='80%', fig.asp=.75, fig.align='center'}
 ggplot(difference_df) +
   geom_sf(aes(fill=diff_hbw)) +
   scale_fill_continuous(name = "Number of Trip Productions") + 
-  theme_minimal()
+  theme_void()
 ```
 
 ```{r plot nhb difference, echo=FALSE, fig.cap='Figure 22. Difference in Number of Non-Home-Based Trip Productions in Scenario B compared to Scenario A', out.width='80%', fig.asp=.75, fig.align='center'}
 ggplot(difference_df) +
   geom_sf(aes(fill=diff_nhb)) +
   scale_fill_continuous(name = "Number of Trip Productions") + 
-  theme_minimal()
+  theme_void()
 ```
 
 
@@ -1915,7 +1915,7 @@ ggplot()+
   stat_summary_bin(data = full_travel_matrix, aes(x = drive_time, y = (n_SOV_total/n_total_total), color = "SOV"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
   stat_summary_bin(data = full_travel_matrix, aes(x = drive_time, y = (n_HOV_total/n_total_total), color = "HOV"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
   scale_x_continuous(breaks = seq(from =0, to = 240, by = 30)) +
-  labs(x = "Drive Time (mins)", y = "Mode Share (Fraction of Total Trips)") +
+  labs(x = "Drive Time (mins)", y = "Mode Share (Fraction of Total Trips)", color = "Mode") +
   theme_minimal()
 ```
 
@@ -1926,7 +1926,7 @@ ggplot()+
   stat_summary_bin(data = full_travel_matrix, aes(x = drive_time, y = (n_SOV_HBO/n_total_HBO), color = "SOV"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
   stat_summary_bin(data = full_travel_matrix, aes(x = drive_time, y = (n_HOV_HBO/n_total_HBO), color = "HOV"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
   scale_x_continuous(breaks = seq(from =0, to = 240, by = 30)) +
-  labs(title = "Mode Split by Drive Time for Home-Based Other Trips", x = "Drive Time (mins)", y = "Mode Share (Fraction of Total Trips)") +
+  labs(title = "Mode Split by Drive Time for Home-Based Other Trips", x = "Drive Time (mins)", y = "Mode Share (Fraction of Total Trips)", color = "Mode") +
   theme_minimal()
 ```
 
@@ -1937,7 +1937,7 @@ ggplot()+
   stat_summary_bin(data = full_travel_matrix, aes(x = drive_time, y = (n_SOV_HBW/n_total_HBW), color = "SOV"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
   stat_summary_bin(data = full_travel_matrix, aes(x = drive_time, y = (n_HOV_HBW/n_total_HBW), color = "HOV"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
   scale_x_continuous(breaks = seq(from =0, to = 240, by = 30)) +
-  labs(title = "Mode Split by Drive Time for Home-Based Work Trips", x = "Drive Time (mins)", y = "Mode Share (Fraction of Total Trips)") +
+  labs(title = "Mode Split by Drive Time for Home-Based Work Trips", x = "Drive Time (mins)", y = "Mode Share (Fraction of Total Trips)", color = "Mode") +
   theme_minimal()
 ```
 
@@ -1948,7 +1948,7 @@ ggplot()+
   stat_summary_bin(data = full_travel_matrix, aes(x = drive_time, y = (n_SOV_NHB/n_total_NHB), color = "SOV"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
   stat_summary_bin(data = full_travel_matrix, aes(x = drive_time, y = (n_HOV_NHB/n_total_NHB), color = "HOV"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
   scale_x_continuous(breaks = seq(from =0, to = 240, by = 30)) +
-  labs(title = "Mode Split by Drive Time for Non Home-Based Trips", x = "Drive Time (mins)", y = "Mode Share (Fraction of Total Trips)") +
+  labs(title = "Mode Split by Drive Time for Non Home-Based Trips", x = "Drive Time (mins)", y = "Mode Share (Fraction of Total Trips)", color = "Mode") +
   theme_minimal()
 
 ```
@@ -1977,18 +1977,10 @@ transit_prob_tracts <- tract_trip_info %>%
 
 We used the same assumptions for travel cost in our unconditional cash transfer model: we used linear distance and the 2023 IRS mileage reimbursement rate (0.655 dollars) to calculate trip costs; we established carpool costs using the “Carpool 2+ only—daily” assumptions from NCHRP 716; for transit costs, we estimated an average of the Embark system’s different fares, assigning each trip a $2.00 fare with free transfers. 
 
-#### Mode-by-Purpose Table
-
-We compared mode split by trip type to the same observed data from NHTS as we used in Scenario A. 
-
-```{r mode by purpose for UBI scenario, echo=FALSE}
-kable(mode_by_purpose)
-```
-
 
 #### Model Coefficients + Calibration 
 
-We started by assigning the coefficients from our Scenario A mode choice model to the Scenario B mode choice model. We applied the same standard for Scenario B, as well, aiming to have any discrepancies between the model and observed data from NHTS below a 5 percentage point threshold. 
+We compared mode split by trip type to the same observed data from NHTS as we used in Scenario A. We started by assigning the coefficients from our Scenario A mode choice model to the Scenario B mode choice model. We applied the same standard for Scenario B, as well, aiming to have any discrepancies between the model and observed data from NHTS below a 5 percentage point threshold. 
 
 HBO: SOV = -0.28, HOV = -0.25, transit = -3.52
 HBW: SOV = 0.70, -2.00, transit = -1.00
@@ -2210,7 +2202,7 @@ model_compare_UBI <- rbind(mode_by_purpose, modeled_mode_by_purpose_UBI) %>%
 kable(model_compare_UBI)
 ```
 
-The differences between the Scenario B modeled mode shares and the NHTS data were within the 5 percentage point threshold on the first run of our model, so no further calibration was necessary. This aligns with expectations that mode choice would not significantly change due to a slight increase in trip productions. [????]
+The differences between the Scenario B modeled mode shares and the NHTS data were within the 5 percentage point threshold on the first run of our model, so no further calibration was necessary. This aligns with expectations that mode choice would not significantly change due to a slight increase in trip productions.
 
 
 #### Visualizations
@@ -2258,7 +2250,7 @@ ggplot()+
   stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_SOV_total_UBI/n_total_total_UBI), color = "SOV"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
   stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_HOV_total_UBI/n_total_total_UBI), color = "HOV"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
   scale_x_continuous(breaks = seq(from =0, to = 240, by = 30)) +
-  labs(x = "Drive Time (mins)", y = "Mode Share (Fraction of Total Trips)") +
+  labs(x = "Drive Time (mins)", y = "Mode Share (Fraction of Total Trips)", color = "Mode") +
   theme_minimal()
 ```
 
@@ -2269,7 +2261,7 @@ ggplot()+
   stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_SOV_HBO_UBI/n_total_HBO_UBI), color = "SOV"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
   stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_HOV_HBO_UBI/n_total_HBO_UBI), color = "HOV"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
   scale_x_continuous(breaks = seq(from =0, to = 240, by = 30)) +
-  labs(title = "Mode Split by Drive Time for Home-Based Other Trips", x = "Drive Time (mins)", y = "Mode Share (Fraction of Total Trips)") +
+  labs(title = "Mode Split by Drive Time for Home-Based Other Trips", x = "Drive Time (mins)", y = "Mode Share (Fraction of Total Trips)", color = "Mode") +
   theme_minimal()
 ```
 
@@ -2280,7 +2272,7 @@ ggplot()+
   stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_SOV_HBW_UBI/n_total_HBW_UBI), color = "SOV"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
   stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_HOV_HBW_UBI/n_total_HBW_UBI), color = "HOV"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
   scale_x_continuous(breaks = seq(from =0, to = 240, by = 30)) +
-  labs(title = "Mode Split by Drive Time for Home-Based Work Trips", x = "Drive Time (mins)", y = "Mode Share (Fraction of Total Trips)") +
+  labs(title = "Mode Split by Drive Time for Home-Based Work Trips", x = "Drive Time (mins)", y = "Mode Share (Fraction of Total Trips)", color = "Mode") +
   theme_minimal()
 ```
 
@@ -2291,7 +2283,7 @@ ggplot()+
   stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_SOV_NHB_UBI/n_total_NHB_UBI), color = "SOV"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
   stat_summary_bin(data = full_TTmatrix_UBI, aes(x = drive_time, y = (n_HOV_NHB_UBI/n_total_NHB_UBI), color = "HOV"), alpha = 0.5, fun="mean", bins=84, size=2, geom="point") +
   scale_x_continuous(breaks = seq(from =0, to = 240, by = 30)) +
-  labs(title = "Mode Split by Drive Time for Non Home-Based Trips", x = "Drive Time (mins)", y = "Mode Share (Fraction of Total Trips)") +
+  labs(title = "Mode Split by Drive Time for Non Home-Based Trips", x = "Drive Time (mins)", y = "Mode Share (Fraction of Total Trips)", color = "Mode") +
   theme_minimal()
 
 ```
@@ -2378,6 +2370,7 @@ When visualizing our findings we chose to represent traffic congestion without t
 ggplot(subset(TA_flows_geom, congestion_time > 240)) + 
   geom_sf(aes(color = congestion_time)) +
   scale_color_continuous(type = "gradient") + 
+  labs(color = "Congestion Time (minutes)") +
   theme_void()
 ```
 
@@ -2389,6 +2382,7 @@ When visualizing our findings we chose to represent traffic congestion without t
 ggplot(subset(TA_flows_geom, congestion_time < 240)) + 
   geom_sf(aes(color = congestion_time)) +
   scale_color_continuous(type = "gradient") + 
+  labs(color = "Congestion Time (minutes)") +
   theme_void()
 ```
 
@@ -2396,6 +2390,7 @@ ggplot(subset(TA_flows_geom, congestion_time < 240)) +
 ggplot(subset(TA_flows_geom, Type != "")) + 
   geom_sf(aes(color = log(congestion_time))) +
   scale_color_continuous(type = "gradient") + 
+  labs(color = "Log of Congestion Time") +
   theme_void()
 ```
 
@@ -2407,6 +2402,7 @@ Additionally, we also filtered our traffic flows by road type to see where conge
 ggplot(subset(TA_flows_geom, Type != "")) + 
   geom_sf(aes(color = Tot_VMT)) +
   scale_color_continuous(type = "viridis", trans = "log") + 
+  labs(color = "Vehicle Miles Traveled") +
   theme_void()
 ```
 
@@ -2415,12 +2411,13 @@ ggplot(TA_flows_geom) +
   geom_sf(aes(color = Tot_VMT)) +
   facet_wrap(vars(Type)) +
   scale_color_continuous(type = "viridis", trans = "log") + 
+  labs(color = "Vehicle Miles Traveled") +
   theme_void()
 ```
 
 ### Scenario B: Unconditional Cash Transfer
 
-We held constant assumptions and methods from our Scenario A. Overall, we were more interested VMT and total trips than we were in congestion, and were surprised that our model demonstrated less overall VMT despite and increase in total trips. 
+We held constant assumptions and methods from our Scenario A. The geographic distribution of VMT remains similar, even with the increased number of trips (Figure 39). 
 
 ```{r probability matrix UBI, echo=FALSE, include=FALSE}
 prob_travel_matrix_UBI <- full_TTmatrix_UBI %>%
@@ -2468,15 +2465,26 @@ TA_flows_geom_UBI <- road_geom %>%
 #write.csv(PA_matrix_transcad_UBI, "PA_matrix_transcad_UBI.csv")
 ```
 
+```{r map-non-connector-VMT-filter-ubi, fig.cap='Figure 39. When Filtering out Connector Roads, VMT is Greater on Long Peripheral Roads', out.width='80%', fig.asp=.75, fig.align='center'}
+ggplot(subset(TA_flows_geom_UBI, Type != "")) + 
+  geom_sf(aes(color = Tot_VMT)) +
+  scale_color_continuous(type = "viridis", trans = "log") + 
+  labs(color = "Vehicle Miles Traveled") +
+  theme_void()
+```
+
 
 # Results
 
-Total number of trips increased from 7,684,930 to 7,768,877 (about 84,000 trip or 1.1% increase). Trips went up across all purpose types.
 
-Total VMT decreased from 24,150,645 to 23,650,677 (about 500,000 miles less or 2.1% decrease). 
+```{r df for TA flows without connectors, echo=FALSE}
+TA_flows_NoCon <- subset(TA_flows, Type != "")
+
+TA_flows_UBI_NoCon <- subset(TA_flows_UBI, Type != "")
+```
 
 ```{r summary table, echo=FALSE, include=FALSE}
-summary_table <- data.frame (matrix(NA, nrow = 8, ncol = 4))
+summary_table <- data.frame (matrix(NA, nrow = 9, ncol = 4))
 
 rownames(summary_table) <- c("Total Trips", 
                              "Total HBO Trips",
@@ -2485,7 +2493,8 @@ rownames(summary_table) <- c("Total Trips",
                              "Total Trips by SOV",
                              "Total Trips by HOV",
                              "Total Trips by Transit",
-                             "Total Vehicle Miles Travelled")
+                             "Total Vehicle Miles Traveled",
+                             "Total Vehicle Miles Traveled (Excluding Connectors)")
 
 colnames(summary_table) <- c ("Scenario A", "Scenario B", "Difference (Count)", "Difference (Percentage)")
 
@@ -2498,6 +2507,7 @@ summary_table$`Scenario A`[5] <- sum(full_travel_matrix_with_flows$n_SOV_total)
 summary_table$`Scenario A`[6] <- sum(full_travel_matrix_with_flows$n_HOV_total)
 summary_table$`Scenario A`[7] <- sum(full_travel_matrix_with_flows$n_transit_total)
 summary_table$`Scenario A`[8] <- sum(TA_flows$Tot_VMT)
+summary_table$`Scenario A`[9] <- sum(TA_flows_NoCon$Tot_VMT)
   
 summary_table$`Scenario B`[1] <- sum(full_TTmatrix_UBI$n_total_total_UBI)
 summary_table$`Scenario B`[2] <- sum(full_TTmatrix_UBI$n_total_HBO_UBI)#total HBO trips here
@@ -2507,6 +2517,7 @@ summary_table$`Scenario B`[5] <- sum(full_TTmatrix_UBI$n_SOV_total_UBI)#total SO
 summary_table$`Scenario B`[6] <- sum(full_TTmatrix_UBI$n_HOV_total_UBI)#total HOV trips here
 summary_table$`Scenario B`[7] <- sum(full_TTmatrix_UBI$n_transit_total_UBI)
 summary_table$`Scenario B`[8] <- sum(TA_flows_UBI$Tot_VMT)
+summary_table$`Scenario B`[9] <- sum(TA_flows_UBI_NoCon$Tot_VMT)
   
 ## Calculate differences
 summary_table$`Difference (Count)`[1] <- summary_table$`Scenario B`[1]-summary_table$`Scenario A`[1]
@@ -2517,6 +2528,7 @@ summary_table$`Difference (Count)`[5] <- summary_table$`Scenario B`[5]-summary_t
 summary_table$`Difference (Count)`[6] <- summary_table$`Scenario B`[6]-summary_table$`Scenario A`[6]
 summary_table$`Difference (Count)`[7] <- summary_table$`Scenario B`[7]-summary_table$`Scenario A`[7]
 summary_table$`Difference (Count)`[8] <- summary_table$`Scenario B`[8]-summary_table$`Scenario A`[8]
+summary_table$`Difference (Count)`[9] <- summary_table$`Scenario B`[9]-summary_table$`Scenario A`[9]
 
 ## Calculate diff percentages
 summary_table$`Difference (Percentage)`[1] <- ((summary_table$`Scenario B`[1]-summary_table$`Scenario A`[1])/summary_table$`Scenario A`[1])*100
@@ -2527,18 +2539,22 @@ summary_table$`Difference (Percentage)`[5] <- ((summary_table$`Scenario B`[5]-su
 summary_table$`Difference (Percentage)`[6] <- ((summary_table$`Scenario B`[6]-summary_table$`Scenario A`[6])/summary_table$`Scenario A`[6])*100
 summary_table$`Difference (Percentage)`[7] <- ((summary_table$`Scenario B`[7]-summary_table$`Scenario A`[7])/summary_table$`Scenario A`[7])*100
 summary_table$`Difference (Percentage)`[8] <- ((summary_table$`Scenario B`[8]-summary_table$`Scenario A`[8])/summary_table$`Scenario A`[8])*100
+summary_table$`Difference (Percentage)`[9] <- ((summary_table$`Scenario B`[9]-summary_table$`Scenario A`[9])/summary_table$`Scenario A`[9])*100
+```
 
+```{r summary tale visualization}
 kable(summary_table)
 ```
 
 
-# Analysis + Discussion
+We observe that in our modeled unconditional cash transfer scenario, almost all metrics increase very slightly as a result of increasing the median income by $12,000. Total number of trips increased from 7,684,930 to 7,768,877 (about 84,000 trip or 1.1% increase). Trips went up across all purpose types. Non-home-based trip types increased about 0.46%, less than all other trip types, which increased by about 1%. Of the three trip types, home-based other trips increased by the highest percentage, which confirms our initial expectation. This increase reflects the fact that income has the strongest productive effect on home-based other trips, as observed in the NHTS data.  
 
-The results of our model for an unconditional cash transfer scenario are mixed and leave many questions unanswered. The juxtaposition of increased trip numbers and decreased VMT is surprising and counterintuitive. We have observed higher concentrations of households below the poverty line in the center of the MSA. We are wondering, if lower income people are concentrated in the city center, would increasing their income result in an increase in trip numbers and the least possible change in VMT? 
+Surprisingly, VMT decreased by about 500,000 miles, or 2%, compared to our original model. This is especially unexpected after seeing the increased number of trips generated by the hypothetical cash transfer. Following the sequence of the four-step travel demand model, the results of each step were in line with our expectations up to the final trip assignment stage. The output from that step, the table of vehicle flows per link, showed lower VMT relative to the original model's output. We excluded the connector roads from the link flow tables in both scenarios to compare VMT on all other roads in the study area. We suspected that connector roads may have been contributing a large number of VMT in both scenarios, and wanted to control for that influence. However, this analysis found that VMT still decreases in Scenario B, though by a slightly smaller percentage.  
 
-One possible explanation for the relatively high increase in HOV trips could be related to mode choice across the various trip types: home-based other trips saw the largest percentage increase as a result of our unconditional cash transfer. Among all home-based other trips, HOV is the most common mode choice. Therefore, it makes sense that the share of HOV trips should increase overall relative to other modes.
+One hypothesis for this finding relates to the higher concentrations of households below the poverty line in the center of the MSA. We are wondering, if lower income people are concentrated in the city center, would increasing their income result in an increase in trip numbers and decrease in VMT? The mixed results raise many questions for further research. 
 
----------------------------------------------------------------
+
+# Discussion
 
 When we set out to create this model, we were interested in understanding the travel externalities of unconditional cash transfers. Economic programs like UBI are not often discussed within the context of transportation planning, and we were curious to understand how changes to income could affect travel demand and behavior. We also wanted to explore the idea that higher incomes are related to more trips, and that the number of trips in a region is a potentially useful proxy for its vitality (economically, socially, etc).
 
@@ -2628,153 +2644,7 @@ head(full_travel_matrix) %>%
 **ovtt** - Out-of-vehicle travel time for transit trip
 **perceived_time** - Weighted travel time for transit trip (ovtt + 1.5*ivtt)
 **fare** - Total cost of transit trip, assuming fares are $2 and transfers are free (based on generalization of EMBARK fares)
-
-## Code  
-
-### Stacked Bar Generator
-
-transit_stackedbar_generator <- function(iso_origin){
-  temp_matrix <- full_travel_matrix %>%
-  filter(from_GEOID == iso_origin) %>%
-  select(to_GEOID, access_wt, init_wt, ivtt, transfer_wt, egress_wt)
-
-temp_matrix_stacked <- melt(temp_matrix, id = "to_GEOID")
-
-ggplot(temp_matrix_stacked, aes(x = reorder(to_GEOID, value), y = value, fill = variable)) + 
-  geom_bar(stat = "identity") +
-  scale_fill_manual(values = c("steelblue","thistle", "gold", "red", "green"), label = c("Walk time", "Wait time", "Travel time", "Transfer time", "Egress time")) +
-  scale_y_continuous(labels = scales::comma) +
-  labs(y = "Number of Minutes", x = " ", fill = "Public Transportation Activity", title = paste("Transit Time to all zones from", iso_origin, "(minutes)"))  + 
-    labs(subtitle = "Figs. 15 and 16 - Travel Time Makes Up the Bulk of Most Trips,\nbut Transfer Wait Time is Also A Large Portion of Trip Duration") +
-  theme(legend.position = "top", axis.text.x=element_blank(), axis.ticks.x=element_blank())
-}
-
-transit_stackedbar_generator(x)
-
-
-### Isochrone Generator
-
-drive_isochrone_generator <- function(iso_origin){
-  temp_matrix <- full_travel_matrix %>%
-  filter(from_GEOID == iso_origin)
-
-  #get tract geometry from ok_msa
-iso_drivetime_from_origin <- full_tract_info %>%
-  select(GEOID, geometry) %>%
-  full_join(temp_matrix, by = c("GEOID" = "to_GEOID"))
-
-selected_centroid <- full_centroid_geom %>%
-  filter(GEOID == iso_origin)
-
-#change NA to 0
-iso_drivetime_from_origin[is.na(iso_drivetime_from_origin)] <- 0
-
-ggplot(iso_drivetime_from_origin) + 
-  annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
-  geom_sf(aes(fill = drive_time)) + 
-  scale_fill_gradient2(low = "white", mid = "thistle", high = "orchid4",
-                       midpoint = 50, #median(iso_drivetime_from_origin$travel_time_mins),
-                       name = paste("Drive Time\nto all\nzones from", iso_origin, "\n(minutes)")) +
-  labs(subtitle = "Figs. 9, 10, and 11 - Drive-time Isochrones Show Access to All Zones in the Study Area") +
-  geom_sf(data = selected_centroid, shape = 19, size = 1.5) +
-  annotation_scale(location = 'br', text_cex = 0.5) +
-  theme()
-}
-
-transit_isochrone_generator <- function(iso_origin){
-  temp_matrix <- full_travel_matrix %>%
-  filter(from_GEOID == iso_origin)
-
-  #get tract geometry from ok_msa
-iso_transittime_from_origin <- full_tract_info %>%
-  select(GEOID, geometry) %>%
-  full_join(temp_matrix, by = c("GEOID" = "to_GEOID"))
-
-selected_centroid <- full_centroid_geom %>%
-  filter(GEOID == iso_origin)
-
-ggplot(iso_transittime_from_origin) + 
-  annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
-  geom_sf(aes(fill = total_time_mins)) + 
-  scale_fill_gradient2(low = "white", mid = "thistle", high = "orchid4",
-                       midpoint = 50, #median(iso_drivetime_from_origin$travel_time_mins),
-                       name = paste("Transit Time\nto all\nzones from", iso_origin, "\n(minutes)")) +
-  labs(subtitle = "Figs. 12, 13, and 14 - Transit-time Isochrones Show Limited Access within the Study Area") +
-  geom_sf(data = selected_centroid, shape = 19, size = 1.5) +
-  annotation_scale(location = 'br', text_cex = 0.5) +
-  theme()
-}
-drive_isochrone_generator(x)
-transit_isochrone_generator(x)
-
-
-### Cumulative Accessibility
-
-drive_accessibility_matrix <- full_travel_matrix %>%
-  filter(drive_time<30) %>%
-  group_by(from_GEOID) %>%
-  tally() %>%
-  rename(score = n) 
-
-drive_accessibility_geom <- full_tract_info %>%
-  select(GEOID, geometry) %>%
-  left_join(drive_accessibility_matrix,
-            by = c("GEOID" = "from_GEOID"))
-
-ggplot(drive_accessibility_geom) + 
-  annotation_map_tile(zoomin = 0, progress = "none", type = "cartolight") +
-  geom_sf(aes(fill=score)) +
-  labs(subtitle = "Fig. 8 - Zonal-Based Accessibility Shows Greatest Access to Other Zones\nis Centered in Downtown Oklahoma City") +
-  annotation_scale(location = 'br', text_cex = 0.5) +
-  theme()
-
-
-### Gravity-based Accessibility Functions
-
-
->>>>>>> a7397251799aa95fd9aecdcd2a5f54203021da4b
-accessibility_summary <- accessibility_summary %>%
-  left_join(full_tract_info %>%
-              select(GEOID, geometry),
-            by = c("from_GEOID" = "GEOID")) %>%
-  as.data.frame()
-
-tract_accessibility <- full_tract_info %>%
-  select(GEOID, geometry) %>%
-  left_join(accessibility_summary, 
-            by = c("GEOID" = "from_GEOID"))
-
-ggplot(tract_accessibility) +
-  annotation_map_tile(type = "cartolight",
-                      zoomin = 0,
-                      progress = "none") +
-  geom_sf(aes(fill = drive_index),
-          color = NA,
-          alpha = 0.6) +
-  scale_fill_viridis_c(name = "Drive accessibility",
-                       #trans = "log",
-                       #breaks = c(0.000001,100),
-                       #labels = c("Low",
-                                  #"High"),
-                       option = "A") +
-  labs(subtitle = "Fig. 17 - Accessibility by Car is Strongest in Downtown Oklahoma City,\nwith Some Zones on the Periphery Indicating Very Low Accessibility") +
-  theme()
-
-ggplot(tract_accessibility) +
-  annotation_map_tile(type = "cartolight",
-                      zoomin = 0,
-                      progress = "none") +
-  geom_sf(aes(fill = transit_index),
-          color = NA,
-          alpha = 0.6) +
-  scale_fill_viridis_c(name = "Transit accessibility",
-                       trans = "log",
-                       breaks = c(0.000001,100),
-                       #labels = c("Low",
-                                  #"High"),
-                       option = "A") +
-  labs(subtitle = "Fig. 18 - Accessibility by Transit is Concentrated in the Downtown Area,\nwith Some Accessibility around a Southern Transit Hub in Norman") +
-  theme()
+**Tot_VMT** - Total vehicle miles traveled along each link in the road network, as determined by TransCAD analysis. 
   
 #### References
 
